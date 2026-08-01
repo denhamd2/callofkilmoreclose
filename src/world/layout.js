@@ -8,14 +8,47 @@
  * canonical hero-shot camera axis.
  *
  * Sides: 0 = -Z, 1 = +X, 2 = +Z, 3 = -X.
+ *
+ * ---------------------------------------------------------------------------
+ * OSM GROUND TRUTH — Kilmore Close, way 37211091 (Overpass export, 2026-08-01)
+ * ---------------------------------------------------------------------------
+ * `highway=residential`, named "Kilmore Close" (`Clós na Coille Móire`),
+ * concrete surface, lit, `lanes=2` with no lane markings, 30 km/h — an
+ * ordinary two-way estate road in Dublin, Ireland (~53.39°N -6.21°W). Six
+ * nodes, essentially straight (max 0.72 m perpendicular deviation from the
+ * node1→node6 chord across its whole length). Real length ≈319.3 m, vs. the
+ * ~104 m fictional envelope this file was originally tuned for.
+ *
+ * Projection used for STREET below: equirectangular, anchored at node
+ * 291661838 (west/north end), local scale at lat 53.39° (111,293 m/deg lat,
+ * 66,382 m/deg lon), rotated -78.35° so the real chord (bearing ≈102°) lies
+ * on level Z. ASSUMPTION, unverified — this JSON is a single way with no
+ * junction or address data, so which end is the closed end of the close is
+ * not derivable from it: node order 291661838→291661825 is taken to map
+ * +Z→-Z, i.e. 291661838 (west/north) is the open/spawn end and 291661825
+ * (east/south) is the closed end that GATE should terminate against.
+ *
+ * STREET.zMin/zMax below are grounded in this way. `halfWidth`/`kerb` are
+ * NOT — the way carries no `width` tag, only the lane count. Every other
+ * table in this file (ALLEYS, BUILDINGS, GATE, SET_PIECES) is still the
+ * original fictional market-street placeholder: this OSM way contains no
+ * building footprints, junctions, or plaza/alley data, so none of their
+ * positions are OSM-derived, and they are now mismatched against a 319 m
+ * street built for a 104 m one (e.g. GATE no longer sits near the real
+ * closed end, and buildings placed beyond the new zMax=0 sit past the paved
+ * street's spawn-end edge). They need their own grounded pass once building
+ * and junction OSM data exists — do not read their current numbers as facts
+ * about the real Kilmore Close.
  */
 
 export const STREET = {
-  halfWidth: 4.5, // asphalt
-  kerb: 6.5, // building line
+  halfWidth: 4.5, // asphalt — UNGROUNDED: way 37211091 has no `width` tag,
+  // only lanes=2 (unmarked). Real surface is concrete, not asphalt; that's a
+  // ground.js material key, out of scope for this layout-only pass.
+  kerb: 6.5, // building line — UNGROUNDED, no OSM setback/width data.
   walkH: 0.145,
-  zMin: -58,
-  zMax: 46,
+  zMin: -319.3, // GROUNDED: real length of way 37211091 (node 291661825 end, assumed GATE/closed end)
+  zMax: 0, // GROUNDED: node 291661838 end (assumed open/spawn end)
 };
 
 /** Alleys and open ground, as rects [x0, z0, x1, z1]. */
