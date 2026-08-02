@@ -33,11 +33,14 @@ import { STREET, ALLEYS, BUILDINGS, SET_PIECES, GATE } from './layout.js';
  * WORLD — set dressing.
  *
  * Geometry makes a level; dressing makes it a *place*. This pass adds the
- * hundreds of instanced props that turn a street of boxes into a market that
- * people evidently live in: stalls under fabric canopies, sandbag emplacements,
- * jersey barriers, wrecked cars, palms, lamps, cables and laundry strung
- * overhead, roof clutter, rubble, and the litter and blown sand that collects
- * against every wall base.
+ * hundreds of instanced props that turn a street of boxes into a Dublin
+ * close people evidently live in: cars parked along the kerb, low garden
+ * walls and clipped hedges, wheelie bins out for collection, ordinary
+ * deciduous trees, lamps, overhead cables and washing lines strung out the
+ * back, roof clutter, and the litter and damp grime that collects against
+ * every wall base. The gate/terminator at the map's south end (`buildGate`)
+ * is a deliberately fictional level-design vista-stop (see layout.js) and is
+ * left as-is by this pass.
  *
  * Everything is placed in LEVEL space and instanced through the Assembler, so
  * the cost of another two hundred props is a few kilobytes of matrices.
@@ -199,7 +202,7 @@ export function registerDressingProps(A, rng) {
     { maxDist: 40, castShadow: false }
   );
 
-  // Cinder blocks — the universal Middle-Eastern building unit.
+  // Cinder blocks — offcuts from garden walls and boundary repairs.
   P(
     'cinder',
     'concrete_prop',
@@ -332,16 +335,14 @@ export function dressStreet(A, rng) {
   // shift every subsequent position in the level and walk props into the shot
   // cameras' keepout zones.
   A.jitter = jitterRig();
-  marketStalls(A, rng);
-  barriers(A, rng);
-  sandbagEmplacements(A, rng);
-  wrecks(A, rng);
-  palms(A, rng);
+  parkedCars(A, rng);
+  frontGardens(A, rng);
+  builderSkips(A, rng);
+  streetTrees(A, rng);
   streetLamps(A, rng);
   overheadLines(A, rng);
-  facadeHangings(A, rng);
-  rubblePiles(A, rng);
-  tyreStacks(A, rng);
+  frontGardenClutter(A, rng);
+  binClusters(A, rng);
   coverClusters(A, rng);
   streetFloor(A, rng);
   A.jitter = null;
@@ -447,22 +448,22 @@ function streetFloor(A, rng) {
       const x = side * (KB - 0.06);
       // Alley mouths and doorways stay clear: a berm across a door reads as a bug.
       if (isOpen(x - side * 0.5, cz, 0.05) && rng.float() < 0.96) {
-        const h = rng.range(0.14, 0.42);
-        const w = rng.range(0.6, 1.5);
+        const h = rng.range(0.1, 0.28);
+        const w = rng.range(0.5, 1.1);
         const g = driftBerm(rng, len, w, h);
         // ry = -PI/2 for the +X side puts the tall edge against the wall
         A.addOnce(
-          rng.float() < 0.72 ? 'sand' : 'road_dust',
+          'moss_verge',
           g,
           LL(IDENT, x, WH - 0.02, cz, side > 0 ? Math.PI / 2 : -Math.PI / 2, 1, 1, 1),
           { masks: [0.15, 0.55, 0.45] }
         );
-        // masonry and litter sitting IN the drift, half buried
-        for (let i = 0; i < rng.int(2, 6); i++) {
+        // litter and windblown leaves sitting IN the drift, half buried
+        for (let i = 0; i < rng.int(1, 4); i++) {
           const px = x - side * rng.range(0.05, w * 0.8);
           const pz = cz + rng.range(-len / 2 + 0.2, len / 2 - 0.2);
           A.put(
-            rng.pick(['brick_a', 'brick_b', 'cinder', 'rock_a', 'rock_b', 'slab_shard', 'litter', 'can']),
+            rng.pick(['litter', 'can', 'weeds']),
             px,
             WH + h * rng.range(0.1, 0.55),
             pz,
@@ -478,14 +479,14 @@ function streetFloor(A, rng) {
     }
   }
 
-  // ---- 2. the kerb line: sand spilling off the pavement into the gutter ----
+  // ---- 2. the kerb line: damp grit and moss spilling off the pavement ----
   for (let i = 0; i < 70; i++) {
     const side = rng.float() < 0.5 ? -1 : 1;
     const cz = rng.range(zMin + 2, zMax - 2);
     const len = rng.range(1.2, 3.4);
     if (!isOpen(side * (HW + 0.4), cz, 0.05)) continue;
     const g = driftBerm(rng, len, rng.range(0.35, 0.8), rng.range(0.05, 0.14), { nz: 3 });
-    A.addOnce('sand', g, LL(IDENT, side * (HW + 0.12), 0.02, cz, side > 0 ? -Math.PI / 2 : Math.PI / 2, 1, 1, 1), {
+    A.addOnce('moss_verge', g, LL(IDENT, side * (HW + 0.12), 0.02, cz, side > 0 ? -Math.PI / 2 : Math.PI / 2, 1, 1, 1), {
       masks: [0.15, 0.5, 0.3],
     });
   }
@@ -506,20 +507,20 @@ function streetFloor(A, rng) {
         LL(IDENT, x, camber, z + len / 2, rng.range(-0.03, 0.03), 1, 1, len / 0.68),
         { masks: [0.55, 0.5, 0.15] }
       );
-      // a lighter, wider halo of disturbed dust either side of the polished strip
+      // a lighter, wider halo of oil staining either side of the polished strip
       if (rng.float() < 0.7) {
         const hg = patchGeometry(rng, 0.62, { lobes: 11, wobble: 0.4 });
         A.addOnce(
-          'road_dust',
+          'dirt',
           hg,
           LL(IDENT, x, camber - 0.004, z + len / 2, rng.range(-0.04, 0.04), 1, 1, len / 1.24),
           { masks: [0.45, 0.15, 0.08] }
         );
       }
-      // the fine dust ridge thrown up between the wheels
+      // grit thrown up between the wheels
       if (rng.float() < 0.6) {
         const dg = driftBerm(rng, len * 0.8, 0.3, 0.035, { nz: 3 });
-        A.addOnce('road_dust', dg, LL(IDENT, x - side * 0.42, camber + 0.004, z + len / 2, Math.PI / 2, 1, 1, 1), {
+        A.addOnce('dirt', dg, LL(IDENT, x - side * 0.42, camber + 0.004, z + len / 2, Math.PI / 2, 1, 1, 1), {
           masks: [0.1, 0.4, 0.2],
         });
       }
@@ -539,15 +540,15 @@ function streetFloor(A, rng) {
     );
   }
 
-  // ---- 4. masonry spill: chunks that fell off the buildings onto the kerb ----
-  for (let i = 0; i < 120; i++) {
+  // ---- 4. everyday kerbside litter — no bombed-masonry rubble on a lived-in close ----
+  for (let i = 0; i < 90; i++) {
     const side = rng.float() < 0.5 ? -1 : 1;
     const z = rng.range(zMin + 1, zMax - 1);
     const x = side * (KB - Math.abs(rng.gauss()) * 1.5 - 0.1);
     if (!isOpen(x, z, 0.05)) continue;
     const y = groundY(x, z);
     A.put(
-      rng.pick(['slab_shard', 'brick_a', 'brick_b', 'cinder', 'rock_a', 'rebar', 'plank_b']),
+      rng.pick(['litter', 'can', 'weeds', 'litter']),
       x,
       y + 0.02,
       z,
@@ -558,47 +559,35 @@ function streetFloor(A, rng) {
       rng.range(-0.3, 0.3)
     );
   }
-  // and eight proper spill mounds where a parapet or a balcony came down
-  const spills = [
-    [-5.4, 16.5],
-    [5.5, 11.0],
-    [-5.6, 2.0],
-    [5.6, -4.0],
-    [-5.5, -13.5],
-    [5.4, -19.0],
-    [-5.3, -25.5],
-    [5.5, -33.0],
-  ];
-  for (const [x, z] of spills) {
-    if (!isOpen(x, z, 0.1) || !camClear(x, z, 1.8)) continue;
-    rubbleMound(A, rng, x, groundY(x, z), z, rng.range(1.1, 1.9), rng.int(18, 30), {
-      key: 'concrete_prop',
-    });
-  }
 
   // ---- 5. silhouette breakers at eye level in the 10-30 m mid-ground ----
-  // A stalled saloon, two drum clusters, a tyre pile and a pallet stack: mass
-  // between the camera and the terminator, so the alley has depth cues rather
-  // than an empty floor and a wall at the end.
-  const car = [-3.35, -6.2, 0.28];
-  if (camClear(car[0], car[1], 2.6)) {
-    const y = groundY(car[0], car[1]);
-    A.put('wreck', car[0], y + 0.02, car[1], car[2], 1, [1, 0.85, 1]);
-    A.box('metal', car[0], y + 0.75, car[1], 1.85, 1.5, 4.4, car[2]);
-    // it has been sitting long enough to gather its own drift and shed a wheel
-    const dg = driftBerm(rng, 4.2, 0.7, 0.13, { nz: 3 });
-    A.addOnce('sand', dg, LL(IDENT, car[0] - 1.0, y + 0.005, car[1], car[2] + Math.PI / 2, 1, 1, 1), {
-      masks: [0.15, 0.6, 0.5],
-    });
-    A.skirts = false;
-    A.put('tyre', car[0] + 1.5, y + 0.1, car[1] - 1.8, 1.1, 1, [1, 1.4, 1], 1.5, 0.2);
-    A.skirts = true;
-    for (let i = 0; i < 12; i++) {
-      const px = car[0] + rng.range(-2.2, 2.2);
-      const pz = car[1] + rng.range(-3.0, 3.0);
+  // Two more parked cars, a kerbside bin store and a bike-shed-style pallet
+  // stack: mass between the camera and the terminator, so the street has
+  // depth cues rather than an empty floor and a wall at the end — the same
+  // job the old wreck/drums/tyre-pile did, ordinary instead of war-damaged.
+  const car2 = [-3.35, -6.2, 0.28];
+  if (camClear(car2[0], car2[1], 2.6)) {
+    const y = groundY(car2[0], car2[1]);
+    A.putS(rng.pick(CAR_COLOURS), car2[0], y + 0.015, car2[1], car2[2] + Math.PI / 2, 1, rng.range(0.97, 1.03), 1);
+    A.box('metal', car2[0], y + 0.7, car2[1], 1.75, 1.4, 4.1, car2[2] + Math.PI / 2);
+    for (const [lx, lz] of [
+      [0.78, 1.45],
+      [-0.78, 1.45],
+      [0.78, -1.45],
+      [-0.78, -1.45],
+    ]) {
+      const ry = car2[2] + Math.PI / 2;
+      const px = car2[0] + Math.cos(ry) * lx + Math.sin(ry) * lz;
+      const pz = car2[1] - Math.sin(ry) * lx + Math.cos(ry) * lz;
+      A.put('tyre', px, y + 0.005, pz, ry, 0.62, [1, 1.1, 1]);
+    }
+    groundSkirt(A, rng, car2[0], y, car2[1], 1.6, { pebbles: rng.int(1, 3), key: 'moss_verge' });
+    for (let i = 0; i < 8; i++) {
+      const px = car2[0] + rng.range(-2.2, 2.2);
+      const pz = car2[1] + rng.range(-3.0, 3.0);
       if (!isOpen(px, pz, 0.1)) continue;
       A.put(
-        rng.pick(['glass_shards', 'brick_b', 'rock_b', 'litter', 'can', 'slab_shard']),
+        rng.pick(['litter', 'can', 'weeds']),
         px,
         groundY(px, pz) + 0.015,
         pz,
@@ -609,326 +598,214 @@ function streetFloor(A, rng) {
     }
   }
 
-  // Oil drum clusters. Same module in three places, so each one gets its own
-  // barrel mix, its own ring radius, its own damage level and a different piece
-  // of dressing on top — otherwise the eye recognises the arrangement.
-  const DRUM_MIX = [
-    ['barrel_rust', 'barrel_rust', 'barrel_blue'],
-    ['barrel_blue', 'barrel_rust', 'barrel_wood'],
-    ['barrel_rust', 'barrel_wood', 'barrel_rust'],
+  // Kerbside bin stores. Same module in three places, so each gets its own
+  // colour mix and ring radius — otherwise the eye recognises the arrangement.
+  const BIN_MIX = [
+    ['bin_black', 'bin_green', 'bin_brown'],
+    ['bin_black', 'bin_blue', 'bin_black'],
+    ['bin_green', 'bin_black', 'bin_blue'],
   ];
   let cluster = 0;
   for (const [dx, dz, n] of [
-    [-5.1, -2.0, 5],
-    [4.9, -11.5, 4],
+    [-5.1, -2.0, 4],
+    [4.9, -11.5, 3],
     [4.75, 6.2, 3],
   ]) {
-    const mix = DRUM_MIX[cluster % DRUM_MIX.length];
-    const spread = [0.62, 0.8, 0.5][cluster % 3];
-    const lyingP = [0.28, 0.1, 0.45][cluster % 3];
-    const phase = rng.float() * 6.28;
+    const mix = BIN_MIX[cluster % BIN_MIX.length];
     cluster++;
     if (!camClear(dx, dz, 1.4)) continue;
-    let tallest = null;
+    const ry0 = rng.float() * 6.28;
     for (let i = 0; i < n; i++) {
-      const a = phase + (i / n) * 6.28 + rng.range(-0.5, 0.5);
-      const r = i === 0 ? 0 : rng.range(spread * 0.85, spread * 1.4);
-      const px = dx + Math.cos(a) * r;
-      const pz = dz + Math.sin(a) * r;
+      const lx = (i - (n - 1) / 2) * 0.6;
+      const px = dx + Math.cos(ry0) * lx;
+      const pz = dz - Math.sin(ry0) * lx;
       if (!isOpen(px, pz, 0.2)) continue;
-      const lying = i > 0 && rng.float() < lyingP;
       const y = groundY(px, pz);
-      A.put(
-        rng.pick(mix),
-        px,
-        y + (lying ? 0.3 : 0),
-        pz,
-        rng.float() * 6.28,
-        1,
-        [1, rng.range(1.1, 1.5), 1],
-        lying ? Math.PI / 2 : 0,
-        lying ? 0 : rng.range(-0.03, 0.03)
-      );
-      A.box('metal', px, y + (lying ? 0.3 : 0.45), pz, 0.64, lying ? 0.6 : 0.9, 0.64);
-      if (!lying) {
-        groundSkirt(A, rng, px, y, pz, 0.36, { pebbles: rng.int(2, 5) });
-        if (!tallest) tallest = [px, y, pz];
-      }
+      A.put(rng.pick(mix), px, y, pz, ry0 + Math.PI / 2 + rng.range(-0.06, 0.06), rng.range(0.95, 1.05), null);
     }
-    // a plank ramp and litter round the cluster: nothing stands alone
-    A.put('plank_a', dx + rng.range(-1.2, 1.2), groundY(dx, dz) + 0.03, dz + rng.range(-1.2, 1.2), rng.float() * 6.28, 1.2, [1, 1.4, 1]);
-    // and on some of them, a tarp thrown over the drums
-    if (tallest && rng.float() < 0.55) {
-      const cloth = clothGeometry(rng.range(1.0, 1.5), rng.range(0.9, 1.3), {
-        segX: 8,
-        segY: 8,
-        sag: 0.22,
-        wrinkle: 0.055,
-        twist: 0.1,
-        thickness: 0.003,
-        fray: 0.02,
-        rng,
-      });
-      A.addOnce(
-        rng.pick(['fabric_teal', 'fabric_cream', 'burlap']),
-        cloth,
-        LL(IDENT, tallest[0], tallest[1] + 0.86, tallest[2], rng.float() * 6.28, 1, 1, 1, -1.35),
-        { masks: [0.35, rng.range(0.55, 0.9), 0.25] }
-      );
-    }
+    groundSkirt(A, rng, dx, groundY(dx, dz), dz, 0.5, { pebbles: rng.int(1, 3), key: 'moss_verge' });
   }
 
-  // a tyre pile and a pallet stack, on the pavement so they never block the road
-  for (const [px, pz, kind] of [
-    [-5.5, 6.2, 'tyres'],
-    [5.55, -1.2, 'pallets'],
-    [5.45, -26.5, 'tyres'],
+  // a bike-shed-style pallet/timber stack, on the pavement so it never blocks the road
+  for (const [px, pz] of [
+    [-5.5, 6.2],
+    [5.55, -1.2],
   ]) {
     if (!camClear(px, pz, 1.2)) continue;
     const y = groundY(px, pz);
-    if (kind === 'tyres') {
-      const n = rng.int(5, 8);
-      tyreStack(A, rng, px, y, pz, n);
-      groundSkirt(A, rng, px, y, pz, 0.45);
-      A.box('rubber', px, y + (n * 0.172) / 2, pz, 0.7, n * 0.172, 0.7);
-    } else {
-      const n = rng.int(4, 7);
-      for (let i = 0; i < n; i++) {
-        A.put('pallet', px + rng.range(-0.07, 0.07), y + i * 0.135, pz + rng.range(-0.07, 0.07), rng.range(-0.12, 0.12), 1, [
-          1,
-          rng.range(1.0, 1.4),
-          1,
-        ]);
-      }
-      A.box('wood', px, y + (n * 0.135) / 2, pz, 1.2, n * 0.135, 0.9);
-      A.put('crate_b', px + 0.75, y, pz + 0.5, rng.float() * 6.28, 1, [1, 1.3, 1]);
-      groundSkirt(A, rng, px, y, pz, 0.72, { pebbles: rng.int(3, 6) });
-    }
-  }
-}
-
-// --- market stalls ----------------------------------------------------------
-function marketStalls(A, rng) {
-  const CANOPY = ['fabric_red', 'fabric_teal', 'fabric_cream'];
-  for (const [x, z, ry0, w] of SET_PIECES.stalls) {
-    const y = groundY(x, z);
-    const s = w / 2.3;
-    // Per-instance: the same module four times down one street is only a repeat
-    // if nothing about it changes. Yaw, depth, canopy tension, colour, whether
-    // the roof has a torn-out band, the side drape and the clutter all differ.
-    const ry = ry0 + rng.range(-0.07, 0.07);
-    A.putS('stall', x, y, z, ry, s, rng.range(0.94, 1.05), rng.range(0.95, 1.06), [
-      1,
-      rng.range(0.8, 1.35),
-      1,
-    ]);
-    // collision: the table volume plus the two post lines
-    A.box('wood', x, y + 0.45, z, w, 0.9, 1.05, ry);
-    // the legs stand IN something: dust and swept grit at each post line
-    for (const t of [-0.42, 0.42]) {
-      groundSkirt(A, rng, x + Math.cos(ry) * w * t, y, z - Math.sin(ry) * w * t, 0.4, {
-        pebbles: rng.int(2, 5),
-      });
-    }
-
-    // canopy: striped cloth draped over the crossbars, sagging between posts.
-    // Tension varies per stall — a tarp that has been up for a year hangs very
-    // differently from one put up this morning.
-    const cw = w * rng.range(1.02, 1.16);
-    const cd = rng.range(1.32, 1.6);
-    const keys = [rng.pick(CANOPY), rng.pick(['fabric_cream', 'fabric_teal', 'fabric_red'])];
-    const slack = rng.range(0.8, 1.5);
-    stripedCloth(
-      A,
-      keys,
-      LL(IDENT, x, y + 2.02, z, ry, 1, 1, 1, -Math.PI / 2, rng.range(-0.05, 0.05)),
-      cw,
-      cd,
-      {
-        segY: 7,
-        sag: 0.19 * slack,
-        wrinkle: 0.028 * slack,
-        bulge: 0.05 * slack,
-        thickness: 0.0028,
-        fray: 0.012,
-        // one band torn out or flapped back on the older stalls
-        skipBand: rng.float() < 0.3 ? rng.int(0, 5) : -1,
-        rng,
-        masks: [0.35, rng.range(0.4, 0.7), 0.15],
-      }
-    );
-    // a valance hanging off the front edge, which is what reads as a market
-    stripedCloth(A, keys, LL(IDENT, x, y + 1.86, z, ry, 1, 1, 1), cw, rng.range(0.24, 0.4), {
-      segY: 3,
-      sag: 0.06 * slack,
-      wrinkle: 0.028 * slack,
-      bulge: 0,
-      thickness: 0.0026,
-      fray: 0.016,
-      rng,
-      masks: [0.4, rng.range(0.45, 0.75), 0.2],
-    });
-    // a drape closing one end of the stall on about half of them
-    if (rng.float() < 0.55) {
-      const sd = rng.float() < 0.5 ? -1 : 1;
-      stripedCloth(
-        A,
-        [keys[rng.int(0, 1)]],
-        LL(IDENT, x + Math.cos(ry) * (cw / 2) * sd, y + 1.42, z - Math.sin(ry) * (cw / 2) * sd, ry + Math.PI / 2),
-        cd * 0.9,
-        rng.range(0.9, 1.3),
-        {
-          segX: 7,
-          segY: 8,
-          sag: 0.09,
-          wrinkle: 0.042,
-          twist: 0.07,
-          thickness: 0.0026,
-          fray: 0.02,
-          rng,
-          masks: [0.35, rng.range(0.5, 0.8), 0.25],
-        }
-      );
-    }
-
-    // goods on the table
-    const n = rng.int(3, 6);
+    const n = rng.int(4, 7);
     for (let i = 0; i < n; i++) {
-      const lx = rng.range(-w / 2 + 0.3, w / 2 - 0.3);
-      const lz = rng.range(-0.35, 0.35);
-      const px = x + Math.cos(ry) * lx + Math.sin(ry) * lz;
-      const pz = z - Math.sin(ry) * lx + Math.cos(ry) * lz;
-      if (rng.float() < 0.5) {
-        A.put('tray', px, y + 0.87, pz, ry + rng.range(-0.3, 0.3), 1, [1, 1.1, 1]);
-        if (rng.float() < 0.8) A.put('produce', px, y + 0.89, pz, rng.float() * 6.28, 1, [1, 1, 1]);
-      } else {
-        A.put(
-          rng.pick(['box_card_a', 'box_card_b', 'crate_b', 'bucket']),
-          px,
-          y + 0.87,
-          pz,
-          rng.float() * 6.28,
-          rng.range(0.7, 1.0),
-          [1, 1.2, 1]
-        );
-      }
-    }
-    // crates and sacks stuffed underneath and alongside
-    for (let i = 0; i < rng.int(2, 5); i++) {
-      const lx = rng.range(-w / 2, w / 2);
-      const lz = rng.range(-0.3, 0.3);
-      A.put(
-        rng.pick(['crate_a', 'crate_b', 'crate_flat', 'sandbag_a', 'tray']),
-        x + Math.cos(ry) * lx + Math.sin(ry) * lz,
-        y + 0.02,
-        z - Math.sin(ry) * lx + Math.cos(ry) * lz,
-        rng.float() * 6.28,
-        rng.range(0.85, 1.05),
-        [1, rng.range(1.0, 1.4), 1]
-      );
-    }
-    const sideX = x + Math.cos(ry) * (w / 2 + 0.5);
-    const sideZ = z - Math.sin(ry) * (w / 2 + 0.5);
-    if (isOpen(sideX, sideZ, 0.4)) {
-      A.put('barrel_wood', sideX, groundY(sideX, sideZ), sideZ, rng.float() * 6.28, 1, [1, 1.2, 1]);
-      A.box('wood', sideX, y + 0.4, sideZ, 0.66, 0.8, 0.66);
-    }
-    A.put('stool', x - Math.sin(ry) * 0.95, y, z - Math.cos(ry) * 0.95, rng.float() * 6.28, 1, [
-      1,
-      1.3,
-      1,
-    ]);
-  }
-}
-
-// --- barriers ---------------------------------------------------------------
-function barriers(A, rng) {
-  for (const [x, z, ry] of SET_PIECES.jerseys) {
-    const y = groundY(x, z);
-    const jr = ry + rng.range(-0.05, 0.05);
-    A.put('jersey', x, y, z, jr, 1, [1, rng.range(0.8, 1.3), 1], 0, rng.range(-0.02, 0.02));
-    A.box('concrete', x, y + 0.46, z, 0.62, 0.92, 1.9, jr);
-    // dragged into place: dust skirt and spalled grit along the splayed foot
-    for (const t of [-0.55, 0.55]) {
-      groundSkirt(A, rng, x + Math.sin(jr) * t * 1.1, y, z + Math.cos(jr) * t * 1.1, 0.52, {
-        pebbles: rng.int(2, 4),
-      });
-    }
-    // things people leave on top of / against a barrier
-    if (rng.float() < 0.4) {
-      A.put(
-        rng.pick(['sandbag_a', 'sandbag_b']),
-        x + rng.range(-0.5, 0.5),
-        y + 0.92,
-        z + rng.range(-0.6, 0.6),
-        rng.float() * 6.28,
+      A.put('pallet', px + rng.range(-0.07, 0.07), y + i * 0.135, pz + rng.range(-0.07, 0.07), rng.range(-0.12, 0.12), 1, [
         1,
-        [1, 1.2, 1]
-      );
-    }
-    if (rng.float() < 0.45) {
-      const ox = x + Math.cos(jr) * rng.range(0.5, 0.9);
-      const oz = z - Math.sin(jr) * rng.range(0.5, 0.9);
-      A.put(
-        rng.pick(['tyre', 'crate_a', 'barrel_rust', 'block_small']),
-        ox,
-        groundY(ox, oz),
-        oz,
-        rng.float() * 6.28,
-        1,
-        [1, 1.3, 1]
-      );
-    }
-    for (let i = 0; i < rng.int(1, 4); i++) {
-      A.put(
-        rng.pick(['brick_a', 'brick_b', 'rock_b', 'litter']),
-        x + rng.range(-1.2, 1.2),
-        y + 0.03,
-        z + rng.range(-1.4, 1.4),
-        rng.float() * 6.28,
-        rng.range(0.6, 1.1),
-        [1, 1.4, 1]
-      );
-    }
-  }
-
-  // Heavier concrete blocks as chest-high cover at street corners.
-  const blocks = [
-    [-4.0, 22.0, 0.1],
-    [4.2, 14.5, -0.15],
-    [-4.3, -1.0, 0.05],
-    [4.3, -12.0, 0.2],
-    [-4.1, -30.0, -0.1],
-    [4.0, -37.5, 0.12],
-    [-2.0, -41.0, 1.5],
-  ];
-  for (const [x, z, ry] of blocks) {
-    const y = groundY(x, z);
-    A.put('block_big', x, y, z, ry, 1, [1, rng.range(0.9, 1.3), 1]);
-    A.box('concrete', x, y + 0.48, z, 1.3, 0.96, 0.9, ry);
-    // a block this heavy grinds a dirt halo into the deck when it is dropped
-    for (const t of [-0.4, 0.4]) {
-      groundSkirt(A, rng, x + Math.cos(ry) * t, y, z - Math.sin(ry) * t, 0.62, {
-        pebbles: rng.int(2, 5),
-      });
-    }
-    if (rng.float() < 0.6) {
-      A.put('block_small', x + rng.range(-1.0, 1.0), y, z + rng.range(-1.0, 1.0), rng.float() * 6.28, 1, [
-        1,
-        1.2,
+        rng.range(1.0, 1.4),
         1,
       ]);
     }
+    A.box('wood', px, y + (n * 0.135) / 2, pz, 1.2, n * 0.135, 0.9);
+    A.put('crate_b', px + 0.75, y, pz + 0.5, rng.float() * 6.28, 1, [1, 1.3, 1]);
+    groundSkirt(A, rng, px, y, pz, 0.72, { pebbles: rng.int(3, 6), key: 'moss_verge' });
   }
 }
 
-// --- sandbags ---------------------------------------------------------------
-function sandbagEmplacements(A, rng) {
-  for (const [x, z, ry, len] of SET_PIECES.sandbagWalls) {
-    // 5 courses: interpenetrating, load-squashed bags stack lower than the old
-    // rigid 15.5 cm pitch did, and this cover has to stay chest-high to a crouch
-    sandbagWall(A, rng, x, z, ry, len, 5);
+// --- parked cars -------------------------------------------------------------
+/**
+ * Cars parked nose-to-tail along the kerb, the way every real close actually
+ * looks. Each one gets its own colour, a slight settle into the verge, four
+ * wheels placed separately (so a shot-out or bullet-holed wheel later can
+ * still be an independent instance), and the odd bit of kerbside detail
+ * — a supermarket trolley, a bin dragged out too early, bin bags waiting for
+ * collection day.
+ */
+const CAR_COLOURS = ['car_red', 'car_blue', 'car_silver', 'car_white'];
+function parkedCars(A, rng) {
+  for (const [x, z, ry0, len] of SET_PIECES.cars) {
+    const y = groundY(x, z);
+    // parked parallel to the kerb: long axis along the street, nose in
+    // whichever direction, with only a couple of degrees of parking-line skew
+    const ry = ry0 + (Math.PI / 2) * (rng.float() < 0.5 ? 0 : 1) + rng.range(-0.04, 0.04);
+    const s = len / 4.1;
+    A.putS(rng.pick(CAR_COLOURS), x, y + 0.015, z, ry, s, rng.range(0.97, 1.03), s, [
+      1,
+      rng.range(0.9, 1.08),
+      1,
+    ]);
+    A.box('metal', x, y + 0.7, z, 1.75 * s, 1.4, len, ry);
+    // four wheels, tucked under the arches
+    const wheelPos = [
+      [0.78, 1.45],
+      [-0.78, 1.45],
+      [0.78, -1.45],
+      [-0.78, -1.45],
+    ];
+    for (const [lx, lz] of wheelPos) {
+      const px = x + (Math.cos(ry) * lx + Math.sin(ry) * lz) * s;
+      const pz = z + (-Math.sin(ry) * lx + Math.cos(ry) * lz) * s;
+      A.put('tyre', px, y + 0.005, pz, ry, 0.62 * s, [1, 1.1, 1]);
+    }
+    groundSkirt(A, rng, x, y, z, len * 0.42, { pebbles: rng.int(1, 3), key: 'moss_verge' });
+    // kerbside clutter: bin day, a dropped bag, sometimes a bike leaning on it
+    if (rng.float() < 0.3) {
+      const bx = x + Math.cos(ry + Math.PI / 2) * 0.9;
+      const bz = z - Math.sin(ry + Math.PI / 2) * 0.9;
+      if (isOpen(bx, bz, 0.3)) {
+        A.put('box_card_a', bx, groundY(bx, bz), bz, rng.float() * 6.28, rng.range(0.7, 0.95), [1, 1.1, 1]);
+      }
+    }
   }
+}
+
+// --- front gardens -------------------------------------------------------
+/**
+ * Every real house's own front plot: lawn, a paved driveway apron, a low
+ * boundary wall along the lawn's kerb edge (broken where the driveway meets
+ * the kerb, exactly like the reference photos — nobody walls off their own
+ * drive), a foundation shrub or two by the door, and a bin.
+ *
+ * This replaces the old hand-placed `SET_PIECES.gardenWalls`/`hedges`
+ * sparse-list approach (a handful of walls scattered across ~150 m read as
+ * occasional fencing, not front gardens) with one procedural per-building
+ * treatment driven directly off `BUILDINGS`' own w/d/streetSide fields — so
+ * it automatically follows the OSM-derived frontage spacing without this
+ * pass touching `BUILDINGS` itself. `BG*` background infill is skipped: it
+ * isn't a real addressable plot (see layout.js).
+ */
+function frontGardens(A, rng) {
+  const KB = STREET.kerb;
+  for (const b of BUILDINGS) {
+    if (b.id?.startsWith('BG')) continue;
+    const side = b.x < 0 ? -1 : 1;
+    const kerbX = side * KB;
+    const faceX = b.x - side * (b.w / 2);
+    const depth = Math.abs(kerbX - faceX);
+    if (depth < 1.2) continue; // shouldn't happen on this map, but don't wall off a sliver
+    const midX = (kerbX + faceX) / 2;
+    const z0 = b.z - b.d / 2;
+    const z1 = b.z + b.d / 2;
+    const frontW = z1 - z0;
+    if (frontW < 3.2) continue; // too narrow a frontage for a wall + drive to read
+
+    // ---- lawn across the whole plot, then a driveway apron cut into it ----
+    A.add('lawn', BOX(A), LL(IDENT, midX, 0.025, b.z, 0, depth, 0.05, frontW), {
+      masks: [0.15, 0.55, 0.3],
+    });
+    A.box('dirt', midX, 0.02, b.z, depth, 0.05, frontW);
+
+    const driveW = Math.min(3.4, Math.max(2.1, frontW * rng.range(0.3, 0.46)));
+    const driveAtStart = rng.float() < 0.5;
+    const dz0 = driveAtStart ? z0 : z1 - driveW;
+    const dz1 = driveAtStart ? z0 + driveW : z1;
+    const gz0 = driveAtStart ? dz1 : z0;
+    const gz1 = driveAtStart ? z1 : dz0;
+    A.add('concrete', BOX_SOFT(A), LL(IDENT, midX, 0.03, (dz0 + dz1) / 2, 0, depth - 0.1, 0.06, driveW - 0.06), {
+      masks: [0.5, 0.4, 0.2],
+    });
+    A.box('concrete', midX, 0.03, (dz0 + dz1) / 2, depth, 0.06, driveW);
+
+    // ---- low wall along the lawn's kerb edge only — the drive stays open ----
+    const wallX = kerbX - side * 0.06;
+    const wr = side > 0 ? -Math.PI / 2 : Math.PI / 2;
+    if (gz1 - gz0 > 1.0) {
+      let z = gz0 + 0.12;
+      while (z < gz1 - 0.12) {
+        const segLen = Math.min(rng.range(1.6, 2.4), gz1 - 0.12 - z);
+        if (segLen < 0.55) break;
+        const cz = z + segLen / 2;
+        A.putS('garden_wall', wallX, groundY(wallX, cz), cz, wr, segLen / 2.4, rng.range(0.9, 1.05), 1);
+        A.box('concrete', wallX, groundY(wallX, cz) + 0.28, cz, segLen, 0.56, 0.2, wr);
+        groundSkirt(A, rng, wallX, groundY(wallX, cz), cz, 0.35, { pebbles: rng.int(1, 2), key: 'moss_verge' });
+        z += segLen + rng.range(0.06, 0.2);
+      }
+      for (const pz of [gz0, gz1]) {
+        A.put('garden_pier', wallX, groundY(wallX, pz), pz, wr, rng.range(0.95, 1.08));
+      }
+    }
+
+    // ---- a foundation shrub or two near the house face, in the lawn ----
+    if (gz1 - gz0 > 1.4) {
+      const shrubs = rng.int(1, 2);
+      for (let i = 0; i < shrubs; i++) {
+        const sz = rng.range(gz0 + 0.5, gz1 - 0.5);
+        const sx = faceX + side * rng.range(0.45, 0.95);
+        hedgeRow(A, rng, sx, sz, rng.float() * 6.28, rng.range(0.6, 1.1), rng.range(0.4, 0.6));
+      }
+    }
+
+    // ---- a bin (or two) by the driveway edge nearest the house ----
+    if (rng.float() < 0.62) {
+      const n = rng.float() < 0.35 ? 2 : 1;
+      const bz0 = driveAtStart ? dz1 - 0.5 : dz0 + 0.5;
+      for (let i = 0; i < n; i++) {
+        const bx = faceX + side * rng.range(0.4, 0.9);
+        const bz = bz0 + (driveAtStart ? -1 : 1) * i * 0.6;
+        if (!isOpen(bx, bz, 0.2)) continue;
+        A.put(rng.pick(['bin_black', 'bin_green', 'bin_brown', 'bin_blue']), bx, groundY(bx, bz), bz, rng.float() * 6.28, 1, [
+          1,
+          rng.range(0.95, 1.05),
+          1,
+        ]);
+      }
+    }
+  }
+}
+
+/**
+ * A run of clipped hedge, broken into a few blocks per run (real hedges are
+ * planted in stretches, not one continuous ruled slab) with a bit of height
+ * and depth jitter per block so the top line isn't dead level.
+ */
+export function hedgeRow(A, rng, x, z, ry, len, h = 1.0, baseY = null) {
+  const y = baseY ?? groundY(x, z);
+  const blockW = rng.range(0.9, 1.5);
+  const n = Math.max(1, Math.round(len / blockW));
+  const w = len / n;
+  for (let i = 0; i < n; i++) {
+    const lx = -len / 2 + (i + 0.5) * w;
+    const px = x + Math.cos(ry) * lx;
+    const pz = z - Math.sin(ry) * lx;
+    const bh = h * rng.range(0.92, 1.08);
+    A.putS('hedge', px, y, pz, ry + rng.range(-0.05, 0.05), (w * 0.98) / 2.0, bh, rng.range(0.85, 1.15));
+  }
+  A.box('foliage', x, y + h / 2, z, len, h, 0.5, ry);
 }
 
 /**
@@ -1029,97 +906,68 @@ export function sandbagWall(A, rng, x, z, ry, len, courses = 3, baseY = null) {
   }
 }
 
-// --- wrecks -----------------------------------------------------------------
-function wrecks(A, rng) {
-  for (const [x, z, ry, roll] of SET_PIECES.wrecks) {
+// --- builder's skip -----------------------------------------------------------
+/**
+ * A skip outside the one house getting done up — the ordinary equivalent of
+ * the old wreck. Kept to a single instance: a whole row of them would read as
+ * a demolition site rather than one house mid-renovation.
+ */
+function builderSkips(A, rng) {
+  const spots = SET_PIECES.skips.slice(0, 1);
+  for (const [x, z, ry] of spots) {
     const y = groundY(x, z);
-    A.put('wreck', x, y + 0.02, z, ry, 1, [1, 1, 1], 0, (roll * Math.PI) / 180);
-    A.box('metal', x, y + 0.75, z, 1.85, 1.5, 4.4, ry);
-    // wheels: two flat, one missing, the hub resting on a block
-    const wheelPos = [
-      [0.86, 1.35],
-      [-0.86, 1.35],
-      [0.86, -1.35],
-      [-0.86, -1.35],
-    ];
-    for (let i = 0; i < wheelPos.length; i++) {
-      if (i === 3) continue;
-      const [lx, lz] = wheelPos[i];
-      const px = x + Math.cos(ry) * lx + Math.sin(ry) * lz;
-      const pz = z - Math.sin(ry) * lx + Math.cos(ry) * lz;
-      A.put('wheel_flat', px, y + 0.2, pz, ry, 1, [1, 1.2, 1]);
-    }
-    A.put('block_small', x + Math.cos(ry) * -0.86 + Math.sin(ry) * -1.35, y, z - Math.sin(ry) * -0.86 + Math.cos(ry) * -1.35, ry, 1, [1, 1.4, 1]);
-    // scorch and debris field
-    const scorch = patchGeometry(rng, rng.range(2.6, 3.4), { lobes: 11, wobble: 0.5 });
-    A.addOnce('asphalt', scorch, LL(IDENT, x, y + 0.008, z, rng.float() * 6.28, 1, 1, 0.7), {
-      masks: [0.05, 1.0, 0.9],
-    });
-    for (let i = 0; i < 18; i++) {
-      const a = rng.float() * 6.28;
-      const r = rng.range(1.2, 4.5);
-      const px = x + Math.cos(a) * r;
-      const pz = z + Math.sin(a) * r;
+    A.put('skip', x, y, z, ry, 1, null, 0, 0);
+    A.box('metal', x, y + 0.45, z, 1.9, 0.9, 2.4, ry);
+    groundSkirt(A, rng, x, y, z, 0.9, { pebbles: rng.int(2, 4), key: 'moss_verge' });
+    // a few offcuts and a bag of rubble beside it
+    for (let i = 0; i < rng.int(3, 6); i++) {
+      const px = x + rng.range(-1.6, 1.6);
+      const pz = z + rng.range(-1.6, 1.6);
       if (!isOpen(px, pz, 0.2)) continue;
       A.put(
-        rng.pick(['brick_b', 'rock_b', 'litter', 'plank_b', 'can', 'glass_shards']),
+        rng.pick(['plank_a', 'plank_b', 'box_card_a', 'brick_a', 'brick_b']),
         px,
-        groundY(px, pz) + 0.02,
+        groundY(px, pz) + 0.015,
         pz,
         rng.float() * 6.28,
-        rng.range(0.6, 1.2),
-        [1, 1.4, 1]
+        rng.range(0.7, 1.1),
+        [1, 1.2, 1]
       );
     }
-    A.put('tyre', x + Math.cos(ry) * 1.6, y, z - Math.sin(ry) * 1.6, rng.float() * 6.28, 1, [1, 1.3, 1]);
+    A.put(rng.pick(['bin_black', 'bin_green']), x + Math.cos(ry) * 1.4, y, z - Math.sin(ry) * 1.4, rng.float() * 6.28, 1, null);
   }
 }
 
-// --- palms ------------------------------------------------------------------
-function palms(A, rng) {
-  for (const [x, z, s] of SET_PIECES.palms) {
+// --- street & garden trees ----------------------------------------------------
+/**
+ * Ordinary deciduous street/garden trees in place of the old palms — a
+ * tapered trunk, a couple of low limbs and a rough round canopy of foliage
+ * cards. Ireland does not grow palms; this is the single highest-visibility
+ * "wrong climate" tell in the old set.
+ */
+function streetTrees(A, rng) {
+  for (const [x, z, s] of SET_PIECES.trees) {
     const y = groundY(x, z);
     const ry = rng.float() * 6.28;
-    A.put('palm_trunk', x, y, z, ry, s, [1, rng.range(0.8, 1.2), 1]);
-    const topY = y + 5.4 * s;
-    const n = rng.int(8, 11);
-    for (let i = 0; i < n; i++) {
-      const a = ry + (i / n) * 6.28 + rng.range(-0.16, 0.16);
-      const tilt = rng.range(-0.55, 0.15);
-      A.putS(
-        'palm_frond',
-        x,
-        topY - rng.range(0.05, 0.3),
-        z,
-        a,
-        s * rng.range(0.85, 1.15),
-        s * rng.range(0.85, 1.15),
-        s * rng.range(0.85, 1.15),
-        [1, rng.range(0.7, 1.3), 1],
-        0,
-        tilt
-      );
-    }
-    // dead fronds hanging under the crown
-    for (let i = 0; i < 3; i++) {
-      const a = ry + rng.float() * 6.28;
-      A.putS('palm_frond', x, topY - 0.35, z, a, s * 0.8, s * 0.8, s * 0.8, [1, 1.6, 1], 0, -1.35);
-    }
-    A.box('wood', x, y + 2.7 * s, z, 0.42 * s, 5.4 * s, 0.42 * s);
-    // ring of dirt, weeds and litter at the base
-    const g = patchGeometry(rng, rng.range(0.9, 1.4), { lobes: 10, wobble: 0.45 });
-    A.addOnce('dirt', g, LL(IDENT, x, y + 0.02, z, rng.float() * 6.28), { masks: [0.1, 0.8, 0.5] });
-    for (let i = 0; i < rng.int(3, 7); i++) {
+    const h = 4.0 * s;
+    A.putS('tree_trunk', x, y, z, ry, s, s, s);
+    A.putS('tree_canopy', x, y + h * 0.92, z, rng.float() * 6.28, s, s * rng.range(0.85, 1.1), s, [
+      1,
+      rng.range(0.85, 1.15),
+      1,
+    ]);
+    A.box('wood', x, y + h * 0.4, z, 0.4 * s, h * 0.8, 0.4 * s);
+    // a ring of grass/weeds at the base, and the odd tree guard stake
+    const g = patchGeometry(rng, rng.range(0.7, 1.1) * s, { lobes: 10, wobble: 0.45 });
+    A.addOnce('moss_verge', g, LL(IDENT, x, y + 0.02, z, rng.float() * 6.28), { masks: [0.1, 0.7, 0.4] });
+    for (let i = 0; i < rng.int(2, 5); i++) {
       const a = rng.float() * 6.28;
-      const r = rng.range(0.4, 1.2);
+      const r = rng.range(0.35, 1.0) * s;
       A.put('weeds', x + Math.cos(a) * r, y + 0.02, z + Math.sin(a) * r, rng.float() * 6.28, rng.range(0.7, 1.3), [
         1,
         1.2,
         1,
       ]);
-    }
-    if (rng.float() < 0.5) {
-      A.put('planter', x + rng.range(-1.4, 1.4), y, z + rng.range(-1.4, 1.4), rng.float() * 6.28, 1, [1, 1.3, 1]);
     }
   }
 }
@@ -1228,138 +1076,59 @@ function overheadLines(A, rng) {
   }
 }
 
-// --- hanging rugs on facades ------------------------------------------------
-function facadeHangings(A, rng) {
-  for (const [x, y, z, ry, w, h] of SET_PIECES.hangings) {
-    // A rug on a facade is the biggest single piece of cloth in the frame, so it
-    // is also the one that most obviously reads as a sheet of glass if it has no
-    // thickness, no hem and no slack. Heavy gauge, deep folds, frayed bottom.
-    const cloth = clothGeometry(w, h, {
-      segX: 10,
-      segY: 10,
-      sag: rng.range(0.09, 0.15),
-      wrinkle: rng.range(0.04, 0.07),
-      rng,
-      bulge: rng.range(0.05, 0.11),
-      twist: rng.range(0.03, 0.1),
-      thickness: rng.range(0.0026, 0.004),
-      fray: rng.range(0.015, 0.035),
-      bow: -1, // belly out into the street, not through the facade
-    });
-    A.addOnce(rng.pick(['fabric_red', 'fabric_teal', 'fabric_cream']), cloth, LL(IDENT, x, y, z, ry), {
-      masks: [0.35, rng.range(0.42, 0.72), 0.2],
-    });
-    // the rail it hangs from
-    A.add('metal_rust', BOX_FINE(A), LL(IDENT, x, y + h / 2 + 0.06, z, ry, w + 0.2, 0.035, 0.035), {
-      masks: [0.9, 0.5, 0.1],
-    });
-    // a second, smaller rug beside it, half-rolled
-    if (rng.float() < 0.6) {
-      const c2 = clothGeometry(w * 0.55, h * 0.7, {
-        segX: 7,
-        segY: 8,
-        sag: 0.12,
-        wrinkle: 0.06,
-        rng,
-        thickness: 0.0032,
-        fray: 0.025,
-        bow: -1,
-      });
-      A.addOnce(
-        rng.pick(['fabric_red', 'fabric_cream']),
-        c2,
-        LL(IDENT, x - Math.sin(ry) * (w * 0.75), y - 0.25, z - Math.cos(ry) * (w * 0.75), ry),
-        { masks: [0.4, 0.6, 0.25] }
-      );
-    }
-  }
-}
-
-// --- rubble -----------------------------------------------------------------
-function rubblePiles(A, rng) {
-  for (const [x, z, radius, count] of SET_PIECES.rubble) {
-    const y = groundY(x, z);
-    rubbleMound(A, rng, x, y, z, radius, count, { key: 'concrete' });
-    // dust ring
-    const g = patchGeometry(rng, radius * 1.5, { lobes: 12, wobble: 0.4 });
-    A.addOnce('dirt', g, LL(IDENT, x, y + 0.012, z, rng.float() * 6.28), { masks: [0.1, 0.9, 0.6] });
-    for (let i = 0; i < rng.int(2, 5); i++) {
-      A.put('slab_shard', x + rng.range(-radius, radius), y + 0.06, z + rng.range(-radius, radius), rng.float() * 6.28, 1, [
-        1,
-        1.3,
-        1,
-      ]);
+// --- front garden clutter -----------------------------------------------------
+/**
+ * Planters and window boxes by the front door. Reads as "someone lives here"
+ * without the market-street rug-on-a-facade motif, which does not belong on
+ * a Dublin semi.
+ */
+function frontGardenClutter(A, rng) {
+  for (const [x, y, z, ry, w] of SET_PIECES.doorstepPlanters) {
+    A.put('planter', x, y, z, ry, rng.range(0.9, 1.15), null);
+    if (rng.float() < 0.5) {
+      A.put('planter', x + Math.cos(ry + Math.PI / 2) * (w * 0.6), y, z - Math.sin(ry + Math.PI / 2) * (w * 0.6), rng.float() * 6.28, rng.range(0.7, 0.95), null);
     }
     for (let i = 0; i < rng.int(1, 3); i++) {
-      A.put('rebar', x + rng.range(-radius, radius), y + 0.05, z + rng.range(-radius, radius), rng.float() * 6.28, 1, [
-        1,
-        1.4,
-        1,
-      ]);
-    }
-    for (let i = 0; i < rng.int(3, 7); i++) {
-      A.put('cinder', x + rng.range(-radius * 1.4, radius * 1.4), y + 0.02, z + rng.range(-radius * 1.4, radius * 1.4), rng.float() * 6.28, 1, [
-        1,
-        1.3,
-        1,
-      ], rng.range(-0.2, 0.2), rng.range(-0.2, 0.2));
+      const a = rng.float() * 6.28;
+      const r = rng.range(0.2, 0.5);
+      A.put('weeds', x + Math.cos(a) * r, y + 0.01, z + Math.sin(a) * r, rng.float() * 6.28, rng.range(0.7, 1.1), null);
     }
   }
 }
 
+// --- bin clusters --------------------------------------------------------------
 /**
- * A stack of tyres. Nobody stacks tyres concentrically: each one is dropped on
- * the last, so the stack walks 2-4 cm sideways per tyre, leans, and every tyre
- * is turned a few degrees off its neighbour. A coaxial pile of toruses is the
- * most obvious "instanced prop" tell in the level.
+ * A kerbside bin store: several wheelie bins together, the everyday
+ * equivalent of the old war-rubble mounds — density on the ground without
+ * pretending the close has been shelled.
  */
-export function tyreStack(A, rng, x, y, z, n) {
-  const walkA = rng.float() * 6.28;
-  const lean = rng.range(-0.05, 0.05);
-  let ox = 0;
-  let oz = 0;
-  let yaw = rng.float() * 6.28;
-  for (let i = 0; i < n; i++) {
-    const a = walkA + rng.range(-1.1, 1.1);
-    const step = rng.range(0.02, 0.04);
-    ox += Math.cos(a) * step;
-    oz += Math.sin(a) * step;
-    // 5-15 degrees of relative rotation, so the tread blocks never line up
-    yaw += (rng.float() < 0.5 ? -1 : 1) * rng.range(0.087, 0.262);
-    A.putS(
-      i % 2 ? 'tyre_small' : 'tyre',
-      x + ox,
-      y + i * 0.168,
-      z + oz,
-      yaw,
-      rng.range(0.97, 1.04),
-      rng.range(0.9, 1.05),
-      rng.range(0.97, 1.04),
-      [1, rng.range(0.88, 1.35), rng.range(0.9, 1.2)],
-      lean * rng.range(0.5, 1.5),
-      rng.range(-0.05, 0.05)
-    );
-  }
-}
-
-function tyreStacks(A, rng) {
-  for (const [x, z, n] of SET_PIECES.tyres) {
+function binClusters(A, rng) {
+  const BINS = ['bin_black', 'bin_green', 'bin_brown', 'bin_blue'];
+  for (const [x, z, radius, count] of SET_PIECES.binStores) {
     const y = groundY(x, z);
-    tyreStack(A, rng, x, y, z, n);
-    groundSkirt(A, rng, x, y, z, 0.42);
-    A.box('rubber', x, y + (n * 0.175) / 2, z, 0.68, n * 0.175, 0.68);
-    if (rng.float() < 0.6) {
-      // on its side, leaning: no fillet, it is not standing on the ground
-      A.skirts = false;
-      A.put('tyre', x + rng.range(0.7, 1.1), y, z + rng.range(-0.6, 0.6), rng.float() * 6.28, 1, [1, 1.3, 1], 1.4, 0);
-      A.skirts = true;
+    const n = Math.max(2, Math.min(5, Math.round(count / 8)));
+    const ry0 = rng.float() * 6.28;
+    for (let i = 0; i < n; i++) {
+      const lx = (i - (n - 1) / 2) * 0.62;
+      const px = x + Math.cos(ry0) * lx;
+      const pz = z - Math.sin(ry0) * lx;
+      if (!isOpen(px, pz, 0.2)) continue;
+      A.put(rng.pick(BINS), px, groundY(px, pz), pz, ry0 + Math.PI / 2 + rng.range(-0.06, 0.06), rng.range(0.95, 1.05), null);
+    }
+    groundSkirt(A, rng, x, y, z, radius * 0.6, { pebbles: rng.int(1, 3), key: 'moss_verge' });
+    for (let i = 0; i < rng.int(1, 3); i++) {
+      const px = x + rng.range(-radius, radius);
+      const pz = z + rng.range(-radius, radius);
+      if (!isOpen(px, pz, 0.15)) continue;
+      A.put('box_card_a', px, groundY(px, pz) + 0.01, pz, rng.float() * 6.28, rng.range(0.7, 1.0), null);
     }
   }
 }
 
 /**
- * Deliberate cover clusters at chest height along the street, so the map plays:
- * something to break contact behind every ~12 m of open ground.
+ * Deliberate cover clusters at chest height along the street, so the map
+ * still plays: a garden wall and hedge stub to break contact behind every
+ * ~12 m of open ground, in place of the old sandbag emplacements.
  */
 function coverClusters(A, rng) {
   const spots = [
@@ -1372,31 +1141,28 @@ function coverClusters(A, rng) {
   ];
   for (const [x, z, ry] of spots) {
     const y = groundY(x, z);
-    // six squashed courses ≈ 0.8 m: cover you can shoot over crouched, not standing
-    sandbagWall(A, rng, x, z, ry, rng.range(1.8, 2.8), 6);
+    const len = rng.range(1.8, 2.6);
+    A.putS('garden_wall', x, y, z, ry, len / 2.4, rng.range(0.95, 1.15), 1);
+    A.box('concrete', x, y + 0.28, z, len, 0.62, 0.2, ry);
+    hedgeRow(A, rng, x, z + 0.3, ry, len * 0.8, 0.6);
     const bx = x + Math.cos(ry + 1.57) * 1.5;
     const bz = z - Math.sin(ry + 1.57) * 1.5;
     if (isOpen(bx, bz, 0.4)) {
-      A.put(rng.pick(['crate_c', 'barrel_rust', 'block_small']), bx, groundY(bx, bz), bz, rng.float() * 6.28, 1, [
-        1,
-        1.2,
-        1,
-      ]);
-      A.box('wood', bx, y + 0.4, bz, 0.8, 0.8, 0.8);
-      groundSkirt(A, rng, bx, groundY(bx, bz), bz, 0.5, { pebbles: rng.int(3, 6) });
+      A.put(rng.pick(['bin_black', 'bin_green', 'crate_c']), bx, groundY(bx, bz), bz, rng.float() * 6.28, 1, null);
+      groundSkirt(A, rng, bx, groundY(bx, bz), bz, 0.5, { pebbles: rng.int(3, 6), key: 'moss_verge' });
     }
-    for (let i = 0; i < rng.int(3, 6); i++) {
+    for (let i = 0; i < rng.int(2, 4); i++) {
       const px = x + rng.range(-2, 2);
       const pz = z + rng.range(-2, 2);
       if (!isOpen(px, pz, 0.2)) continue;
       A.put(
-        rng.pick(['brick_a', 'brick_b', 'litter', 'can', 'rock_b', 'plank_a']),
+        rng.pick(['litter', 'can', 'weeds']),
         px,
         groundY(px, pz) + 0.02,
         pz,
         rng.float() * 6.28,
         rng.range(0.6, 1.2),
-        [1, 1.4, 1]
+        null
       );
     }
   }
@@ -1549,6 +1315,13 @@ function dressBuilding(A, rng, info) {
   }
 
   // ---- roof clutter ----
+  // Roofs are playable ground ONLY where `roofAccess` opens a stair onto them
+  // (see buildings.js) — every other house on Kilmore Close now has a real
+  // pitched, tiled roof over this flat slab, so water tanks, rusty aerials,
+  // rubble and laundry lines here would be invisible AND, if they somehow
+  // clipped through, exactly the industrial/war-torn skyline clutter this
+  // fork has been removing everywhere else.
+  if (!spec.roofAccess) return;
   // Roofs are playable ground in this map (balconies and parapets are the
   // elevation layer), so they get real density, not a token water tank.
   const rp = Math.round((spec.roofProps ?? 2) * 2.4) + 2;

@@ -124,7 +124,12 @@ export function windowState(rng, floor = 1, damage = 0.2, opts = {}) {
   // Ground-floor openings are shopfronts and barred windows, not open sashes;
   // upper floors are where laundry, shutters and open casements live.
   const upper = floor > 0;
-  if (r < 0.07 + damage * 0.25) return 'boarded';
+  // `allowBoarded: false` (Kilmore Close's occupied houses) drops the flat
+  // 0.07 floor a plywood-over-glass window needs no damage at all to roll —
+  // fine for an abandoned-building generic case, not for a lived-in close. A
+  // roll that would have boarded instead falls through to 'open', which is
+  // just an open sash, not damage.
+  if (opts.allowBoarded !== false && r < 0.07 + damage * 0.25) return 'boarded';
   if (r < 0.2 + damage * 0.5) return 'open';
   if (upper && r < 0.42) return 'shuttered';
   if (upper && r < 0.52) return 'ajar';

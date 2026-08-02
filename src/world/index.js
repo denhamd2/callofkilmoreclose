@@ -19,9 +19,10 @@ import {
  * WORLD — level geometry, the modular building kit, props, set dressing and
  * static collision.
  *
- * A ~120 x 120 m Middle-Eastern market street: one main street with a plaza,
- * flanking alleys, eighteen buildings (three of them enterable and furnished
- * across multiple floors), an arched gate closing the vista, and several
+ * Kilmore Close, a real Dublin residential street (OSM way 37211091):
+ * a single-sided lane forking into a two-sided loop, ~209 m of real building
+ * frontage, three enterable houses furnished across multiple floors, a
+ * fictional arched gate closing the vista at the loop end, and several
  * thousand props. Nothing is loaded from disk — every vertex is generated here.
  *
  * HOW IT FITS TOGETHER

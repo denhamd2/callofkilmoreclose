@@ -11,10 +11,19 @@
  */
 export const PALETTE = {
   // ---------------------------------------------------------- architecture --
+  // The four wallKey variants below (plaster_cream/plaster_white/brick/
+  // brick_fine) are what every Kilmore Close house's facade rotates through
+  // (see layout.js BUILDINGS). Retinted paler/less saturated to match the
+  // pale rendered/pebbledash + painted-brick look in the Street View
+  // reference — Irish semis read as an off-white or cream render, sometimes
+  // over textured brick, essentially never as deep terracotta brick. The
+  // brick GLSL's coursing is kept (it still reads as textured, painted
+  // brick close-up) — only the colour moved into the same pale family as the
+  // render keys, not swapped for a smooth surface.
   plaster_cream: {
     name: 'plaster',
     surface: 'plaster',
-    opts: { vertexMasks: true, tint: 0xcfc0a4, scale: 2.35, weather: [0.4, 0.5, 1.4, 0.55] },
+    opts: { vertexMasks: true, tint: 0xddd4bc, scale: 2.35, weather: [0.4, 0.5, 1.4, 0.55] },
   },
   plaster_sand: {
     name: 'plaster',
@@ -34,18 +43,18 @@ export const PALETTE = {
   plaster_white: {
     name: 'plaster',
     surface: 'plaster',
-    opts: { vertexMasks: true, tint: 0xd8d2c4, scale: 1.9, weather: [0.3, 0.35, 0.9, 0.5] },
+    opts: { vertexMasks: true, tint: 0xe4dfd0, scale: 1.9, weather: [0.3, 0.35, 0.9, 0.5] },
   },
   brick: {
     name: 'brick',
     surface: 'concrete',
-    opts: { vertexMasks: true, tint: 0xa8846c, scale: 1.3 },
+    opts: { vertexMasks: true, tint: 0xb8a98f, scale: 1.3 },
   },
   /** Hollow clay block exposed where the render has spalled off. */
   brick_fine: {
     name: 'brick',
     surface: 'concrete',
-    opts: { vertexMasks: true, tint: 0x9c8068, scale: 0.62, weather: [0.45, 0.5, 0.8, 0.6] },
+    opts: { vertexMasks: true, tint: 0xa89c86, scale: 0.62, weather: [0.45, 0.5, 0.8, 0.6] },
   },
   concrete: {
     name: 'concrete',
@@ -78,6 +87,18 @@ export const PALETTE = {
     name: 'concrete',
     surface: 'concrete',
     opts: { vertexMasks: true, tint: 0xb5a992, scale: 2.8, weather: [0.6, 0.2, 0.3, 0.45] },
+  },
+  /**
+   * Pitched-roof covering for Kilmore Close's houses — dark, slightly warm
+   * grey-brown, the concrete/clay tile colour in every Street View reference.
+   * Reuses `concrete`'s generator rather than a new tile GLSL (out of scope
+   * for a roof-geometry pass): at roofline viewing distance/angle a flat dark
+   * tint reads fine, and this map has no close-up rooftop camera work.
+   */
+  roof_tile: {
+    name: 'concrete',
+    surface: 'concrete',
+    opts: { vertexMasks: true, tint: 0x4a4038, scale: 1.6, weather: [0.35, 0.3, 0.35, 0.4] },
   },
   floor_concrete: {
     name: 'concrete_floor',
@@ -122,7 +143,11 @@ export const PALETTE = {
   asphalt: {
     name: 'asphalt',
     surface: 'concrete',
-    opts: { vertexMasks: true, tint: 0x9d968a, scale: 3.2, detile: 0.6, wear: [0, 0.55, 0.45, 0] },
+    // Dark, damp Irish tarmac — this key inherited a warm 0x9d968a desert-dust
+    // tint from the old road_dust entry when ground.js switched the road from
+    // road_dust to asphalt; that tint alone was enough to make the retextured
+    // street still read as a sand road in every render.
+    opts: { vertexMasks: true, tint: 0x4a4944, scale: 3.2, detile: 0.6, wear: [0, 0.5, 0.4, 0] },
   },
   /**
    * The driving line: tarmac polished bare by tyres and stained with oil. A
@@ -386,5 +411,47 @@ export const PALETTE = {
       scale: 1.0,
       three: { emissive: 0xffc47a, emissiveIntensity: 0, opacity: 0.5 },
     },
+  },
+
+  // ------------------------------------------------------- residential kit --
+  /** Wet-look rendered/pebbledash boundary wall, the standard Dublin front garden wall. */
+  wall_garden: {
+    name: 'concrete',
+    surface: 'concrete',
+    opts: { vertexMasks: true, tint: 0x9a988e, scale: 1.6, weather: [0.35, 0.4, 0.5, 0.4] },
+  },
+  /** Wheelie bins. Irish kerbside colours: black/green general waste, brown organic, blue recycling. */
+  bin_black: { name: 'metal_painted', surface: 'rubber', opts: { tint: 0x2a2a2c, scale: 0.8 } },
+  bin_green: { name: 'metal_painted', surface: 'rubber', opts: { tint: 0x2e4a30, scale: 0.8 } },
+  bin_brown: { name: 'metal_painted', surface: 'rubber', opts: { tint: 0x4a3626, scale: 0.8 } },
+  bin_blue: { name: 'metal_painted', surface: 'rubber', opts: { tint: 0x2c4a6a, scale: 0.8 } },
+  /** Parked-car paint. Ordinary, unremarkable colours — nothing showroom-bright. */
+  car_red: { name: 'metal_painted', surface: 'metal', opts: { tint: 0x7a2a28, scale: 1.4, weather: [0.3, 0.25, 0.2, 0.35] } },
+  car_blue: { name: 'metal_painted', surface: 'metal', opts: { tint: 0x35455c, scale: 1.4, weather: [0.3, 0.25, 0.2, 0.35] } },
+  car_silver: { name: 'metal_painted', surface: 'metal', opts: { tint: 0x9a9a96, scale: 1.4, weather: [0.3, 0.25, 0.2, 0.35] } },
+  car_white: { name: 'metal_painted', surface: 'metal', opts: { tint: 0xc8c8c2, scale: 1.4, weather: [0.3, 0.25, 0.2, 0.35] } },
+  car_glass: { name: 'glass', surface: 'glass', opts: { scale: 1.2, roughness: [0.25, 0.05], three: { opacity: 0.22, envMapIntensity: 1.8 } } },
+  /** A builder's skip outside the one house getting done up. */
+  skip_yellow: { name: 'metal_painted', surface: 'metal', opts: { tint: 0xc9a227, scale: 1.2, weather: [0.4, 0.4, 0.3, 0.45] } },
+  /** Clipped garden hedge / privet. Same generator as the rest of the foliage. */
+  hedge: { name: 'foliage', surface: 'foliage', opts: { vertexMasks: true, tint: 0x4f6b3c } },
+  /** Damp, mossy tarmac verge grime — replaces the desert sand/dust berms at wall bases. */
+  moss_verge: {
+    name: 'gravel',
+    surface: 'dirt',
+    opts: { vertexMasks: true, tint: 0x5a6249, scale: 1.4, weather: [0.35, 0.15, 0.2, 0.3] },
+  },
+  /**
+   * Front-garden lawn. There is no dedicated grass/turf generator in the
+   * shared materials library (`src/materials/`) — adding one is a bigger,
+   * cross-subsystem lift than this dressing pass should take on — so this
+   * reuses the same `dirt` surface generator as `moss_verge` at a distinctly
+   * greener, more saturated tint. Cheap, but it is the difference between a
+   * front garden and a builder's yard in every Street View reference.
+   */
+  lawn: {
+    name: 'dirt',
+    surface: 'dirt',
+    opts: { vertexMasks: true, tint: 0x53694a, scale: 2.0, weather: [0.25, 0.15, 0.15, 0.25] },
   },
 };

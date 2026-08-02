@@ -16,8 +16,9 @@ export function buildGround(A, rng) {
   const { halfWidth: HW, kerb: KB, walkH: WH, zMin, zMax } = STREET;
 
   // ------------------------------------------------------------- terrain --
-  // Sandy ground under everything, gently undulating so the horizon isn't a
-  // ruler-straight line where it meets the buildings.
+  // Damp earth/verge under everything, gently undulating so the horizon isn't
+  // a ruler-straight line where it meets the buildings. Dublin ground, not
+  // desert sand: brown, not warm ochre.
   const S = 168;
   const N = 42;
   const terrain = new THREE.PlaneGeometry(S, S, N, N);
@@ -26,7 +27,12 @@ export function buildGround(A, rng) {
   for (let i = 0; i < pa.count; i++) {
     const x = pa.getX(i);
     const z = pa.getZ(i);
-    const inStreet = Math.abs(x) < KB + 1 && z > zMin && z < zMax;
+    // KB + 3.6, not KB + 1: every house sits at a uniform 3.0 m setback from
+    // the kerb (see layout.js's front-garden decision), so the flat band has
+    // to reach the house face or the front-garden lawn/driveway dressing
+    // (buildStreet's frontGardens) floats/embeds in undulating background
+    // terrain instead of sitting flush.
+    const inStreet = Math.abs(x) < KB + 3.6 && z > zMin && z < zMax;
     const h = inStreet ? 0 : (fbm3(x * 0.045, 7.3, z * 0.045, 3) - 0.5) * 1.1 + 0.02;
     pa.setY(i, h - 0.03);
   }
@@ -35,8 +41,8 @@ export function buildGround(A, rng) {
     out[1] = 0.25 + fbm3(x * 0.3, 1.1, z * 0.3, 2) * 0.4;
     out[0] = 0.2;
   });
-  A.add('sand', terrain, null);
-  A.collideGeo('sand', terrain);
+  A.add('dirt', terrain, null);
+  A.collideGeo('dirt', terrain);
   terrain.dispose();
 
   // ---------------------------------------------------------------- road --
@@ -60,12 +66,12 @@ export function buildGround(A, rng) {
     out[0] = 0.2 + n * 0.3;
   });
   road.translate(0, 0, (zMin + zMax) / 2);
-  A.add('road_dust', road, null);
+  A.add('asphalt', road, null);
   road.dispose();
   A.box('dirt', 0, -0.2, (zMin + zMax) / 2, HW * 2, 0.42, roadLen);
 
-  // Old tarmac showing through the dust where wheels have polished it: long
-  // patches in the ruts, and a scatter of intact pavement elsewhere.
+  // The driving line, polished dark and oil-stained by decades of tyres: long
+  // patches in the ruts, and a scatter elsewhere.
   for (let i = 0; i < 30; i++) {
     const rut = rng.float() < 0.62;
     const x = rut ? (rng.float() < 0.5 ? -1 : 1) * rng.range(1.2, 2.1) : rng.range(-HW + 0.5, HW - 0.5);
@@ -74,7 +80,7 @@ export function buildGround(A, rng) {
     const camber = (1 - (x / HW) ** 2) * 0.055 + 0.042;
     const g = patchGeometry(rng, rng.range(0.45, 1.1), { lobes: 11, wobble: 0.5 });
     A.addOnce(
-      'asphalt',
+      'road_rut',
       g,
       LL(IDENT, x, camber, z, rng.float() * 0.4, 1, 1, rut ? rng.range(2.0, 4.5) : rng.range(0.7, 1.4)),
       { masks: [0.35, 0.25, 0.1] }
@@ -211,24 +217,24 @@ export function buildGround(A, rng) {
   // which is what actually hides the value step where the road surface meets the
   // pavement in a low camera. This is the seam the eye lands on first in any
   // street-level frame.
-  seam(-HW + 0.08, zMin + 2, -HW + 0.08, zMax - 2, 'sand', 'road_dust', 0.012);
-  seam(HW - 0.08, zMin + 2, HW - 0.08, zMax - 2, 'sand', 'road_dust', 0.012);
+  seam(-HW + 0.08, zMin + 2, -HW + 0.08, zMax - 2, 'moss_verge', 'asphalt', 0.012);
+  seam(HW - 0.08, zMin + 2, HW - 0.08, zMax - 2, 'moss_verge', 'asphalt', 0.012);
   // the pavement / open-ground line down both sides of the street, and the
-  // perimeter of every alley and courtyard where its floor meets the sand
-  seam(-KB, zMin + 2, -KB, zMax - 2, 'concrete', 'sand', WH + 0.004);
-  seam(KB, zMin + 2, KB, zMax - 2, 'concrete', 'sand', WH + 0.004);
+  // perimeter of every alley and courtyard where its floor meets open ground
+  seam(-KB, zMin + 2, -KB, zMax - 2, 'concrete', 'dirt', WH + 0.004);
+  seam(KB, zMin + 2, KB, zMax - 2, 'concrete', 'dirt', WH + 0.004);
   for (const a of ALLEYS) {
     const [ax0, az0, ax1, az1] = a.rect;
     const ay = 0.062;
-    seam(ax0, az0, ax1, az0, a.surface, 'sand', ay);
-    seam(ax0, az1, ax1, az1, a.surface, 'sand', ay);
-    seam(ax0, az0, ax0, az1, a.surface, 'sand', ay);
-    seam(ax1, az0, ax1, az1, a.surface, 'sand', ay);
+    seam(ax0, az0, ax1, az0, a.surface, 'dirt', ay);
+    seam(ax0, az1, ax1, az1, a.surface, 'dirt', ay);
+    seam(ax0, az0, ax0, az1, a.surface, 'dirt', ay);
+    seam(ax1, az0, ax1, az1, a.surface, 'dirt', ay);
   }
 
   // ------------------------------------------- drifts, stains and covers --
-  // Sand blown against the kerbs and building lines: the single cheapest thing
-  // that stops a street reading as a clean box of geometry.
+  // Damp moss and grit against the kerbs and building lines: the single
+  // cheapest thing that stops a street reading as a clean box of geometry.
   for (let i = 0; i < 130; i++) {
     const side = rng.float() < 0.5 ? -1 : 1;
     const againstWall = rng.float() < 0.55;
@@ -244,7 +250,7 @@ export function buildGround(A, rng) {
         ? (1 - (x / HW) ** 2) * 0.055 + 0.05
         : WH + 0.01;
     const g = patchGeometry(rng, rng.range(0.35, 1.5), { lobes: 9, wobble: 0.5 });
-    A.addOnce('sand', g, LL(IDENT, x, y, z, rng.float() * 6.28, 1, 1, rng.range(0.5, 1.0)), {
+    A.addOnce('moss_verge', g, LL(IDENT, x, y, z, rng.float() * 6.28, 1, 1, rng.range(0.5, 1.0)), {
       masks: [0.15, 0.5, 0.3],
     });
   }

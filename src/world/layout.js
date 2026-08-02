@@ -108,8 +108,8 @@ export const ALLEYS = [
  */
 export const BUILDINGS = [
   // --------------------------------------------- KW row (single lane + loop west arm) --
-  { id: 'KW1', x: -13.56, z: 197.35, w: 8.1, d: 9.73, floors: 2, wallKey: 'brick', streetSide: 1, damage: 0.05, balconies: 0, doorBays: { 1: 0 }, roofProps: 2 }, // osm way/644614598
-  { id: 'KW2', x: -16.22, z: 188.42, w: 13.4, d: 7.53, floors: 2, wallKey: 'brick_fine', streetSide: 1, damage: 0.05, balconies: 0, doorBays: { 1: 0 }, roofProps: 2 }, // osm way/960176181 — irregular/larger footprint, kept as mapped
+  { id: 'KW1', x: -13.56, z: 197.35, w: 8.1, d: 9.73, floors: 2, wallKey: 'plaster_sand', streetSide: 1, damage: 0.05, balconies: 0, doorBays: { 1: 0 }, roofProps: 2 }, // osm way/644614598
+  { id: 'KW2', x: -16.22, z: 188.42, w: 13.4, d: 7.53, floors: 2, wallKey: 'plaster_cream', streetSide: 1, damage: 0.05, balconies: 0, doorBays: { 1: 0 }, roofProps: 2 }, // osm way/960176181 — irregular/larger footprint, kept as mapped
   { id: 'KW3', x: -16.48, z: 159.25, w: 14.0, d: 10.1, floors: 2, wallKey: 'plaster_cream', streetSide: 1, damage: 0.1, balconies: 0, doorBays: { 1: 0 }, roofProps: 2 }, // osm way/644614600 — irregular/larger footprint (likely a mapped semi-D pair), kept as mapped
   { id: 'KW4', x: -14.01, z: 151.2, w: 9.0, d: 5.4, floors: 2, wallKey: 'plaster_white', streetSide: 1, damage: 0.05, balconies: 0, doorBays: { 1: 0 }, roofProps: 1 }, // osm way/960176180
   {
@@ -119,7 +119,7 @@ export const BUILDINGS = [
     w: 8.6,
     d: 6.63,
     floors: 2,
-    wallKey: 'brick',
+    wallKey: 'plaster_sand',
     streetSide: 1,
     damage: 0.05,
     balconies: 0,
@@ -149,11 +149,11 @@ export const BUILDINGS = [
       },
     ],
   },
-  { id: 'KW6', x: -13.94, z: 134.31, w: 8.9, d: 4.83, floors: 2, wallKey: 'brick_fine', streetSide: 1, damage: 0.05, balconies: 0, doorBays: { 1: 0 }, roofProps: 1 }, // osm way/960176179
+  { id: 'KW6', x: -13.94, z: 134.31, w: 8.9, d: 4.83, floors: 2, wallKey: 'plaster_cream', streetSide: 1, damage: 0.05, balconies: 0, doorBays: { 1: 0 }, roofProps: 1 }, // osm way/960176179
   { id: 'KW7', x: -15.77, z: 123.95, w: 12.5, d: 6.84, floors: 2, wallKey: 'plaster_cream', streetSide: 1, damage: 0.1, balconies: 0, doorBays: { 1: 0 }, roofProps: 2 }, // osm way/644614616 — irregular footprint, kept as mapped
   { id: 'KW8', x: -14.08, z: 117.11, w: 9.2, d: 6.24, floors: 2, wallKey: 'plaster_white', streetSide: 1, damage: 0.05, balconies: 0, doorBays: { 1: 0 }, roofProps: 2 }, // osm way/960176178
-  { id: 'KW9', x: -14.28, z: 104.9, w: 9.6, d: 6.52, floors: 2, wallKey: 'brick', streetSide: 1, damage: 0.05, balconies: 0, doorBays: { 1: 0 }, roofProps: 2 }, // osm way/644614617
-  { id: 'KW10', x: -14.28, z: 98.08, w: 9.6, d: 6.52, floors: 2, wallKey: 'brick_fine', streetSide: 1, damage: 0.05, balconies: 0, doorBays: { 1: 0 }, roofProps: 2 }, // osm way/960176177
+  { id: 'KW9', x: -14.28, z: 104.9, w: 9.6, d: 6.52, floors: 2, wallKey: 'plaster_sand', streetSide: 1, damage: 0.05, balconies: 0, doorBays: { 1: 0 }, roofProps: 2 }, // osm way/644614617
+  { id: 'KW10', x: -14.28, z: 98.08, w: 9.6, d: 6.52, floors: 2, wallKey: 'plaster_cream', streetSide: 1, damage: 0.05, balconies: 0, doorBays: { 1: 0 }, roofProps: 2 }, // osm way/960176177
   { id: 'KW11', x: -13.95, z: 86.19, w: 8.9, d: 6.32, floors: 2, wallKey: 'plaster_cream', streetSide: 1, damage: 0.05, balconies: 0, doorBays: { 1: 0 }, roofProps: 1 }, // osm way/644614618
   { id: 'KW12', x: -13.95, z: 79.57, w: 8.9, d: 6.32, floors: 2, wallKey: 'plaster_white', streetSide: 1, damage: 0.05, balconies: 0, doorBays: { 1: 0 }, roofProps: 1 }, // osm way/960176176
   {
@@ -163,7 +163,7 @@ export const BUILDINGS = [
     w: 9.2,
     d: 7.72,
     floors: 2,
-    wallKey: 'brick',
+    wallKey: 'plaster_sand',
     streetSide: 1,
     damage: 0.05,
     balconies: 0,
@@ -191,14 +191,14 @@ export const BUILDINGS = [
       },
     ],
   },
-  { id: 'KW14', x: -14.12, z: 58.81, w: 9.2, d: 6.92, floors: 2, wallKey: 'brick_fine', streetSide: 1, damage: 0.05, balconies: 0, doorBays: { 1: 0 }, roofProps: 2 }, // osm way/960176175
+  { id: 'KW14', x: -14.12, z: 58.81, w: 9.2, d: 6.92, floors: 2, wallKey: 'plaster_cream', streetSide: 1, damage: 0.05, balconies: 0, doorBays: { 1: 0 }, roofProps: 2 }, // osm way/960176175
   { id: 'KW15', x: -14.12, z: 50.8, w: 9.2, d: 7.32, floors: 2, wallKey: 'plaster_cream', streetSide: 1, damage: 0.05, balconies: 0, doorBays: { 1: 0 }, roofProps: 1 }, // osm way/644614614
   { id: 'KW16', x: -14.12, z: 42.78, w: 9.2, d: 7.82, floors: 2, wallKey: 'plaster_white', streetSide: 1, damage: 0.05, balconies: 0, doorBays: { 1: 0 }, roofProps: 2 }, // osm way/960176174
-  { id: 'KW17', x: -14.13, z: 34.62, w: 9.3, d: 6.36, floors: 2, wallKey: 'brick', streetSide: 1, damage: 0.05, balconies: 0, doorBays: { 1: 0 }, roofProps: 1 }, // osm way/644614624 — loop's west arm begins here
-  { id: 'KW18', x: -14.13, z: 27.81, w: 9.3, d: 6.66, floors: 2, wallKey: 'brick_fine', streetSide: 1, damage: 0.05, balconies: 0, doorBays: { 1: 0 }, roofProps: 2 }, // osm way/960176171
+  { id: 'KW17', x: -14.13, z: 34.62, w: 9.3, d: 6.36, floors: 2, wallKey: 'plaster_sand', streetSide: 1, damage: 0.05, balconies: 0, doorBays: { 1: 0 }, roofProps: 1 }, // osm way/644614624 — loop's west arm begins here
+  { id: 'KW18', x: -14.13, z: 27.81, w: 9.3, d: 6.66, floors: 2, wallKey: 'plaster_cream', streetSide: 1, damage: 0.05, balconies: 0, doorBays: { 1: 0 }, roofProps: 2 }, // osm way/960176171
   { id: 'KW19', x: -13.84, z: 15.95, w: 8.7, d: 6.97, floors: 2, wallKey: 'plaster_cream', streetSide: 1, damage: 0.05, balconies: 0, doorBays: { 1: 0 }, roofProps: 1 }, // osm way/644614623
   { id: 'KW20', x: -13.84, z: 8.68, w: 8.7, d: 6.97, floors: 2, wallKey: 'plaster_white', streetSide: 1, damage: 0.05, balconies: 0, doorBays: { 1: 0 }, roofProps: 2 }, // osm way/960176170
-  { id: 'KW21', x: -14.31, z: -3.83, w: 9.6, d: 7.87, floors: 2, wallKey: 'brick', streetSide: 1, damage: 0.1, balconies: 0, doorBays: { 1: 0 }, roofProps: 2 }, // osm way/644614622
+  { id: 'KW21', x: -14.31, z: -3.83, w: 9.6, d: 7.87, floors: 2, wallKey: 'plaster_sand', streetSide: 1, damage: 0.1, balconies: 0, doorBays: { 1: 0 }, roofProps: 2 }, // osm way/644614622
   {
     id: 'KW22',
     x: -14.31,
@@ -206,7 +206,7 @@ export const BUILDINGS = [
     w: 9.6,
     d: 7.87,
     floors: 2,
-    wallKey: 'brick_fine',
+    wallKey: 'plaster_cream',
     streetSide: 1,
     damage: 0.15,
     balconies: 0,
@@ -237,8 +237,8 @@ export const BUILDINGS = [
   },
 
   // --------------------------------------------- KE row (loop's east arm — the only two-sided stretch) --
-  { id: 'KE1', x: 13.8, z: 32.24, w: 8.6, d: 7.76, floors: 2, wallKey: 'brick', streetSide: 3, damage: 0.05, balconies: 0, doorBays: { 3: 0 }, roofProps: 2 }, // osm way/644614620
-  { id: 'KE2', x: 13.8, z: 24.18, w: 8.6, d: 7.76, floors: 2, wallKey: 'brick_fine', streetSide: 3, damage: 0.05, balconies: 0, doorBays: { 3: 0 }, roofProps: 1 }, // osm way/960176173
+  { id: 'KE1', x: 13.8, z: 32.24, w: 8.6, d: 7.76, floors: 2, wallKey: 'plaster_sand', streetSide: 3, damage: 0.05, balconies: 0, doorBays: { 3: 0 }, roofProps: 2 }, // osm way/644614620
+  { id: 'KE2', x: 13.8, z: 24.18, w: 8.6, d: 7.76, floors: 2, wallKey: 'plaster_cream', streetSide: 3, damage: 0.05, balconies: 0, doorBays: { 3: 0 }, roofProps: 1 }, // osm way/960176173
   { id: 'KE3', x: 14.38, z: 12.69, w: 9.8, d: 7.04, floors: 2, wallKey: 'plaster_cream', streetSide: 3, damage: 0.05, balconies: 0, doorBays: { 3: 0 }, roofProps: 2 }, // osm way/644614621
   { id: 'KE4', x: 14.38, z: 5.35, w: 9.8, d: 7.04, floors: 2, wallKey: 'plaster_white', streetSide: 3, damage: 0.1, balconies: 0, doorBays: { 3: 0 }, roofProps: 1 }, // osm way/960176172
 
@@ -250,12 +250,12 @@ export const BUILDINGS = [
    * decision to keep neighbouring streets as loose background only. These
    * are generic distant masses, not individually OSM-placed.
    */
-  { id: 'BGE1', x: 26, z: 172, w: 18, d: 22, floors: 2, wallKey: 'brick_fine', streetSide: 3, damage: 0.1, skipSides: [3], roofProps: 2 },
+  { id: 'BGE1', x: 26, z: 172, w: 18, d: 22, floors: 2, wallKey: 'plaster_cream', streetSide: 3, damage: 0.1, skipSides: [3], roofProps: 2 },
   { id: 'BGE2', x: 27, z: 108, w: 18, d: 24, floors: 2, wallKey: 'plaster_cream', streetSide: 3, damage: 0.1, skipSides: [3], roofProps: 2 },
-  { id: 'BGE3', x: 26, z: 52, w: 16, d: 18, floors: 2, wallKey: 'brick', streetSide: 3, damage: 0.1, skipSides: [3], roofProps: 2 },
+  { id: 'BGE3', x: 26, z: 52, w: 16, d: 18, floors: 2, wallKey: 'plaster_sand', streetSide: 3, damage: 0.1, skipSides: [3], roofProps: 2 },
   // Far skyline beyond the lane's open (north) end — "the street continues off-map", not a dead end.
   { id: 'BGN1', x: -18, z: 222, w: 20, d: 14, floors: 2, wallKey: 'plaster_cream', streetSide: 0, damage: 0.1, roofProps: 2 },
-  { id: 'BGN2', x: 16, z: 226, w: 22, d: 16, floors: 2, wallKey: 'brick_fine', streetSide: 0, damage: 0.1, roofProps: 2 },
+  { id: 'BGN2', x: 16, z: 226, w: 22, d: 16, floors: 2, wallKey: 'plaster_cream', streetSide: 0, damage: 0.1, roofProps: 2 },
   // The mass behind the fictional GATE — third plane of depth beyond the arch, same role BS3 played before.
   { id: 'BGS1', x: 2, z: -50, w: 10, d: 8, floors: 3, wallKey: 'plaster_white', streetSide: 2, damage: 0.15, roofProps: 2 },
 ];
@@ -294,52 +294,55 @@ export const GATE = {
 };
 
 /**
- * Hand-placed set pieces, proportionally rescaled from the old ~104 m street
- * (zMin -58/zMax 46) to the new ~247 m one (zMin -40/zMax 213) so nothing
- * sits off the map. Categories/content are UNCHANGED from the previous
- * market-street pass and deliberately not rethemed here — retargeting these
- * for a residential Dublin close (bins, garden walls, parked cars…) is the
- * job of the dressing/materials pass that follows this one.
+ * Hand-placed set pieces. Positions are carried over from the previous
+ * market-street pass (chosen to clear the named shot cameras — see
+ * `SHOT_CLEAR` in dressing.js — and to sit inside the real building line),
+ * but every category's CONTENT is rethemed here for a lived-in Dublin
+ * residential close: parked cars in place of market stalls, low garden walls
+ * in place of jersey barriers, clipped hedges in place of sandbag walls, a
+ * single builder's skip in place of the burnt-out wrecks, ordinary deciduous
+ * trees in place of palms, and kerbside bin stores in place of the war-rubble
+ * piles and tyre stacks. Lamps, overhead cables and washing lines read fine
+ * unchanged for an older Irish estate and are kept as-is.
  */
 export const SET_PIECES = {
-  /** Market stalls: [x, z, ry, width] */
-  stalls: [
-    [-3.2, 118.95, 0.08, 2.4],
-    [-3.0, 108.97, -0.05, 2.2],
-    [3.1, 126.31, 3.2, 2.4],
-    [3.4, 113.25, 3.05, 2.6],
-    [-0.4, 109.93, 1.62, 2.3],
-    [3.0, 82.38, 3.25, 2.2],
-    [-3.3, 69.31, 0.12, 2.4],
-    [2.9, 56.25, 3.0, 2.3],
+  /** Parked cars along the kerb: [x, z, ry, length] */
+  cars: [
+    [5.7, 118.95, 0.0, 4.3],
+    [-5.7, 108.97, 0.0, 4.0],
+    [5.7, 126.31, 0.0, 4.3],
+    [-5.7, 113.25, 0.0, 4.1],
+    [5.7, 109.93, 0.0, 4.0],
+    [-5.7, 82.38, 0.0, 4.2],
+    [5.7, 69.31, 0.0, 4.3],
+    [-5.7, 56.25, 0.0, 4.0],
   ],
-  /** Jersey barriers: [x, z, ry] */
-  jerseys: [
-    [-2.6, 145.31, 0.12],
-    [-0.4, 142.22, 1.5],
-    [2.9, 132.25, -0.1],
-    [1.6, 97.81, 1.62],
-    [-2.4, 89.5, 0.05],
-    [3.2, 65.75, 0.1],
-    [-1.0, 46.75, 1.55],
-    [1.2, 32.5, 0.2],
-    [-3.0, 23.0, 0.0],
+  /** Low front-garden boundary wall runs, at the kerb: [x, z, ry] */
+  gardenWalls: [
+    [-6.3, 145.31, Math.PI / 2],
+    [6.3, 142.22, -Math.PI / 2],
+    [-6.3, 132.25, Math.PI / 2],
+    [6.3, 97.81, -Math.PI / 2],
+    [-6.3, 89.5, Math.PI / 2],
+    [6.3, 65.75, -Math.PI / 2],
+    [-6.3, 46.75, Math.PI / 2],
+    [6.3, 32.5, -Math.PI / 2],
+    [-6.3, 23.0, Math.PI / 2],
   ],
-  /** Sandbag emplacements: [x, z, ry, length] */
-  sandbagWalls: [
-    [-3.6, 129.88, 0.0, 3.0],
-    [3.6, 99.0, 0.0, 2.6],
-    [-1.6, 59.81, 1.57, 2.4],
-    [3.4, 39.62, 0.0, 3.2],
+  /** Clipped garden hedge rows, at the kerb: [x, z, ry, length] */
+  hedges: [
+    [-6.5, 129.88, Math.PI / 2, 3.0],
+    [6.5, 99.0, -Math.PI / 2, 2.6],
+    [-6.5, 59.81, Math.PI / 2, 2.4],
+    [6.5, 39.62, -Math.PI / 2, 3.2],
   ],
-  /** Burnt-out vehicles: [x, z, ry, rollDeg] */
-  wrecks: [
-    [2.5, 104.94, 0.42, 0],
-    [-2.8, 36.06, -2.6, 4],
-    [4.9, 160.75, 1.5, 0],
+  /** A builder's skip outside the one house mid-renovation: [x, z, ry] */
+  skips: [
+    [5.7, 104.94, 0.42],
+    [-5.7, 36.06, -0.3],
   ],
-  /** Palm trees: [x, z, scale] */
-  palms: [
+  /** Street/garden trees: [x, z, scale] */
+  trees: [
     [-5.4, 151.25, 1.0],
     [5.5, 119.19, 1.1],
     [-5.5, 93.06, 0.92],
@@ -356,7 +359,7 @@ export const SET_PIECES = {
     [5.9, 46.75, Math.PI / 2],
     [-5.9, 18.25, -Math.PI / 2],
   ],
-  /** Overhead cable spans: [x0, y0, z0, x1, y1, z1, sag] */
+  /** Overhead utility cable spans: [x0, y0, z0, x1, y1, z1, sag] */
   cables: [
     [-6.4, 7.2, 127.5, 6.4, 6.6, 133.44, 1.1],
     [-6.4, 8.4, 99.0, 6.4, 7.9, 102.56, 1.4],
@@ -365,7 +368,7 @@ export const SET_PIECES = {
     [-6.4, 5.4, 148.88, -6.4, 5.6, 161.94, 0.6],
     [6.4, 5.6, 108.5, 6.4, 5.4, 122.75, 0.7],
   ],
-  /** Laundry lines with hanging cloth: [x0, y0, z0, x1, y1, z1] */
+  /** Back-garden washing lines with hanging laundry: [x0, y0, z0, x1, y1, z1] */
   laundry: [
     [6.35, 3.6, 125.12, 6.35, 3.75, 137.47],
     [-6.35, 3.7, 106.12, -6.35, 3.6, 116.57],
@@ -374,27 +377,20 @@ export const SET_PIECES = {
     [-6.35, 3.65, 39.62, -6.35, 3.8, 51.5],
     [6.4, 3.7, 153.62, 6.4, 3.6, 164.31],
   ],
-  /** Hanging rugs / cloth on facades: [x, y, z, ry, w, h] */
-  hangings: [
-    [-6.45, 2.6, 123.94, Math.PI / 2, 1.5, 2.1],
-    [-6.45, 2.4, 114.44, Math.PI / 2, 1.2, 1.7],
-    [6.45, 2.7, 118.0, -Math.PI / 2, 1.6, 2.2],
-    [6.45, 2.5, 83.56, -Math.PI / 2, 1.3, 1.9],
-    [-6.45, 2.5, 65.75, Math.PI / 2, 1.4, 2.0],
+  /** Doorstep planters / window boxes: [x, y, z, ry, w] */
+  doorstepPlanters: [
+    [-6.45, 0.02, 123.94, Math.PI / 2, 1.5],
+    [-6.45, 0.02, 114.44, Math.PI / 2, 1.2],
+    [6.45, 0.02, 118.0, -Math.PI / 2, 1.6],
+    [6.45, 0.02, 83.56, -Math.PI / 2, 1.3],
+    [-6.45, 0.02, 65.75, Math.PI / 2, 1.4],
   ],
-  /** Rubble piles: [x, z, radius, count] */
-  rubble: [
+  /** Kerbside bin stores: [x, z, radius, count] */
+  binStores: [
     [-4.2, 55.06, 2.4, 34],
     [5.0, 69.31, 2.8, 40],
     [-1.5, 8.75, 2.0, 26],
     [7.6, 31.31, 2.2, 28],
     [-5.0, 165.5, 1.6, 18],
-  ],
-  /** Tyre stacks: [x, z, n] */
-  tyres: [
-    [-5.2, 133.44, 4],
-    [5.3, 89.5, 3],
-    [6.2, 110.88, 5],
-    [-5.4, 37.25, 3],
   ],
 };
