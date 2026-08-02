@@ -492,11 +492,23 @@ export class AiSystem {
       .filter((e) => e.d > 18);
     if (!ranked.length) return 0;
 
-    const variants = ['vanguard', 'irregular', 'breacher'];
+    // Each named character is their own variant now, so one roster slot is
+    // one identity — no separate variant/name cycles, no repeats.
+    const ROSTER = ['David', 'MickMcCabe', 'Deco McCabe', 'Paddy Mason', 'Oysters'];
     const squads = opts.squads ?? 2;
-    const per = opts.perSquad ?? 3;
+    const total = Math.min(opts.count ?? ROSTER.length, ROSTER.length);
+    // split `total` across `squads` as evenly as possible (e.g. 5 over 2 -> 3, 2)
+    const sizes = [];
+    let remaining = total;
+    for (let q = 0; q < squads; q++) {
+      const size = Math.ceil(remaining / (squads - q));
+      sizes.push(size);
+      remaining -= size;
+    }
+    let slot = 0;
     let made = 0;
     for (let q = 0; q < squads && q < ranked.length; q++) {
+      const per = sizes[q];
       const squad = this.createSquad();
       const anchor = ranked[q % ranked.length].s;
       // patrol route: this spawn point and the two next-nearest ones
@@ -526,8 +538,10 @@ export class AiSystem {
         } else {
           p.y = this.groundAt(p.x, p.z, anchor.position.y + 4);
         }
-        const a = this.spawn(variants[(q * per + m) % variants.length], p, anchor.yaw + this.rng.signed() * 0.7, {
+        const identity = ROSTER[slot++];
+        const a = this.spawn(identity, p, anchor.yaw + this.rng.signed() * 0.7, {
           patrol: route,
+          name: identity,
         });
         squad.add(a);
         made++;
@@ -996,15 +1010,15 @@ export class AiSystem {
     /** [variant, ndcX, depth, crouch, speed, fire, reloadEvery] */
     const LAYOUT = [
       // hero: up and firing, left of frame, close enough to read the kit
-      ['vanguard', -0.44, 8.0, false, 0, true, 0],
+      ['David', -0.44, 8.0, false, 0, true, 0],
       // second man crouched in cover, right of frame
-      ['breacher', 0.30, 12.0, true, 0, true, 0],
+      ['Deco McCabe', 0.30, 12.0, true, 0, true, 0],
       // one caught mid-stride between positions
-      ['irregular', -0.14, 16.0, false, 4.1, false, 0],
+      ['MickMcCabe', -0.14, 16.0, false, 4.1, false, 0],
       // one reloading behind cover on the far right
-      ['vanguard', 0.60, 9.5, true, 0, true, 3.4],
+      ['David', 0.60, 9.5, true, 0, true, 3.4],
       // depth: a fifth man well down the street
-      ['irregular', -0.26, 22.0, false, 0, true, 0],
+      ['MickMcCabe', -0.26, 22.0, false, 0, true, 0],
     ];
 
     const placedPositions = [];
@@ -1043,7 +1057,7 @@ export class AiSystem {
     // One man already down, handed to the ragdoll solver with the round's
     // impulse — it dresses the tableau and it exercises the death path.
     const dPos = this._stageSlot(cam, -0.58, 9.4, placedPositions);
-    const casualty = this.spawn('breacher', dPos, Math.atan2(cam.position.x - dPos.x, cam.position.z - dPos.z));
+    const casualty = this.spawn('Deco McCabe', dPos, Math.atan2(cam.position.x - dPos.x, cam.position.z - dPos.z));
     squad.add(casualty);
     casualty.animator.update(0.016, 0);
     const hit = new THREE.Vector3(dPos.x, dPos.y + 1.35, dPos.z);
@@ -1062,9 +1076,9 @@ export class AiSystem {
     const right = new THREE.Vector3(F.z, 0, -F.x);
     this.ctx.peek('sky')?.setTimeOfDay?.(11.5);
     const layout = [
-      ['vanguard', 1.9, 0.35, 0.25],
-      ['irregular', 2.7, -0.95, 3.0],
-      ['breacher', 3.6, 1.15, -0.7],
+      ['David', 1.9, 0.35, 0.25],
+      ['MickMcCabe', 2.7, -0.95, 3.0],
+      ['Deco McCabe', 3.6, 1.15, -0.7],
     ];
     for (const [nm, d, s2, extraYaw] of layout) {
       const p = new THREE.Vector3().copy(cam.position).addScaledVector(F, d).addScaledVector(right, s2);

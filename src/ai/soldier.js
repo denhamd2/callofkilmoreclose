@@ -104,7 +104,7 @@ const GEAR = {
  * dragging every piece of its kit out of the albedo budget.
  */
 export const VARIANTS = {
-  vanguard: {
+  David: {
     camo: 'arid',
     clothTint: [1.03, 1.0, 0.94],
     gearTint: [1.08, 0.98, 0.80], // coyote brown
@@ -123,7 +123,7 @@ export const VARIANTS = {
     bulk: 1.0,
     scale: 1.0,
   },
-  irregular: {
+  MickMcCabe: {
     camo: 'woodland',
     clothTint: [0.98, 1.02, 0.94],
     gearTint: [0.92, 0.96, 0.74], // olive drab
@@ -143,7 +143,7 @@ export const VARIANTS = {
     bulk: 0.94,
     scale: 0.985,
   },
-  breacher: {
+  'Deco McCabe': {
     camo: 'urban',
     clothTint: [0.98, 0.99, 1.02],
     gearTint: [0.84, 0.86, 0.90], // wolf grey
@@ -152,7 +152,7 @@ export const VARIANTS = {
     helmet: true,
     helmetCover: false, // bare painted shell instead of a cloth cover
     helmetTint: [0.82, 0.83, 0.86],
-    // goggles parked on the shell (not over the eyes like vanguard) plus a hard
+    // goggles parked on the shell (not over the eyes like David) plus a hard
     // ballistic half-mask: same helmet family, completely different head read
     goggles: true,
     gogglesDown: false,
@@ -164,6 +164,47 @@ export const VARIANTS = {
     weapon: 'carbine',
     bulk: 1.06,
     scale: 1.025,
+  },
+  'Paddy Mason': {
+    // Same woodland family as MickMcCabe but helmeted and heavier-kitted, so
+    // the two read as distinct silhouettes rather than a recolour of one another.
+    camo: 'woodland',
+    clothTint: [1.0, 1.01, 0.96],
+    gearTint: [0.88, 0.92, 0.78],
+    plateTint: [0.94, 0.96, 0.84],
+    skinTint: [1.02, 0.96, 0.90],
+    helmet: true,
+    helmetCover: true,
+    helmetTint: [0.70, 0.74, 0.66],
+    goggles: true,
+    gogglesDown: true,
+    faceWrap: true,
+    beard: false,
+    kneePads: true,
+    fullCarrier: true,
+    weapon: 'ak',
+    bulk: 1.02,
+    scale: 1.01,
+  },
+  Oysters: {
+    // Urban family, but bare-headed and lightly kitted for the leanest
+    // silhouette of the five — no helmet, no goggles, no plate carrier.
+    camo: 'urban',
+    clothTint: [0.96, 0.98, 1.0],
+    gearTint: [0.80, 0.82, 0.86],
+    plateTint: [0.82, 0.84, 0.88],
+    skinTint: [0.90, 0.84, 0.78],
+    helmet: false,
+    headWrap: true,
+    goggles: false,
+    shades: false,
+    faceWrap: false,
+    beard: true,
+    kneePads: false,
+    fullCarrier: false,
+    weapon: 'carbine',
+    bulk: 0.9,
+    scale: 0.97,
   },
 };
 
@@ -177,7 +218,7 @@ const bp = (name) => {
  * @returns { geometry, materials: THREE.Material[], weapon, stats }
  */
 export function buildSoldier(name, { rng, materials }) {
-  const V = VARIANTS[name] ?? VARIANTS.vanguard;
+  const V = VARIANTS[name] ?? VARIANTS.David;
   const nz = new Noise(rng.fork());
   const B = new CharacterBuilder(RIG, { noise: nz, materials: MATERIALS });
 
@@ -702,12 +743,15 @@ export function buildSoldier(name, { rng, materials }) {
   });
 
   const W = buildWeapon(nz, V.weapon, rng);
-  B.add(W.steel, { material: 'steel', bone: 'HandR', grime: 0.55, wear: 0.25, name: 'wpnSteel' });
-  B.add(W.polymer, { material: 'polymer', bone: 'HandR', grime: 0.5, wear: 0.3, name: 'wpnPoly' });
-  B.add(W.rubber, { material: 'rubber', bone: 'HandR', grime: 0.6, name: 'wpnRubber' });
+  // Emitted before wpnSteel: a scope lens is this build's only source of
+  // 'glass' for variants with no goggles/shades (e.g. Oysters), and MATERIAL_SLOTS
+  // requires glass to precede steel — see the order assertion below.
   if (W.glass.p.length) {
     B.add(W.glass, { material: 'glass', bone: 'HandR', grime: 0.1, name: 'wpnGlass' });
   }
+  B.add(W.steel, { material: 'steel', bone: 'HandR', grime: 0.55, wear: 0.25, name: 'wpnSteel' });
+  B.add(W.polymer, { material: 'polymer', bone: 'HandR', grime: 0.5, wear: 0.3, name: 'wpnPoly' });
+  B.add(W.rubber, { material: 'rubber', bone: 'HandR', grime: 0.6, name: 'wpnRubber' });
 
   // sling: body-bound so it stays on the chest as the arms move
   B.add(P.sling(W.foregrip, W.stockTop), {
@@ -777,7 +821,7 @@ export const MATERIAL_SLOTS = Object.freeze([
  * a boot without any per-part tuning.
  */
 export function resolveMaterials(name, slots, materials) {
-  const V = VARIANTS[name] ?? VARIANTS.vanguard;
+  const V = VARIANTS[name] ?? VARIANTS.David;
   const detail = (set, matName, normal, rough) => ({
     set,
     scale: MATERIALS[matName].tile / DETAIL_TILE,

@@ -95,7 +95,8 @@ export class Agent {
     this.ctx = ai.ctx;
     this.id = _nextId++;
     this.rng = ai.rng.fork();
-    this.variantName = opts.variant ?? 'vanguard';
+    this.variantName = opts.variant ?? 'David';
+    this.name = opts.name ?? 'ENEMY';
     const def = ai.variant(this.variantName);
     this.def = def;
     this.scale = def.variant.scale ?? 1;
@@ -198,7 +199,7 @@ export class Agent {
 
     /* ---------------- combat ---------------- */
     this.weaponRange = 60;
-    this.fireRate = this.variantName === 'irregular' ? 8.2 : 10.5;
+    this.fireRate = this.variantName === 'MickMcCabe' ? 8.2 : 10.5;
     this.burstLeft = 0;
     this.fireCooldown = 0;
     this.burstCooldown = this.rng.range(0.4, 1.4);
@@ -755,7 +756,7 @@ export class Agent {
 
     if (!this.wantFire || this.animator.reloading || this.animator.vaulting) return;
     if (this.ammo <= 0) {
-      this.animator.reload(this.variantName === 'irregular' ? 2.9 : 2.35);
+      this.animator.reload(this.variantName === 'MickMcCabe' ? 2.9 : 2.35);
       this.ai.emitReload(this);
       this.ammo = this.magSize;
       return;

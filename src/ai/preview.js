@@ -3,7 +3,7 @@
  * its animation without booting the whole game. Studio lighting, neutral
  * background, a real PMREM environment so metals and the goggle glass behave.
  *
- *   node src/ai/shoot.mjs --view=front --variant=vanguard --out=/tmp/ai-front.png
+ *   node src/ai/shoot.mjs --view=front --variant=David --out=/tmp/ai-front.png
  *
  * Query params: variant, view (front|back|three|face|gear|legs|line), clip, phase, aim
  */
@@ -90,7 +90,7 @@ const materials = new SoldierMaterials(rng.fork(), {
 });
 
 const view = q.get('view') ?? 'front';
-const variantName = q.get('variant') ?? 'vanguard';
+const variantName = q.get('variant') ?? 'David';
 const names = view === 'line' ? Object.keys(VARIANTS) : [variantName];
 const actors = [];
 
