@@ -27,7 +27,7 @@ import {
   tubeY,
   fbm3,
 } from './util.js';
-import { STREET, ALLEYS, BUILDINGS, SET_PIECES, GATE } from './layout.js';
+import { STREET, ALLEYS, BUILDINGS, SET_PIECES } from './layout.js';
 
 /**
  * WORLD — set dressing.
@@ -38,9 +38,8 @@ import { STREET, ALLEYS, BUILDINGS, SET_PIECES, GATE } from './layout.js';
  * walls and clipped hedges, wheelie bins out for collection, ordinary
  * deciduous trees, lamps, overhead cables and washing lines strung out the
  * back, roof clutter, and the litter and damp grime that collects against
- * every wall base. The gate/terminator at the map's south end (`buildGate`)
- * is a deliberately fictional level-design vista-stop (see layout.js) and is
- * left as-is by this pass.
+ * every wall base. Both street ends are left open, continuing toward the
+ * real connecting roads per `ROAD_ENDS` in layout.js.
  *
  * Everything is placed in LEVEL space and instanced through the Assembler, so
  * the cost of another two hundred props is a few kilobytes of matrices.
@@ -701,13 +700,15 @@ function parkedCars(A, rng) {
  * the kerb, exactly like the reference photos — nobody walls off their own
  * drive), a foundation shrub or two by the door, and a bin.
  *
- * This replaces the old hand-placed `SET_PIECES.gardenWalls`/`hedges`
- * sparse-list approach (a handful of walls scattered across ~150 m read as
- * occasional fencing, not front gardens) with one procedural per-building
- * treatment driven directly off `BUILDINGS`' own w/d/streetSide fields — so
- * it automatically follows the OSM-derived frontage spacing without this
- * pass touching `BUILDINGS` itself. `BG*` background infill is skipped: it
- * isn't a real addressable plot (see layout.js).
+ * One procedural per-building treatment, driven directly off `BUILDINGS`'
+ * own x/w/d/streetSide fields and `STREET.kerb`/`STREET.setback` — so it
+ * automatically follows both the OSM-derived frontage spacing and the
+ * Google Earth-calibrated street-section dimensions without this pass
+ * touching `BUILDINGS` itself. The old hand-placed `SET_PIECES.gardenWalls`/
+ * `hedges` sparse lists this replaced (a handful of walls scattered across
+ * ~150 m, not real per-plot boundaries) have been removed from layout.js as
+ * dead data. `BG*` background infill is skipped: it isn't a real addressable
+ * plot (see layout.js).
  */
 function frontGardens(A, rng) {
   const KB = STREET.kerb;
@@ -1747,246 +1748,30 @@ function merlonRun(A, rng, x0, x1, z, t, yTop, opts = {}) {
 }
 
 /**
- * The street terminator at the south end of the vista.
- *
- * Four masses at four heights, stepped in Z as well as Y, with a pointed archway
- * through the middle, an upper loggia of dark recessed openings, a rampart
- * walkway on corbels with a shadowed underside, sandbag emplacements on top, and
- * a sliver of sky over the arch that shows `BS3` receding behind it. The old
- * version was a single 17 m slab at one height with square merlons on a perfectly
- * regular pitch — the largest flat surface in most frames, sitting exactly where
- * the eye lands.
- */
-export function buildGate(A, rng) {
-  const { z, depth, span, height, outerW, bodyH, xL0, xL1, hL, xR0, xR1, hR, eastProud, xT0, xT1, hT, towerProud } = GATE;
-  const t = depth;
-
-  /** One block of the mass: body, plinth, cornice, spalled render, walkway. */
-  const block = (x0, x1, h, tt, zc, o = {}) => {
-    const cx = (x0 + x1) / 2;
-    const w = x1 - x0;
-    A.add(o.key ?? 'plaster_sand', BOX(A), LL(IDENT, cx, h / 2, zc, 0, w, h, tt), {
-      masks: [0.45, 0.6, 0.35],
-    });
-    A.box('concrete', cx, h / 2, zc, w, h, tt);
-    // plinth: catches the ground grime band and the sand drift at the base
-    A.add('concrete', BOX_SOFT(A), LL(IDENT, cx, 0.4, zc, 0, w + 0.24, 0.8, tt + 0.26), {
-      masks: [0.6, 0.85, 0.55],
-    });
-    // Pilasters standing 0.3 m proud at each end of the block. These are what
-    // give the face a lit edge and a cast shadow instead of one flat value.
-    for (const s of [-1, 1]) {
-      A.add(o.key ?? 'plaster_sand', BOX(A), LL(IDENT, cx + s * (w / 2 - 0.3), h * 0.5, zc + tt / 2 + 0.15, 0, 0.6, h - 0.2, 0.34), {
-        masks: [0.6, 0.5, 0.25],
-      });
-    }
-    // cornice, well proud of the face: the strongest horizontal shadow on the
-    // whole terminator, and a full stop of value between the two faces.
-    A.add('concrete', BOX_SOFT(A), LL(IDENT, cx, h - 0.22, zc + 0.2, 0, w + 0.5, 0.3, tt + 0.66), {
-      masks: [0.8, 0.45, 0.2],
-    });
-    // corbels under it, so the overhang reads as carried rather than floating
-    const nb = Math.max(2, Math.round(w / 1.15));
-    for (let i = 0; i < nb; i++) {
-      const bx = x0 + 0.35 + (i / Math.max(1, nb - 1)) * (w - 0.7);
-      A.add('concrete', BOX(A), LL(IDENT, bx, h - 0.62, zc + tt / 2 + 0.22, 0, 0.22, 0.44, 0.46), {
-        masks: [0.7, 0.55, 0.35],
-      });
-    }
-    // A string course at mid height. The sun is 32 degrees up, so every
-    // horizontal ledge on a shaded elevation reads as a bright line — this is
-    // the cheapest way to break a big shaded face into readable bands.
-    A.add('concrete', BOX_SOFT(A), LL(IDENT, cx, h * 0.46, zc + tt / 2 + 0.11, 0, w + 0.18, 0.16, 0.3), {
-      masks: [0.8, 0.5, 0.25],
-    });
-    // Spalled render over the visible face. Small and nearly flush: a big patch
-    // standing proud reads as a paint splash rather than as exposed clay block.
-    const sp = Math.round(w * h * 0.05);
-    for (let i = 0; i < sp; i++) {
-      const g = spallPatch(rng, rng.range(0.24, 0.7), rng.range(0.22, 0.6), 0.022);
-      A.addOnce(
-        'brick_fine',
-        g,
-        LL(IDENT, rng.range(x0 + 0.5, x1 - 0.5), rng.range(0.9, h - 0.7), zc + tt / 2 - 0.014)
-      );
-    }
-    return { cx, w };
-  };
-
-  // ------------------------------------------------------- the four masses --
-  // west gatehouse block: lowest, with an upper loggia of three dark openings
-  block(xL0, xL1, hL, t, z);
-  for (let i = 0; i < 3; i++) {
-    gateAperture(A, rng, xL0 + 1.0 + i * ((xL1 - xL0 - 2.0) / 2), hL * 0.66, z, 0.9, 1.5, t);
-  }
-  gateAperture(A, rng, (xL0 + xL1) / 2, hL * 0.3, z, 1.1, 1.3, t);
-  merlonRun(A, rng, xL0, xL1, z, t, hL);
-
-  // east block: nearly two metres taller and half a metre proud, so the skyline
-  // steps twice and the block has a sunlit west return of its own
-  const zR = z + eastProud / 2;
-  const tR = t + eastProud;
-  block(xR0, xR1, hR, tR, zR, { key: 'plaster_blue' });
-  gateAperture(A, rng, (xR0 + xR1) / 2, hR * 0.62, zR, 1.0, 1.6, tR);
-  gateAperture(A, rng, (xR0 + xR1) / 2, hR * 0.34, zR, 0.85, 1.2, tR);
-  merlonRun(A, rng, xR0, xR1, zR, tR, hR, { key: 'plaster_blue' });
-
-  // the tower: tallest, and standing proud toward the camera so it casts across
-  // the east block and the arch — the depth cue that carries the whole vista
-  const zT = z + towerProud / 2;
-  block(xT0, xT1, hT, t + towerProud, zT, { key: 'plaster_cream' });
-  for (let i = 0; i < 3; i++) {
-    gateAperture(A, rng, (xT0 + xT1) / 2 + (i - 1) * 1.05, hT * 0.55 + (i === 1 ? 0.25 : 0), zT, 0.5, i === 1 ? 1.5 : 1.1, t + towerProud);
-  }
-  gateAperture(A, rng, (xT0 + xT1) / 2, hT * 0.8, zT, 1.5, 1.0, t + towerProud, { recess: 0.75 });
-  merlonRun(A, rng, xT0, xT1, z + towerProud / 2, t + towerProud, hT, { key: 'plaster_cream' });
-  // a bent aerial on the tower: breaks the hard corner against the sky
-  A.add('metal_rust', BOX(A), LL(IDENT, xT1 - 0.5, hT + 1.9, zT, 0, 0.06, 3.4, 0.06, 0.04, 0.07), {
-    masks: [0.95, 0.5, 0],
-  });
-  A.put('sat_dish', xT0 + 0.9, hT + 0.3, zT + 0.4, 0.7, 1, [1, 1.3, 1]);
-
-  // sandbag emplacements on the ramparts, and a crate of ammunition
-  sandbagWall(A, rng, xL0 + 1.9, z - 0.15, 0.0, 2.4, 3, hL + 0.16);
-  sandbagWall(A, rng, xR0 + 1.7, zR - 0.15, 0.0, 1.9, 3, hR + 0.16);
-  sandbagWall(A, rng, (xT0 + xT1) / 2, zT - 0.25, 0.0, 2.2, 4, hT + 0.16);
-  A.skirts = false;
-  A.put('crate_c', xL1 - 1.2, hL + 0.16, z - 0.6, 0.4, 1, [1, 1.3, 1]);
-  A.put('barrel_rust', xR0 + 0.6, hR + 0.16, zR - 0.5, 0.2, 1, [1, 1.4, 1]);
-  A.skirts = true;
-
-  // The spandrel over the arch, built as a wall panel with a pointed hole so
-  // the arch has real depth and a reveal.
-  const spanH = bodyH - height;
-  A.add('plaster_sand', BOX(A), LL(IDENT, 0, height + spanH / 2, z, 0, span + 0.4, spanH, t), {
-    masks: [0.45, 0.6, 0.35],
-  });
-  A.box('concrete', 0, height + spanH / 2, z, span + 0.4, spanH, t);
-
-  // Arch voussoirs: individual stones around a pointed profile.
-  const seg = 15;
-  for (let i = 0; i <= seg; i++) {
-    const a = (i / seg) * Math.PI;
-    const r = span / 2;
-    const px = -Math.cos(a) * r;
-    const py = height - r + Math.sin(a) * r * 1.18;
-    if (py < height - r - 0.01) continue;
-    const ang = a - Math.PI / 2;
-    A.add(
-      'concrete',
-      BOX(A),
-      LL(IDENT, px, py, z, 0, 0.62, 0.42, t + 0.14, 0, -ang),
-      { masks: [0.7, 0.45, 0.25] }
-    );
-  }
-  // spring-line blocks and the walls beside the opening
-  for (const sx of [-1, 1]) {
-    A.add('concrete', BOX(A), LL(IDENT, sx * (span / 2 + 0.1), height - span / 2 - 0.2, z, 0, 0.6, 0.4, t + 0.2), {
-      masks: [0.7, 0.5, 0.3],
-    });
-    A.box('concrete', sx * (span / 2 + 0.28), (height - span / 2) / 2, z, 0.56, height - span / 2, t + 0.2);
-  }
-
-  /**
-   * The rampart walkway over the arch. It projects 0.75 m toward the camera on
-   * corbels, which puts a hard 0.75 m band of shadow across the spandrel and the
-   * arch head — the value break that stops the middle of the terminator reading
-   * as one flat tone — and its own top surface is in full sun.
-   */
-  const wz = z + t / 2 + 0.38;
-  A.add('roof_screed', BOX(A), LL(IDENT, 0, bodyH + 0.11, wz, 0, span + 1.4, 0.22, 0.82), {
-    masks: [0.55, 0.35, 0.15],
-  });
-  A.box('concrete', 0, bodyH + 0.11, wz, span + 1.4, 0.22, 0.82);
-  for (let i = 0; i < 6; i++) {
-    const bx = -(span + 0.6) / 2 + (i / 5) * (span + 0.6);
-    A.add('concrete', BOX(A), LL(IDENT, bx, bodyH - 0.24, wz - 0.06, 0, 0.2, 0.46, 0.66), {
-      masks: [0.7, 0.6, 0.4],
-    });
-  }
-  // a low, irregular parapet along the walkway's outer edge, sandbags behind it
-  merlonRun(A, rng, -span / 2 - 0.6, span / 2 + 0.6, z + 0.76, t, bodyH + 0.22, {
-    depth: 0.34,
-    set: 0.02,
-  });
-  sandbagWall(A, rng, -0.9, z + 0.15, 0.0, 2.0, 3, bodyH + 0.34);
-
-  // guard hut and checkpoint clutter under the arch
-  const hutX = -span / 2 - 1.2;
-  A.put('block_big', 0.0, 0.0, z + 3.2, 0.1, 1, [1, 1.2, 1]);
-  A.box('concrete', 0, 0.48, z + 3.2, 1.3, 0.96, 0.9);
-  for (const [bx, bz, br] of [
-    [-2.2, z + 2.6, 0.1],
-    [2.4, z + 2.2, 1.6],
-    [-1.4, z - 2.4, 1.5],
-    [2.0, z - 2.8, 0.2],
-  ]) {
-    A.put('jersey', bx, 0, bz, br, 1, [1, rng.range(0.9, 1.3), 1]);
-    A.box('concrete', bx, 0.46, bz, 0.62, 0.92, 1.9, br);
-  }
-  sandbagWall(A, rng, -1.9, z + 4.6, 0.1, 2.4, 4);
-  sandbagWall(A, rng, 2.1, z - 4.4, 0.0, 2.0, 3);
-  for (let i = 0; i < 24; i++) {
-    const px = rng.range(-outerW / 2, outerW / 2);
-    const pz = z + rng.range(-5, 5);
-    if (Math.abs(px) > span / 2 && Math.abs(pz - z) < t / 2 + 0.3) continue;
-    A.put(
-      rng.pick(['brick_a', 'brick_b', 'rock_b', 'litter', 'cinder', 'can', 'weeds', 'plank_b']),
-      px,
-      groundY(px, pz) + 0.02,
-      pz,
-      rng.float() * 6.28,
-      rng.range(0.6, 1.2),
-      [1, 1.4, 1]
-    );
-  }
-  // spalled corners and a bullet-scarred face
-  rubbleMound(A, rng, -span / 2 - 1.0, 0, z + 1.4, 1.2, 16, { key: 'concrete' });
-  rubbleMound(A, rng, span / 2 + 1.4, 0, z - 1.6, 1.0, 12, { key: 'concrete' });
-  // Bullet scarring, clustered. Kept off the tower, whose face stands 0.9 m
-  // proud — a pock on the main plane there would float inside the masonry.
-  if (A.has('pock')) {
-    for (let b = 0; b < 12; b++) {
-      const cx = rng.range(xL0 + 0.5, xR1 - 0.5);
-      const cy = rng.range(0.6, 6.0);
-      if (Math.abs(cx) < span / 2 && cy < height) continue;
-      for (let j = 0; j < rng.int(3, 8); j++) {
-        const px = cx + rng.gauss() * 0.4;
-        const py = cy + rng.gauss() * 0.3;
-        if (Math.abs(px) < span / 2 && py < height) continue;
-        if (px < xL0 + 0.1 || px > xR1 - 0.1 || py < 0.2) continue;
-        if (py > (px < xL1 ? hL : hR) - 0.4) continue;
-        const s = rng.range(0.55, 1.4);
-        A.putS('pock', px, py, z + t / 2 + 0.0015, 0, s, s, rng.range(0.5, 1.2), [1, rng.range(0.7, 1.3), 1]);
-      }
-    }
-    // and a burst across the tower's own proud face
-    for (let b = 0; b < 4; b++) {
-      const cx = rng.range(xT0 + 0.4, xT1 - 0.4);
-      const cy = rng.range(0.8, hT - 1.0);
-      for (let j = 0; j < rng.int(3, 7); j++) {
-        const px = cx + rng.gauss() * 0.35;
-        const py = cy + rng.gauss() * 0.28;
-        if (px < xT0 + 0.1 || px > xT1 - 0.1 || py < 0.3) continue;
-        const s = rng.range(0.5, 1.3);
-        A.putS('pock', px, py, z + t / 2 + towerProud + 0.0015, 0, s, s, rng.range(0.5, 1.1), [1, rng.range(0.7, 1.3), 1]);
-      }
-    }
-  }
-}
-
-/**
- * The map edge: a continuous wall of compound walls, blocked side streets and
- * distant infill so the playable 120 m reads as part of a bigger town.
+ * The map edge: a continuous wall of compound walls and distant infill so the
+ * playable area reads as part of a bigger town. The street's own two ends
+ * (z near STREET.zMin/zMax) are deliberately left unblocked — they read as
+ * continuing into the real road network (Kilmore Avenue north, Beechlawn
+ * Avenue south; see ROAD_ENDS in layout.js) rather than a dead end.
  */
 export function buildPerimeter(A, rng) {
-  const R = 58;
+  // The compound wall has to sit outside the real ~253 m OSM street length
+  // (STREET.zMin..zMax) and the BG* background infill either side of it —
+  // R=58 was left over from the old ~104 m fictional market street and cut
+  // straight across the lane around KW9/KW10 (z~90-110) once the street was
+  // rescaled to real OSM length, walling off the middle of a street whose
+  // ends are supposed to read as open. Margins clear the widest BG infill
+  // (BGE2 reaches x=36; BGN2/BGS2 reach z=234/z=-64) and both real
+  // zMin/zMax with room to spare.
+  const RX = 44;
+  const ZN = STREET.zMin - 30;
+  const ZX = STREET.zMax + 30;
   const segs = [
     // [x0,z0,x1,z1] runs of compound wall
-    [-R, -R, R, -R],
-    [-R, R, R, R],
-    [-R, -R, -R, R],
-    [R, -R, R, R],
+    [-RX, ZN, RX, ZN],
+    [-RX, ZX, RX, ZX],
+    [-RX, ZN, -RX, ZX],
+    [RX, ZN, RX, ZX],
   ];
   for (const [x0, z0, x1, z1] of segs) {
     const dx = x1 - x0;
@@ -2009,34 +1794,6 @@ export function buildPerimeter(A, rng) {
         masks: [0.8, 0.4, 0.15],
       });
       A.box('concrete', px, h / 2, pz, len / n + 0.05, h, 0.45, ry);
-    }
-  }
-  // Blocked cross-streets: rubble barricades and stacked barriers rather than
-  // an invisible wall, so the boundary is diegetic.
-  const blocks = [
-    [0, STREET.zMax + 1.5],
-    [0, STREET.zMin - 1.5],
-  ];
-  for (const [bx, bz] of blocks) {
-    for (let i = -1; i <= 1; i++) {
-      A.put('jersey', bx + i * 2.1, 0.02, bz, 0.02 + rng.range(-0.05, 0.05), 1, [1, 1.2, 1]);
-      A.box('concrete', bx + i * 2.1, 0.46, bz, 0.62, 0.92, 1.9);
-    }
-    rubbleMound(A, rng, bx - 3.4, 0, bz, 2.2, 30);
-    rubbleMound(A, rng, bx + 3.6, 0, bz, 2.0, 26);
-    A.box('concrete', bx, 1.4, bz + (bz > 0 ? 1.4 : -1.4), 16, 2.8, 1.2);
-    for (let i = 0; i < 14; i++) {
-      const px = bx + rng.range(-7, 7);
-      const pz = bz + rng.range(-2, 2);
-      A.put(
-        rng.pick(['brick_a', 'brick_b', 'cinder', 'rock_a', 'slab_shard', 'rebar']),
-        px,
-        groundY(px, pz) + 0.03,
-        pz,
-        rng.float() * 6.28,
-        rng.range(0.7, 1.3),
-        [1, 1.4, 1]
-      );
     }
   }
 }

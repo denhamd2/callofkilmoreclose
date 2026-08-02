@@ -45,6 +45,80 @@ export const SHOTS = {
     time: 1.5,
     doc: 'Night — artificial lights, exposure adaptation, shadow quality in the dark.',
   },
+  housesSample: {
+    // Kilmore Close houses-pass review shot: framed on the KW19/KW20 pair
+    // (layout.js) — the identical-footprint, adjacent-in-z entries used as the
+    // representative "paired frontage" sample against Street View screenshots
+    // 1 & 4. Standing on the pavement looking at both front faces (near-face
+    // x=-14.515, z spanning ~5.2-19.4 — recalibrated from -9.49 for the
+    // dimensions pass's 8.71 m front-garden setback, STREET.setback in
+    // layout.js), the same angle those photos were taken from.
+    pos: [5.5, 1.7, 12.3],
+    look: [-14.515, 2.3, 12.3],
+    fov: 65,
+    time: 12.5,
+    doc: 'Houses-pass judge review: KW19/KW20 paired frontage vs. Street View refs.',
+  },
+  housesSampleKW19: {
+    // Isolated, square-on framing of KW19 alone (layout.js, z=15.95, front
+    // face x=-14.515 — recalibrated from -9.49 for the dimensions pass's
+    // 8.71 m front-garden setback) — the paired `housesSample` shot leaves
+    // KW19 off-centre and its band unconfirmed, so this stands directly
+    // opposite just this house, close enough to rule out occlusion/angle as
+    // the reason the band wasn't reading, rather than adding another paired
+    // shot.
+    pos: [4.2, 1.7, 15.95],
+    look: [-14.515, 2.0, 15.95],
+    fov: 55,
+    time: 12.5,
+    doc: 'Houses-pass judge review: KW19 isolated, square-on — confirms band visibility.',
+  },
+  attachSample: {
+    // Porch/garage-pass review shot (buildings.js `buildAttachments`, layout.js
+    // KW19/KW20 `attachments`): an oblique angle down the row from further
+    // along +z so the low boxes' PROTRUSION reads as a silhouette against the
+    // flat two-storey wall behind them, rather than the near-square-on
+    // `housesSample` angle which compresses that depth. Look x recalibrated
+    // from -9.6 to -14.625 for the dimensions pass's 8.71 m setback.
+    pos: [4.5, 1.8, 6],
+    look: [-14.625, 1.9, 16],
+    fov: 60,
+    time: 12.5,
+    doc: 'Porch/garage-pass judge review: KW19 porch + KW20 garage silhouette, oblique.',
+  },
+
+  roadSample: {
+    // Road/footpath-pass review shot (ground.js buildGround): standing on
+    // the road's centreline mid-street just past the new speed ramp (z=90),
+    // looking down-lane at walking-eye height — road surface, footpath,
+    // kerb line and the ramp's chevron paint all in frame at once.
+    pos: [0, 1.65, 96],
+    look: [0.4, 1.4, 84],
+    fov: 65,
+    time: 16.5,
+    doc: 'Road/footpath-pass judge review: down-lane view over the speed ramp — road/footpath/kerb + chevron markings, confirmed clean in a live preview_start check (offline capture.mjs washes out past ~100 units from spawn; this framing stays well inside that range).',
+  },
+  streetEndSampleNorth: {
+    // Street-end continuity review (layout.js ROAD_ENDS.north / BGN1-2):
+    // stood back from the lane's open north end (z near STREET.zMax=213)
+    // looking up-street, to check the cross-road/backdrop reads as "the
+    // street continues" rather than a dead stop.
+    pos: [12, 1.75, 187],
+    look: [-4, 2.2, 211],
+    fov: 75,
+    time: 16.5,
+    doc: 'Street-end judge review: north/lane end continuity into Kilmore Avenue (hero-style oblique angle — a straight down-lane angle hits a long-distance fog/exposure artifact in this capture harness).',
+  },
+  streetEndSampleSouth: {
+    // Street-end continuity review (layout.js ROAD_ENDS.south / BGS1-2):
+    // stood back from the loop's open south end (z near STREET.zMin=-40)
+    // looking down-street toward Beechlawn Avenue.
+    pos: [12, 1.75, -5],
+    look: [-4, 2.2, -29],
+    fov: 75,
+    time: 16.5,
+    doc: 'Street-end judge review: south/loop end continuity into Beechlawn Avenue (hero-style oblique angle, same reasoning as streetEndSampleNorth).',
+  },
 
   // ---- weapon / viewmodel ----
   weapon: {

@@ -13,7 +13,7 @@ import { STREET, ALLEYS } from './layout.js';
  * visual triangles, which keeps the BVH tiny and the character controller smooth.
  */
 export function buildGround(A, rng) {
-  const { halfWidth: HW, kerb: KB, walkH: WH, zMin, zMax } = STREET;
+  const { halfWidth: HW, kerb: KB, setback: SB, walkH: WH, zMin, zMax } = STREET;
 
   // ------------------------------------------------------------- terrain --
   // Damp earth/verge under everything, gently undulating so the horizon isn't
@@ -27,12 +27,12 @@ export function buildGround(A, rng) {
   for (let i = 0; i < pa.count; i++) {
     const x = pa.getX(i);
     const z = pa.getZ(i);
-    // KB + 3.6, not KB + 1: every house sits at a uniform 3.0 m setback from
-    // the kerb (see layout.js's front-garden decision), so the flat band has
-    // to reach the house face or the front-garden lawn/driveway dressing
+    // KB + SB + 0.6, not KB + 1: every house sits at STREET.setback from the
+    // kerb (see layout.js's front-garden decision), so the flat band has to
+    // reach the house face or the front-garden lawn/driveway dressing
     // (buildStreet's frontGardens) floats/embeds in undulating background
     // terrain instead of sitting flush.
-    const inStreet = Math.abs(x) < KB + 3.6 && z > zMin && z < zMax;
+    const inStreet = Math.abs(x) < KB + SB + 0.6 && z > zMin && z < zMax;
     const h = inStreet ? 0 : (fbm3(x * 0.045, 7.3, z * 0.045, 3) - 0.5) * 1.1 + 0.02;
     pa.setY(i, h - 0.03);
   }
@@ -85,6 +85,48 @@ export function buildGround(A, rng) {
       LL(IDENT, x, camber, z, rng.float() * 0.4, 1, 1, rut ? rng.range(2.0, 4.5) : rng.range(0.7, 1.4)),
       { masks: [0.35, 0.25, 0.1] }
     );
+  }
+
+  // ---------------------------------------------------- speed ramp / bump --
+  // A single tarmac speed ramp crossing the full road width, with three
+  // white painted chevrons pointing up-street — the traffic-calming ramp
+  // visible in the Kilmore Close reference photos, not part of the old
+  // market-street set. Placed clear of parked cars/hedges/trees in
+  // layout.js's SET_PIECES.
+  {
+    const rampZ = 90;
+    const rampLen = 0.85;
+    const rampH = 0.055;
+    const rampCamber = (1 - (0 / HW) ** 2) * 0.055; // road crown at the ramp's centre
+    A.add(
+      'asphalt',
+      BOX_SOFT(A),
+      LL(IDENT, 0, rampCamber + rampH / 2, rampZ, 0, HW * 2 - 0.1, rampH, rampLen),
+      { masks: [0.2, 0.35, 0.15] }
+    );
+    A.box('dirt', 0, rampCamber + rampH / 2, rampZ, HW * 2, rampH + 0.02, rampLen);
+    const chevron = A.cache('speed_chevron', () => {
+      const g = new THREE.BufferGeometry();
+      g.setAttribute(
+        'position',
+        new THREE.BufferAttribute(new Float32Array([0, 0, 0.5, -0.42, 0, -0.5, 0.42, 0, -0.5]), 3)
+      );
+      g.setIndex([0, 1, 2]);
+      g.computeVertexNormals();
+      paintMasks(g, (px, py, pz, nx, ny, nz, out) => {
+        out[0] = 0.05;
+        out[1] = 0.15;
+        out[2] = 0.05;
+      });
+      return g;
+    });
+    for (const cx of [-2.4, 0, 2.4]) {
+      A.add(
+        'road_paint_white',
+        chevron,
+        LL(IDENT, cx, rampCamber + rampH + 0.006, rampZ, 0, 1.0, 1, 1.05)
+      );
+    }
   }
 
   // ------------------------------------------------------- pavement slabs --

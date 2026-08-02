@@ -17,6 +17,7 @@ import {
   BOX_SOFT,
   IDENT,
   LL,
+  slab,
   worldOf,
 } from './kit.js';
 import { chamferBox, clothGeometry, fbm3, patchGeometry, polyPrism, runoffStreak } from './util.js';
@@ -287,7 +288,72 @@ export function buildBuilding(A, rng, spec) {
     drainpipe(A, pmD.clone(), rng.range(len / 2 - 1.0, len / 2 - 0.4), dpTop, dpTop, rng);
   }
 
+  // ---------------------------------------------------------- frontage add-ons --
+  buildAttachments(A, rng, spec, wallKey, streetSide);
+
   return info;
+}
+
+// ============================================================ attachments ====
+/**
+ * One-storey porch/garage additions tucked against the street face, opt-in
+ * via `spec.attachments`. Every paired semi-D in the Street View references
+ * has one of these at the shared boundary with its neighbour — a garage on
+ * one half, a porch on the other — which is what actually breaks the
+ * repeated two-storey block up before the eye reaches the roofline; the
+ * pitched roof and wall banding above are untouched by this function.
+ *
+ * Positioned directly in level space (no panel matrix): `along` is an offset
+ * along the wall's own run from the building's centreline (world x for a
+ * north/south-facing wall, world z for an east/west-facing one — whichever
+ * axis `streetSide` doesn't point down), `depth` is how far the box
+ * protrudes outward from the wall face along `streetSide`'s normal. Kept
+ * shallow (<=2.6m) to stay inside the fixed 3.0m front-garden gap
+ * (layout.js) rather than reaching real driveway depth.
+ */
+function buildAttachments(A, rng, spec, wallKey, streetSide) {
+  const list = spec.attachments;
+  if (!list || !list.length) return;
+  const n = SIDE[streetSide].n;
+  const alongX = streetSide === 0 || streetSide === 2 ? 1 : 0;
+  const alongZ = 1 - alongX;
+  const faceX = spec.x + n[0] * (spec.w / 2);
+  const faceZ = spec.z + n[2] * (spec.d / 2);
+
+  for (const at of list) {
+    const isGarage = at.kind === 'garage';
+    const h = at.h ?? (isGarage ? 2.3 : 2.5);
+    const depth = Math.min(at.depth ?? (isGarage ? 2.6 : 1.3), 2.6);
+    const w = at.w ?? (isGarage ? 2.6 : 1.6);
+    const along = at.along ?? 0;
+    const cx = faceX + alongX * along + n[0] * (depth / 2);
+    const cz = faceZ + alongZ * along + n[2] * (depth / 2);
+    const boxW = alongX ? w : depth;
+    const boxD = alongX ? depth : w;
+    const key = at.wallKey ?? wallKey;
+
+    A.add(key, BOX(A), LL(IDENT, cx, h / 2, cz, 0, boxW, h, boxD), { masks: [0.5, 0.5, 0.2] });
+    A.box('concrete', cx, h / 2, cz, boxW, h, boxD);
+    // flat capped roof, thin fascia overhang
+    const capW = alongX ? w + 0.16 : depth + 0.16;
+    const capD = alongX ? depth + 0.16 : w + 0.16;
+    A.add('concrete', BOX_SOFT(A), LL(IDENT, cx, h + 0.05, cz, 0, capW, 0.1, capD), {
+      masks: [0.6, 0.4, 0.15],
+    });
+
+    // door/garage leaf set into the outward face
+    const leafW = isGarage ? w * 0.8 : 0.95;
+    const leafH = isGarage ? h * 0.78 : 2.05;
+    const leafKey = at.doorKey ?? 'wood_dark';
+    const faceOff = depth / 2 + 0.03;
+    const lx = cx + n[0] * faceOff;
+    const lz = cz + n[2] * faceOff;
+    const leafX = alongX ? leafW : 0.06;
+    const leafZ = alongX ? 0.06 : leafW;
+    A.add(leafKey, BOX(A), LL(IDENT, lx, leafH / 2 + 0.03, lz, 0, leafX, leafH, leafZ), {
+      masks: [0.3, 0.3, 0.1],
+    });
+  }
 }
 
 // =================================================================== roof ====
@@ -583,6 +649,31 @@ function buildFacade(A, rng, spec, info, ctx) {
   });
 
   for (const fn of deco) fn();
+
+  // ---- painted ground-floor spandrel band ----------------------------------
+  // A wine/coral accent strip under the front windows, the way the paired
+  // semis in the Street View references read as two-tone paint rather than
+  // one flat render colour. Street-facing ground floor only — the gable ends
+  // and rear elevation in every reference stay a single colour.
+  //
+  // Iteration 2: the top edge stays pinned at the window sill (1.05) — raising
+  // it further would push the band up into the glass opening itself. Instead
+  // the band grows DOWN, over the plinth course, to 0.1 off the ground: at the
+  // iteration-1 height (plinth-top to sill, 0.63 m) it read as a thin trim
+  // line from street distance; starting it near ground level nearly doubles
+  // the visible height without touching any opening.
+  if (spec.bandKey && f === 0 && street) {
+    const bandBottom = 0.1;
+    const bandTop = 1.05; // ground-floor window sill height — do not raise past this
+    const bandH = bandTop - bandBottom;
+    // A touch more proud of the wall (was -0.017) so the band casts a hairline
+    // shadow at its top edge instead of sitting perfectly flush — that edge
+    // shadow is what reads as "painted strip" rather than "tinted patch" at
+    // range.
+    slab(A, spec.bandKey, pm, 0, bandBottom + bandH / 2, -0.022, len + 0.04, bandH, 0.035, {
+      masks: [0.5, 0.4, 0.2],
+    });
+  }
 
   // ---- rain runoff below every opening and ledge --------------------------
   // The world knows where the water comes off: sills, shopfront heads, awning

@@ -292,6 +292,10 @@ export class Agent {
   /* ================================================================== */
 
   _sense(dt) {
+    // Position-gated squads (see index.js#populate) stay combat-deaf until
+    // the player crosses their activation threshold, so the far encounter
+    // doesn't merge into the near one via early sightlines.
+    if (this.squad && !this.squad.active) return;
     const player = this.ai.playerPosition(this._v3);
     if (!player) return;
     const eye = this.eye;
@@ -330,6 +334,7 @@ export class Agent {
   /** A gunshot or footstep heard from `pos` with a given loudness (metres). */
   hear(pos, loudness) {
     if (!this.alive) return;
+    if (this.squad && !this.squad.active) return;
     const d = this.position.distanceTo(pos);
     if (d > loudness) return;
     const strength = 1 - d / loudness;
@@ -467,7 +472,7 @@ export class Agent {
         .sub(target)
         .setY(0)
         .normalize()
-        .multiplyScalar(9)
+        .multiplyScalar(5)
         .add(this.position);
       if (this._goTo(away)) {
         this._setState(STATE.RETREAT);

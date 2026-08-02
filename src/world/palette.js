@@ -166,6 +166,18 @@ export const PALETTE = {
       wear: [0, 0.55, 0.45, 0],
     },
   },
+  /**
+   * Road-marking paint: the white triangles on a speed ramp / the give-way
+   * chevrons at a junction mouth. Reuses the asphalt generator (so it still
+   * reads as paint worn into a tarmac surface, not a decal) but bright and
+   * with almost no cavity grime — traffic paint is refreshed far more often
+   * than the road around it.
+   */
+  road_paint_white: {
+    name: 'asphalt',
+    surface: 'concrete',
+    opts: { vertexMasks: true, tint: 0xdedcd2, scale: 2.0, detile: 0.4, weather: [0.15, 0.2, 0.1, 0.1], wear: [0, 0.3, 0.2, 0] },
+  },
   sand: {
     name: 'sand',
     surface: 'sand',
@@ -414,6 +426,44 @@ export const PALETTE = {
   },
 
   // ------------------------------------------------------- residential kit --
+  /**
+   * Painted ground-floor spandrel band, the wine/maroon accent strip under
+   * the front windows on the paired semis in the Street View references
+   * (screenshots 1 & 4) — never the whole wall, just the band below sill
+   * height that reads as a two-tone paint job rather than a flat single tint.
+   *
+   * Iteration 2: darkened and desaturated less (lower weather amount) than the
+   * iteration-1 value — at the original 0x6e3f3c/[.35,.4,.8,.5] the band's own
+   * grime pass muddied it toward the wall colour and it read as shadow, not
+   * paint, at street distance.
+   */
+  plaster_wine: {
+    name: 'plaster',
+    surface: 'plaster',
+    opts: { vertexMasks: true, tint: 0x5c2a28, scale: 1.4, weather: [0.25, 0.3, 0.5, 0.32] },
+  },
+  /**
+   * Second band accent, for the neighbour half of a painted pair — a
+   * saturated terracotta/coral rather than iteration 1's `plaster_pink`
+   * (0xc09a86), which sat too close in value to `plaster_sand`/`plaster_butter`
+   * wall tones to read as a separate paint colour.
+   */
+  plaster_coral: {
+    name: 'plaster',
+    surface: 'plaster',
+    opts: { vertexMasks: true, tint: 0xb85a42, scale: 1.4, weather: [0.25, 0.3, 0.5, 0.32] },
+  },
+  /**
+   * Butter-yellow render, for the second half of a painted pair — pulls the
+   * mustard/yellow read from the Street View references that `plaster_sand`
+   * (too brown/tan) didn't reach, and gives the paired house real separation
+   * from its `plaster_white` neighbour instead of two close tans.
+   */
+  plaster_butter: {
+    name: 'plaster',
+    surface: 'plaster',
+    opts: { vertexMasks: true, tint: 0xd9bf74, scale: 2.1, weather: [0.4, 0.5, 1.3, 0.55] },
+  },
   /** Wet-look rendered/pebbledash boundary wall, the standard Dublin front garden wall. */
   wall_garden: {
     name: 'concrete',

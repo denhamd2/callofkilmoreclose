@@ -507,10 +507,17 @@ export class AiSystem {
     }
     let slot = 0;
     let made = 0;
+    const squadAnchors = [];
     for (let q = 0; q < squads && q < ranked.length; q++) {
       const per = sizes[q];
       const squad = this.createSquad();
-      const anchor = ranked[q % ranked.length].s;
+      // Spread anchors across the whole far-to-near range instead of always
+      // taking the front of `ranked`: the two farthest points are often close
+      // to each other (both near the same dead end), which put every squad
+      // in one cluster and made a 2-squad garrison read as one encounter.
+      const anchorIdx = Math.min(ranked.length - 1, Math.floor((q * ranked.length) / squads));
+      const anchor = ranked[anchorIdx].s;
+      squadAnchors.push({ squad, pos: anchor.position, d: ranked[anchorIdx].d });
       // patrol route: this spawn point and the two next-nearest ones
       const route = [anchor.position.clone()];
       const others = ranked
@@ -547,6 +554,29 @@ export class AiSystem {
         made++;
       }
     }
+    // Position-gate every squad beyond the nearest one: a live playthrough
+    // showed patrol drift and weapon noise pulling the far squad into combat
+    // before the player had even engaged the near one, so it read as a single
+    // fight instead of two beats. Each gated squad stays combat-deaf (agent.js
+    // `_sense`/`hear` check `squad.active`) until the player crosses the
+    // midpoint line between it and the squad nearer to the player start.
+    if (squadAnchors.length > 1) {
+      squadAnchors.sort((a, b) => a.d - b.d);
+      const near = squadAnchors[0];
+      for (let i = 1; i < squadAnchors.length; i++) {
+        const far = squadAnchors[i];
+        const dx = far.pos.x - near.pos.x;
+        const dz = far.pos.z - near.pos.z;
+        const len = Math.hypot(dx, dz) || 1;
+        far.squad.active = false;
+        far.squad.activationNormal = { x: dx / len, z: dz / len };
+        far.squad.activationPoint = {
+          x: (near.pos.x + far.pos.x) / 2,
+          z: (near.pos.z + far.pos.z) / 2,
+        };
+      }
+    }
+
     console.info(`[ai] garrison: ${made} enemies in ${squads} squads`);
     return made;
   }
@@ -747,7 +777,8 @@ export class AiSystem {
     this._pathBudget = this.pathsPerFrame;
     this._updateRelevance(ctx);
 
-    for (const s of this.squads) s.update(dt);
+    const playerPos = this.playerPosition(this._v3);
+    for (const s of this.squads) s.update(dt, playerPos);
 
     let alive = 0;
     for (let i = 0; i < this.agents.length; i++) {
