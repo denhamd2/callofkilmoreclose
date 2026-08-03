@@ -4,6 +4,20 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
     <title>GTA: Kilmore Close</title>
+    <!--
+      Inline favicon, deliberately a data URI.
+
+      Without this the browser requests /favicon.ico on every load, there is no
+      public/ directory to serve one, and the resulting 404 is a console error —
+      which tools/smoke.mjs counts as a page error. That made the pre-deploy
+      smoke gate fail on EVERY run, for every build, with the scene drawing
+      perfectly. A data URI fixes the cause rather than teaching the test to
+      ignore it, and keeps the no-external-assets rule: nothing is fetched.
+    -->
+    <link
+      rel="icon"
+      href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><rect width='16' height='16' fill='%230b0d0f'/><path d='M3 11h10v2H3z' fill='%23f0f6fa'/><path d='M4 5h3v6H4zM9 5h3v6H9z' fill='%23ffc247'/></svg>"
+    />
     <style>
       :root { color-scheme: dark; }
       * { margin: 0; padding: 0; box-sizing: border-box; }
