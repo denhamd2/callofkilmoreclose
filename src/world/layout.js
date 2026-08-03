@@ -46,9 +46,13 @@
  *  - Front garden lawn/driveway/boundary-wall dressing is procedural (see
  *    dressing.js's `frontGardens`) — the "garden" reads as a bounded plot,
  *    not open ground.
- *  - floors (2), wallKey materials (brick / brick_fine / plaster_cream /
- *    plaster_white, cycled for texture variety), doorBays, roofProps,
- *    damage — ordinary set-dressing choices, not claimed as OSM facts.
+ *  - floors (2), wallKey materials (dash_cream / dash_white / dash_sand /
+ *    dash_butter — pebbledash, cycled for variety and paired so neighbours
+ *    contrast), doorBays, roofProps, damage — ordinary set-dressing choices,
+ *    not claimed as OSM facts. The BG* background infill is dashed too: it
+ *    stands for the rears of the neighbouring streets, which are the same
+ *    estate. bandKey stays plaster_*, because the painted ground-floor band is
+ *    a smooth render strip over the dash, not more aggregate.
  *  - The engine's road is a straight, constant-width ribbon (see
  *    ground.js:16-65) with no curve/fork support, so the real curving,
  *    forking street is flattened: real along-axis position/order/spacing is
@@ -154,10 +158,10 @@ export const ALLEYS = [
  */
 export const BUILDINGS = [
   // --------------------------------------------- KW row (single lane + loop west arm) --
-  { id: 'KW1', x: -18.585, z: 197.35, w: 8.1, d: 9.73, floors: 2, wallKey: 'plaster_sand', bandKey: 'plaster_wine', streetSide: 1, damage: 0.05, balconies: 0, doorBays: { 1: 0 }, roofProps: 2, attachments: [{ kind: 'porch', along: -3.615, w: 1.9, depth: 1.5, h: 2.5, wallKey: 'plaster_wine' }] }, // osm way/644614598
-  { id: 'KW2', x: -21.245, z: 188.42, w: 13.4, d: 7.53, floors: 2, wallKey: 'plaster_cream', bandKey: 'plaster_wine', streetSide: 1, damage: 0.05, balconies: 0, doorBays: { 1: 0 }, roofProps: 2, attachments: [{ kind: 'garage', along: 2.165, w: 2.6, depth: 2.5, h: 2.3, doorKey: 'wood_prop' }] }, // osm way/960176181 — irregular/larger footprint, kept as mapped
-  { id: 'KW3', x: -21.505, z: 159.25, w: 14.0, d: 10.1, floors: 2, wallKey: 'plaster_cream', bandKey: 'plaster_wine', streetSide: 1, damage: 0.1, balconies: 0, doorBays: { 1: 0 }, roofProps: 2, attachments: [{ kind: 'porch', along: -3.8, w: 1.9, depth: 1.5, h: 2.5, wallKey: 'plaster_wine' }] }, // osm way/644614600 — irregular/larger footprint (likely a mapped semi-D pair), kept as mapped
-  { id: 'KW4', x: -19.035, z: 151.2, w: 9.0, d: 5.4, floors: 2, wallKey: 'plaster_white', bandKey: 'plaster_coral', streetSide: 1, damage: 0.05, balconies: 0, doorBays: { 1: 0 }, roofProps: 1, attachments: [{ kind: 'garage', along: 1.1, w: 2.6, depth: 2.5, h: 2.3, doorKey: 'wood_prop' }] }, // osm way/960176180
+  { id: 'KW1', x: -18.585, z: 197.35, w: 8.1, d: 9.73, floors: 2, wallKey: 'dash_sand', bandKey: 'plaster_wine', streetSide: 1, damage: 0.05, balconies: 0, doorBays: { 1: 0 }, roofProps: 2, attachments: [{ kind: 'porch', along: -3.615, w: 1.9, depth: 1.5, h: 2.5, wallKey: 'plaster_wine' }] }, // osm way/644614598
+  { id: 'KW2', x: -21.245, z: 188.42, w: 13.4, d: 7.53, floors: 2, wallKey: 'dash_cream', bandKey: 'plaster_wine', streetSide: 1, damage: 0.05, balconies: 0, doorBays: { 1: 0 }, roofProps: 2, attachments: [{ kind: 'garage', along: 2.165, w: 2.6, depth: 2.5, h: 2.3, doorKey: 'wood_prop' }] }, // osm way/960176181 — irregular/larger footprint, kept as mapped
+  { id: 'KW3', x: -21.505, z: 159.25, w: 14.0, d: 10.1, floors: 2, wallKey: 'dash_cream', bandKey: 'plaster_wine', streetSide: 1, damage: 0.1, balconies: 0, doorBays: { 1: 0 }, roofProps: 2, attachments: [{ kind: 'porch', along: -3.8, w: 1.9, depth: 1.5, h: 2.5, wallKey: 'plaster_wine' }] }, // osm way/644614600 — irregular/larger footprint (likely a mapped semi-D pair), kept as mapped
+  { id: 'KW4', x: -19.035, z: 151.2, w: 9.0, d: 5.4, floors: 2, wallKey: 'dash_white', bandKey: 'plaster_coral', streetSide: 1, damage: 0.05, balconies: 0, doorBays: { 1: 0 }, roofProps: 1, attachments: [{ kind: 'garage', along: 1.1, w: 2.6, depth: 2.5, h: 2.3, doorKey: 'wood_prop' }] }, // osm way/960176180
   {
     id: 'KW5',
     x: -18.835,
@@ -165,7 +169,7 @@ export const BUILDINGS = [
     w: 8.6,
     d: 6.63,
     floors: 2,
-    wallKey: 'plaster_sand',
+    wallKey: 'dash_sand',
     bandKey: 'plaster_wine',
     streetSide: 1,
     damage: 0.05,
@@ -197,13 +201,13 @@ export const BUILDINGS = [
       },
     ],
   },
-  { id: 'KW6', x: -18.965, z: 134.31, w: 8.9, d: 4.83, floors: 2, wallKey: 'plaster_cream', bandKey: 'plaster_wine', streetSide: 1, damage: 0.05, balconies: 0, doorBays: { 1: 0 }, roofProps: 1, attachments: [{ kind: 'garage', along: 0.815, w: 2.6, depth: 2.5, h: 2.3, doorKey: 'wood_prop' }] }, // osm way/960176179
-  { id: 'KW7', x: -20.795, z: 123.95, w: 12.5, d: 6.84, floors: 2, wallKey: 'plaster_cream', bandKey: 'plaster_wine', streetSide: 1, damage: 0.1, balconies: 0, doorBays: { 1: 0 }, roofProps: 2, attachments: [{ kind: 'porch', along: -2.17, w: 1.9, depth: 1.5, h: 2.5, wallKey: 'plaster_wine' }] }, // osm way/644614616 — irregular footprint, kept as mapped
-  { id: 'KW8', x: -19.105, z: 117.11, w: 9.2, d: 6.24, floors: 2, wallKey: 'plaster_white', bandKey: 'plaster_coral', streetSide: 1, damage: 0.05, balconies: 0, doorBays: { 1: 0 }, roofProps: 2, attachments: [{ kind: 'garage', along: 1.52, w: 2.6, depth: 2.5, h: 2.3, doorKey: 'wood_prop' }] }, // osm way/960176178
-  { id: 'KW9', x: -19.305, z: 104.9, w: 9.6, d: 6.52, floors: 2, wallKey: 'plaster_sand', bandKey: 'plaster_wine', streetSide: 1, damage: 0.05, balconies: 0, doorBays: { 1: 0 }, roofProps: 2, attachments: [{ kind: 'porch', along: -2.01, w: 1.9, depth: 1.5, h: 2.5, wallKey: 'plaster_wine' }] }, // osm way/644614617
-  { id: 'KW10', x: -19.305, z: 98.08, w: 9.6, d: 6.52, floors: 2, wallKey: 'plaster_cream', bandKey: 'plaster_wine', streetSide: 1, damage: 0.05, balconies: 0, doorBays: { 1: 0 }, roofProps: 2, attachments: [{ kind: 'garage', along: 1.66, w: 2.6, depth: 2.5, h: 2.3, doorKey: 'wood_prop' }] }, // osm way/960176177
-  { id: 'KW11', x: -18.975, z: 86.19, w: 8.9, d: 6.32, floors: 2, wallKey: 'plaster_cream', bandKey: 'plaster_wine', streetSide: 1, damage: 0.05, balconies: 0, doorBays: { 1: 0 }, roofProps: 1, attachments: [{ kind: 'porch', along: -1.91, w: 1.9, depth: 1.5, h: 2.5, wallKey: 'plaster_wine' }] }, // osm way/644614618
-  { id: 'KW12', x: -18.975, z: 79.57, w: 8.9, d: 6.32, floors: 2, wallKey: 'plaster_white', bandKey: 'plaster_coral', streetSide: 1, damage: 0.05, balconies: 0, doorBays: { 1: 0 }, roofProps: 1, attachments: [{ kind: 'garage', along: 1.56, w: 2.6, depth: 2.5, h: 2.3, doorKey: 'wood_prop' }] }, // osm way/960176176
+  { id: 'KW6', x: -18.965, z: 134.31, w: 8.9, d: 4.83, floors: 2, wallKey: 'dash_cream', bandKey: 'plaster_wine', streetSide: 1, damage: 0.05, balconies: 0, doorBays: { 1: 0 }, roofProps: 1, attachments: [{ kind: 'garage', along: 0.815, w: 2.6, depth: 2.5, h: 2.3, doorKey: 'wood_prop' }] }, // osm way/960176179
+  { id: 'KW7', x: -20.795, z: 123.95, w: 12.5, d: 6.84, floors: 2, wallKey: 'dash_cream', bandKey: 'plaster_wine', streetSide: 1, damage: 0.1, balconies: 0, doorBays: { 1: 0 }, roofProps: 2, attachments: [{ kind: 'porch', along: -2.17, w: 1.9, depth: 1.5, h: 2.5, wallKey: 'plaster_wine' }] }, // osm way/644614616 — irregular footprint, kept as mapped
+  { id: 'KW8', x: -19.105, z: 117.11, w: 9.2, d: 6.24, floors: 2, wallKey: 'dash_white', bandKey: 'plaster_coral', streetSide: 1, damage: 0.05, balconies: 0, doorBays: { 1: 0 }, roofProps: 2, attachments: [{ kind: 'garage', along: 1.52, w: 2.6, depth: 2.5, h: 2.3, doorKey: 'wood_prop' }] }, // osm way/960176178
+  { id: 'KW9', x: -19.305, z: 104.9, w: 9.6, d: 6.52, floors: 2, wallKey: 'dash_sand', bandKey: 'plaster_wine', streetSide: 1, damage: 0.05, balconies: 0, doorBays: { 1: 0 }, roofProps: 2, attachments: [{ kind: 'porch', along: -2.01, w: 1.9, depth: 1.5, h: 2.5, wallKey: 'plaster_wine' }] }, // osm way/644614617
+  { id: 'KW10', x: -19.305, z: 98.08, w: 9.6, d: 6.52, floors: 2, wallKey: 'dash_cream', bandKey: 'plaster_wine', streetSide: 1, damage: 0.05, balconies: 0, doorBays: { 1: 0 }, roofProps: 2, attachments: [{ kind: 'garage', along: 1.66, w: 2.6, depth: 2.5, h: 2.3, doorKey: 'wood_prop' }] }, // osm way/960176177
+  { id: 'KW11', x: -18.975, z: 86.19, w: 8.9, d: 6.32, floors: 2, wallKey: 'dash_cream', bandKey: 'plaster_wine', streetSide: 1, damage: 0.05, balconies: 0, doorBays: { 1: 0 }, roofProps: 1, attachments: [{ kind: 'porch', along: -1.91, w: 1.9, depth: 1.5, h: 2.5, wallKey: 'plaster_wine' }] }, // osm way/644614618
+  { id: 'KW12', x: -18.975, z: 79.57, w: 8.9, d: 6.32, floors: 2, wallKey: 'dash_white', bandKey: 'plaster_coral', streetSide: 1, damage: 0.05, balconies: 0, doorBays: { 1: 0 }, roofProps: 1, attachments: [{ kind: 'garage', along: 1.56, w: 2.6, depth: 2.5, h: 2.3, doorKey: 'wood_prop' }] }, // osm way/960176176
   {
     id: 'KW13',
     x: -19.145,
@@ -211,7 +215,7 @@ export const BUILDINGS = [
     w: 9.2,
     d: 7.72,
     floors: 2,
-    wallKey: 'plaster_sand',
+    wallKey: 'dash_sand',
     bandKey: 'plaster_wine',
     streetSide: 1,
     damage: 0.05,
@@ -241,11 +245,11 @@ export const BUILDINGS = [
       },
     ],
   },
-  { id: 'KW14', x: -19.145, z: 58.81, w: 9.2, d: 6.92, floors: 2, wallKey: 'plaster_cream', bandKey: 'plaster_wine', streetSide: 1, damage: 0.05, balconies: 0, doorBays: { 1: 0 }, roofProps: 2, attachments: [{ kind: 'garage', along: 1.86, w: 2.6, depth: 2.5, h: 2.3, doorKey: 'wood_prop' }] }, // osm way/960176175
-  { id: 'KW15', x: -19.145, z: 50.8, w: 9.2, d: 7.32, floors: 2, wallKey: 'plaster_cream', bandKey: 'plaster_wine', streetSide: 1, damage: 0.05, balconies: 0, doorBays: { 1: 0 }, roofProps: 1, attachments: [{ kind: 'porch', along: -2.41, w: 1.9, depth: 1.5, h: 2.5, wallKey: 'plaster_wine' }] }, // osm way/644614614
-  { id: 'KW16', x: -19.145, z: 42.78, w: 9.2, d: 7.82, floors: 2, wallKey: 'plaster_white', bandKey: 'plaster_coral', streetSide: 1, damage: 0.05, balconies: 0, doorBays: { 1: 0 }, roofProps: 2, attachments: [{ kind: 'garage', along: 2.31, w: 2.6, depth: 2.5, h: 2.3, doorKey: 'wood_prop' }] }, // osm way/960176174
-  { id: 'KW17', x: -19.155, z: 34.62, w: 9.3, d: 6.36, floors: 2, wallKey: 'plaster_sand', bandKey: 'plaster_wine', streetSide: 1, damage: 0.05, balconies: 0, doorBays: { 1: 0 }, roofProps: 1, attachments: [{ kind: 'porch', along: -1.93, w: 1.9, depth: 1.5, h: 2.5, wallKey: 'plaster_wine' }] }, // osm way/644614624 — loop's west arm begins here
-  { id: 'KW18', x: -19.155, z: 27.81, w: 9.3, d: 6.66, floors: 2, wallKey: 'plaster_cream', bandKey: 'plaster_wine', streetSide: 1, damage: 0.05, balconies: 0, doorBays: { 1: 0 }, roofProps: 2, attachments: [{ kind: 'garage', along: 1.73, w: 2.6, depth: 2.5, h: 2.3, doorKey: 'wood_prop' }] }, // osm way/960176171
+  { id: 'KW14', x: -19.145, z: 58.81, w: 9.2, d: 6.92, floors: 2, wallKey: 'dash_cream', bandKey: 'plaster_wine', streetSide: 1, damage: 0.05, balconies: 0, doorBays: { 1: 0 }, roofProps: 2, attachments: [{ kind: 'garage', along: 1.86, w: 2.6, depth: 2.5, h: 2.3, doorKey: 'wood_prop' }] }, // osm way/960176175
+  { id: 'KW15', x: -19.145, z: 50.8, w: 9.2, d: 7.32, floors: 2, wallKey: 'dash_cream', bandKey: 'plaster_wine', streetSide: 1, damage: 0.05, balconies: 0, doorBays: { 1: 0 }, roofProps: 1, attachments: [{ kind: 'porch', along: -2.41, w: 1.9, depth: 1.5, h: 2.5, wallKey: 'plaster_wine' }] }, // osm way/644614614
+  { id: 'KW16', x: -19.145, z: 42.78, w: 9.2, d: 7.82, floors: 2, wallKey: 'dash_white', bandKey: 'plaster_coral', streetSide: 1, damage: 0.05, balconies: 0, doorBays: { 1: 0 }, roofProps: 2, attachments: [{ kind: 'garage', along: 2.31, w: 2.6, depth: 2.5, h: 2.3, doorKey: 'wood_prop' }] }, // osm way/960176174
+  { id: 'KW17', x: -19.155, z: 34.62, w: 9.3, d: 6.36, floors: 2, wallKey: 'dash_sand', bandKey: 'plaster_wine', streetSide: 1, damage: 0.05, balconies: 0, doorBays: { 1: 0 }, roofProps: 1, attachments: [{ kind: 'porch', along: -1.93, w: 1.9, depth: 1.5, h: 2.5, wallKey: 'plaster_wine' }] }, // osm way/644614624 — loop's west arm begins here
+  { id: 'KW18', x: -19.155, z: 27.81, w: 9.3, d: 6.66, floors: 2, wallKey: 'dash_cream', bandKey: 'plaster_wine', streetSide: 1, damage: 0.05, balconies: 0, doorBays: { 1: 0 }, roofProps: 2, attachments: [{ kind: 'garage', along: 1.73, w: 2.6, depth: 2.5, h: 2.3, doorKey: 'wood_prop' }] }, // osm way/960176171
   // SAMPLE PASS (houses agent) — mirrored-footprint pair used as the
   // representative paired frontage against screenshots 1 & 4, visible via the
   // `housesSample` capture shot (src/dev/shots.js). bandKey paints a ground-
@@ -259,9 +263,9 @@ export const BUILDINGS = [
   // Street View references: a small glazed porch at KW19's boundary with
   // KW20, a flat-roofed garage at KW20's matching boundary — the two sit
   // ~0.3m apart, echoing the party-wall gap already trimmed in the OSM data.
-  { id: 'KW19', x: -18.865, z: 15.95, w: 8.7, d: 6.97, floors: 2, wallKey: 'plaster_white', bandKey: 'plaster_wine', streetSide: 1, damage: 0.05, balconies: 0, doorBays: { 1: 0 }, roofProps: 1, attachments: [{ kind: 'porch', along: -1.74, w: 1.9, depth: 1.5, h: 2.5, wallKey: 'plaster_wine' }] }, // osm way/644614623 — porch centred on the doorBays{1:0} entrance (bay0 sits at along ~ -1.74)
-  { id: 'KW20', x: -18.865, z: 8.68, w: 8.7, d: 6.97, floors: 2, wallKey: 'plaster_butter', bandKey: 'plaster_coral', streetSide: 1, damage: 0.05, balconies: 0, doorBays: { 1: 0 }, roofProps: 2, attachments: [{ kind: 'garage', along: 1.9, w: 2.6, depth: 2.5, h: 2.3, doorKey: 'wood_prop' }] }, // osm way/960176170
-  { id: 'KW21', x: -19.335, z: -3.83, w: 9.6, d: 7.87, floors: 2, wallKey: 'plaster_sand', bandKey: 'plaster_wine', streetSide: 1, damage: 0.1, balconies: 0, doorBays: { 1: 0 }, roofProps: 2, attachments: [{ kind: 'porch', along: -2.685, w: 1.9, depth: 1.5, h: 2.5, wallKey: 'plaster_wine' }] }, // osm way/644614622 — KW22 (roofAccess finale) excluded from this pattern, so KW21 gets a porch with no paired garage neighbour
+  { id: 'KW19', x: -18.865, z: 15.95, w: 8.7, d: 6.97, floors: 2, wallKey: 'dash_white', bandKey: 'plaster_wine', streetSide: 1, damage: 0.05, balconies: 0, doorBays: { 1: 0 }, roofProps: 1, attachments: [{ kind: 'porch', along: -1.74, w: 1.9, depth: 1.5, h: 2.5, wallKey: 'plaster_wine' }] }, // osm way/644614623 — porch centred on the doorBays{1:0} entrance (bay0 sits at along ~ -1.74)
+  { id: 'KW20', x: -18.865, z: 8.68, w: 8.7, d: 6.97, floors: 2, wallKey: 'dash_butter', bandKey: 'plaster_coral', streetSide: 1, damage: 0.05, balconies: 0, doorBays: { 1: 0 }, roofProps: 2, attachments: [{ kind: 'garage', along: 1.9, w: 2.6, depth: 2.5, h: 2.3, doorKey: 'wood_prop' }] }, // osm way/960176170
+  { id: 'KW21', x: -19.335, z: -3.83, w: 9.6, d: 7.87, floors: 2, wallKey: 'dash_sand', bandKey: 'plaster_wine', streetSide: 1, damage: 0.1, balconies: 0, doorBays: { 1: 0 }, roofProps: 2, attachments: [{ kind: 'porch', along: -2.685, w: 1.9, depth: 1.5, h: 2.5, wallKey: 'plaster_wine' }] }, // osm way/644614622 — KW22 (roofAccess finale) excluded from this pattern, so KW21 gets a porch with no paired garage neighbour
   {
     id: 'KW22',
     x: -19.335,
@@ -269,7 +273,7 @@ export const BUILDINGS = [
     w: 9.6,
     d: 7.87,
     floors: 2,
-    wallKey: 'plaster_cream',
+    wallKey: 'dash_cream',
     streetSide: 1,
     damage: 0.15,
     balconies: 0,
@@ -300,10 +304,10 @@ export const BUILDINGS = [
   },
 
   // --------------------------------------------- KE row (loop's east arm — the only two-sided stretch) --
-  { id: 'KE1', x: 18.825, z: 32.24, w: 8.6, d: 7.76, floors: 2, wallKey: 'plaster_sand', bandKey: 'plaster_wine', streetSide: 3, damage: 0.05, balconies: 0, doorBays: { 3: 0 }, roofProps: 2, attachments: [{ kind: 'porch', along: -2.63, w: 1.9, depth: 1.5, h: 2.5, wallKey: 'plaster_wine' }] }, // osm way/644614620
-  { id: 'KE2', x: 18.825, z: 24.18, w: 8.6, d: 7.76, floors: 2, wallKey: 'plaster_cream', bandKey: 'plaster_wine', streetSide: 3, damage: 0.05, balconies: 0, doorBays: { 3: 0 }, roofProps: 1, attachments: [{ kind: 'garage', along: 2.28, w: 2.6, depth: 2.5, h: 2.3, doorKey: 'wood_prop' }] }, // osm way/960176173
-  { id: 'KE3', x: 19.405, z: 12.69, w: 9.8, d: 7.04, floors: 2, wallKey: 'plaster_cream', bandKey: 'plaster_wine', streetSide: 3, damage: 0.05, balconies: 0, doorBays: { 3: 0 }, roofProps: 2, attachments: [{ kind: 'porch', along: -2.27, w: 1.9, depth: 1.5, h: 2.5, wallKey: 'plaster_wine' }] }, // osm way/644614621
-  { id: 'KE4', x: 19.405, z: 5.35, w: 9.8, d: 7.04, floors: 2, wallKey: 'plaster_white', bandKey: 'plaster_coral', streetSide: 3, damage: 0.1, balconies: 0, doorBays: { 3: 0 }, roofProps: 1, attachments: [{ kind: 'garage', along: 1.92, w: 2.6, depth: 2.5, h: 2.3, doorKey: 'wood_prop' }] }, // osm way/960176172
+  { id: 'KE1', x: 18.825, z: 32.24, w: 8.6, d: 7.76, floors: 2, wallKey: 'dash_sand', bandKey: 'plaster_wine', streetSide: 3, damage: 0.05, balconies: 0, doorBays: { 3: 0 }, roofProps: 2, attachments: [{ kind: 'porch', along: -2.63, w: 1.9, depth: 1.5, h: 2.5, wallKey: 'plaster_wine' }] }, // osm way/644614620
+  { id: 'KE2', x: 18.825, z: 24.18, w: 8.6, d: 7.76, floors: 2, wallKey: 'dash_cream', bandKey: 'plaster_wine', streetSide: 3, damage: 0.05, balconies: 0, doorBays: { 3: 0 }, roofProps: 1, attachments: [{ kind: 'garage', along: 2.28, w: 2.6, depth: 2.5, h: 2.3, doorKey: 'wood_prop' }] }, // osm way/960176173
+  { id: 'KE3', x: 19.405, z: 12.69, w: 9.8, d: 7.04, floors: 2, wallKey: 'dash_cream', bandKey: 'plaster_wine', streetSide: 3, damage: 0.05, balconies: 0, doorBays: { 3: 0 }, roofProps: 2, attachments: [{ kind: 'porch', along: -2.27, w: 1.9, depth: 1.5, h: 2.5, wallKey: 'plaster_wine' }] }, // osm way/644614621
+  { id: 'KE4', x: 19.405, z: 5.35, w: 9.8, d: 7.04, floors: 2, wallKey: 'dash_white', bandKey: 'plaster_coral', streetSide: 3, damage: 0.1, balconies: 0, doorBays: { 3: 0 }, roofProps: 1, attachments: [{ kind: 'garage', along: 1.92, w: 2.6, depth: 2.5, h: 2.3, doorKey: 'wood_prop' }] }, // osm way/960176172
 
   // --------------------------------------------- background / infill (fully provisional) --
   /**
@@ -313,15 +317,15 @@ export const BUILDINGS = [
    * decision to keep neighbouring streets as loose background only. These
    * are generic distant masses, not individually OSM-placed.
    */
-  { id: 'BGE1', x: 26, z: 172, w: 18, d: 22, floors: 2, wallKey: 'plaster_cream', streetSide: 3, damage: 0.1, skipSides: [3], roofProps: 2 },
-  { id: 'BGE2', x: 27, z: 108, w: 18, d: 24, floors: 2, wallKey: 'plaster_cream', streetSide: 3, damage: 0.1, skipSides: [3], roofProps: 2 },
-  { id: 'BGE3', x: 26, z: 52, w: 16, d: 18, floors: 2, wallKey: 'plaster_sand', streetSide: 3, damage: 0.1, skipSides: [3], roofProps: 2 },
+  { id: 'BGE1', x: 26, z: 172, w: 18, d: 22, floors: 2, wallKey: 'dash_cream', streetSide: 3, damage: 0.1, skipSides: [3], roofProps: 2 },
+  { id: 'BGE2', x: 27, z: 108, w: 18, d: 24, floors: 2, wallKey: 'dash_cream', streetSide: 3, damage: 0.1, skipSides: [3], roofProps: 2 },
+  { id: 'BGE3', x: 26, z: 52, w: 16, d: 18, floors: 2, wallKey: 'dash_sand', streetSide: 3, damage: 0.1, skipSides: [3], roofProps: 2 },
   // Far skyline beyond the lane's open (north) end, toward Kilmore Avenue — "the street continues off-map", not a dead end.
-  { id: 'BGN1', x: -18, z: 222, w: 20, d: 14, floors: 2, wallKey: 'plaster_cream', streetSide: 0, damage: 0.1, roofProps: 2 },
-  { id: 'BGN2', x: 16, z: 226, w: 22, d: 16, floors: 2, wallKey: 'plaster_cream', streetSide: 0, damage: 0.1, roofProps: 2 },
+  { id: 'BGN1', x: -18, z: 222, w: 20, d: 14, floors: 2, wallKey: 'dash_cream', streetSide: 0, damage: 0.1, roofProps: 2 },
+  { id: 'BGN2', x: 16, z: 226, w: 22, d: 16, floors: 2, wallKey: 'dash_cream', streetSide: 0, damage: 0.1, roofProps: 2 },
   // Far skyline beyond the loop's open (south) end, toward Beechlawn Avenue — mirrors BGN1/BGN2, replaces the removed GATE backdrop (BGS1).
-  { id: 'BGS1', x: -18, z: -52, w: 20, d: 14, floors: 2, wallKey: 'plaster_cream', streetSide: 2, damage: 0.1, roofProps: 2 },
-  { id: 'BGS2', x: 16, z: -56, w: 22, d: 16, floors: 2, wallKey: 'plaster_cream', streetSide: 2, damage: 0.1, roofProps: 2 },
+  { id: 'BGS1', x: -18, z: -52, w: 20, d: 14, floors: 2, wallKey: 'dash_cream', streetSide: 2, damage: 0.1, roofProps: 2 },
+  { id: 'BGS2', x: 16, z: -56, w: 22, d: 16, floors: 2, wallKey: 'dash_cream', streetSide: 2, damage: 0.1, roofProps: 2 },
 ];
 
 /**

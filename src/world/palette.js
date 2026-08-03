@@ -147,7 +147,24 @@ export const PALETTE = {
     // tint from the old road_dust entry when ground.js switched the road from
     // road_dust to asphalt; that tint alone was enough to make the retextured
     // street still read as a sand road in every render.
-    opts: { vertexMasks: true, tint: 0x4a4944, scale: 3.2, detile: 0.6, wear: [0, 0.5, 0.4, 0] },
+    // WET. Under the overcast sky this street now sits beneath, a bone-dry road
+    // fights the weather — a wet or drying carriageway is the single most
+    // recognisable thing about a Dublin street.
+    //
+    // Two changes, no new shader: the tint drops about a stop (wet tarmac is
+    // genuinely darker, not just shinier), and `roughness` comes down from the
+    // concrete surface's own ~0.98 so the road takes a broad specular sheen off
+    // the sky. It is deliberately NOT mirror-smooth — standing water would be
+    // 0.1 and would read as ice. 0.55 with a wide variation band keeps the
+    // drying patches the wear masks already carry.
+    opts: {
+      vertexMasks: true,
+      tint: 0x3a3935,
+      scale: 3.2,
+      detile: 0.6,
+      wear: [0, 0.5, 0.4, 0],
+      roughness: [0.55, -0.04, 0.30],
+    },
   },
   /**
    * The driving line: tarmac polished bare by tyres and stained with oil. A
@@ -463,6 +480,45 @@ export const PALETTE = {
     name: 'plaster',
     surface: 'plaster',
     opts: { vertexMasks: true, tint: 0xd9bf74, scale: 2.1, weather: [0.4, 0.5, 1.3, 0.55] },
+  },
+  /**
+   * PEBBLEDASH house walls — the single most recognisable thing about these
+   * houses, and until now the one material that wasn't modelled. The comment on
+   * the plaster_* keys says outright that the render look is only approximated.
+   *
+   * No new shader and no new surface: the `concrete` surface already bakes an
+   * exposed-aggregate layer (worley stone chips breaking the skin, plus a
+   * 5-8 mm coarse sand fraction — see surfaces-arch.js), which is physically
+   * what pebbledash IS: chip aggregate thrown at a wet render coat. `scale` is
+   * what tunes the chip size to a house wall rather than a paving slab.
+   *
+   * These are separate keys rather than a change to plaster_*, because
+   * plaster_white is also the INTERIOR partition material — dashing the inside
+   * of every room would be wrong and expensive.
+   *
+   * Tints match the established exterior colour scheme so the paired-house
+   * contrast the layout depends on survives; dash is painted over, and the
+   * colour is the paint, not the aggregate.
+   */
+  dash_cream: {
+    name: 'concrete',
+    surface: 'concrete',
+    opts: { vertexMasks: true, tint: 0xd7cfb8, scale: 2.6, weather: [0.4, 0.5, 1.2, 0.5] },
+  },
+  dash_white: {
+    name: 'concrete',
+    surface: 'concrete',
+    opts: { vertexMasks: true, tint: 0xded9cb, scale: 2.5, weather: [0.3, 0.35, 0.9, 0.45] },
+  },
+  dash_sand: {
+    name: 'concrete',
+    surface: 'concrete',
+    opts: { vertexMasks: true, tint: 0xb5a17f, scale: 2.6, weather: [0.45, 0.5, 1.3, 0.55] },
+  },
+  dash_butter: {
+    name: 'concrete',
+    surface: 'concrete',
+    opts: { vertexMasks: true, tint: 0xd3ba73, scale: 2.55, weather: [0.4, 0.5, 1.2, 0.5] },
   },
   /** Wet-look rendered/pebbledash boundary wall, the standard Dublin front garden wall. */
   wall_garden: {
