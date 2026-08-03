@@ -97,6 +97,14 @@ export class Agent {
     this.rng = ai.rng.fork();
     this.variantName = opts.variant ?? 'David';
     this.name = opts.name ?? 'ENEMY';
+    /**
+     * Who last damaged this agent, for the killfeed's `actor:death` row.
+     * `ui` already reads `e.by.name` (see ui/index.js) but nothing was ever
+     * putting `by` in the payload, so any death not credited to the player
+     * inside the 0.3 s window — an explosion, a fall — printed
+     * "ENEMY killed <RosterName>". Set by AiSystem's damage handlers.
+     */
+    this.lastAttacker = null;
     const def = ai.variant(this.variantName);
     this.def = def;
     this.scale = def.variant.scale ?? 1;
@@ -881,6 +889,7 @@ export class Agent {
     }
     this.ctx.events.emit('actor:death', {
       actor: this,
+      by: this.lastAttacker,
       point: hitPoint,
       impulse,
       headshot: false,

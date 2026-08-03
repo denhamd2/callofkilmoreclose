@@ -147,10 +147,35 @@ export function buildGround(A, rng) {
       const wSlab = KB - HW;
       if (!mouth) {
         const h = WH + rng.range(-0.012, 0.012);
+        // GRASS VERGE + FOOTPATH, not one continuous slab.
+        //
+        // A 1950s Corporation estate puts a grass verge against the kerb with
+        // the path behind it, and the verge is what the street trees and lamp
+        // columns actually stand in. The band is fixed at KB - HW = 2.0 m and
+        // CANNOT grow: STREET.kerb is what the measured 8.71 m front-garden
+        // setback and every house's calibrated `x` are pinned to, so widening
+        // the street here would silently move all 26 houses.
+        //
+        // So the 2.0 m is split rather than extended: 0.9 m of verge on the
+        // kerb side, 1.1 m of path on the garden side. Both are narrower than
+        // a real estate's ~1.2 m + ~1.8 m. That is an honest consequence of
+        // the fixed total, recorded here rather than hidden by moving the kerb.
+        //
+        // Driveways cross the verge: frontGardens() lays a paved crossing over
+        // this strip at each plot's drive span, so the verge reads as a run
+        // with gaps rather than an unbroken ribbon.
+        const vergeW = 0.9;
+        const pathW = wSlab - vergeW; // 1.1
+        A.add(
+          'lawn',
+          BOX_SOFT(A),
+          LL(IDENT, side * (HW + vergeW / 2), h / 2, cz, 0, vergeW - 0.04, h, segLen - gap),
+          { masks: [0.15, 0.6, 0.35] }
+        );
         A.add(
           'concrete',
           BOX_SOFT(A),
-          LL(IDENT, cx, h / 2, cz, 0, wSlab - 0.05, h, segLen - gap),
+          LL(IDENT, side * (HW + vergeW + pathW / 2), h / 2, cz, 0, pathW - 0.05, h, segLen - gap),
           { masks: [0.6, 0.45, 0.2] }
         );
         // kerb stone, a touch taller and more worn
@@ -166,8 +191,12 @@ export function buildGround(A, rng) {
         // A grime stain, not a different material: a dark patch in a contrasting
         // key reads as a decal lying on top of the pavement.
         if (rng.float() < 0.5) {
+          // Centred on the PATH now, not the old full-band centre — a grime
+          // stain belongs on paving, not on the grass verge. Same three rng
+          // draws either way, so the shared placement stream is unchanged.
           const g = patchGeometry(rng, rng.range(0.25, 0.7), { lobes: 9, wobble: 0.6 });
-          A.addOnce('concrete', g, LL(IDENT, cx + rng.range(-0.5, 0.5), h + 0.006, cz + rng.range(-1, 1), rng.float() * 6.28), {
+          const pathCx = side * (HW + 0.9 + (wSlab - 0.9) / 2);
+          A.addOnce('concrete', g, LL(IDENT, pathCx + rng.range(-0.38, 0.38), h + 0.006, cz + rng.range(-1, 1), rng.float() * 6.28), {
             masks: [0.1, 1.0, 0.55],
           });
         }

@@ -46,6 +46,13 @@ import { Agent, STATE } from './agent.js';
 import { Squad } from './squad.js';
 import { GroundShadows } from './grounding.js';
 
+/**
+ * The local player, as a killfeed actor. A module-level singleton, not a fresh
+ * object per hit — this is assigned inside the damage handler, which runs on
+ * every connecting round, and the no-per-frame-allocation rule applies.
+ */
+const PLAYER_ACTOR = { name: 'YOU' };
+
 export class AiSystem {
   static id = 'ai';
   static deps = ['physics', 'world'];
@@ -322,6 +329,10 @@ export class AiSystem {
       const a = e.target;
       if (!a.alive) return;
       const amount = e.amount * this._falloff(e.point);
+      // Credit the kill so the killfeed can name it. `damage:dealt` aimed at an
+      // Agent is the player's round connecting — `ai` emits its own rounds at
+      // the player, and `ui` filters those out before this path.
+      a.lastAttacker = PLAYER_ACTOR;
       a.applyDamage(amount, e.headshot ? 'head' : e.part ?? 'torso', e.point ?? a.position, e.incident);
       if (!a.alive) e.killed = true;
     });
@@ -567,7 +578,15 @@ export class AiSystem {
         const far = squadAnchors[i];
         const dx = far.pos.x - near.pos.x;
         const dz = far.pos.z - near.pos.z;
-        const len = Math.hypot(dx, dz) || 1;
+        const len = Math.hypot(dx, dz);
+        // Coincident anchors would give a zero normal, and `dot > 0` can never
+        // be true against it — the squad would stay combat-deaf for the whole
+        // level. Not reachable today (populate() is only ever called with the
+        // default 2 squads, and fewer than 2 ranked spawns creates only one),
+        // but `|| 1` silently produced exactly that, so make it explicit:
+        // degenerate geometry means leave the squad ACTIVE rather than gate it
+        // on a test it can never pass.
+        if (len < 1e-3) continue;
         far.squad.active = false;
         far.squad.activationNormal = { x: dx / len, z: dz / len };
         far.squad.activationPoint = {

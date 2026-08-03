@@ -107,7 +107,10 @@ export const STREET = {
   // (8.71 m) on the reference street. See the file-header PROVISIONAL note
   // for how this is applied to BUILDINGS' per-house x.
   setback: 8.71,
-  walkH: 0.145,
+  // Kerb upstand. Was 0.145; standard kerb face is 100-125 mm, and 125 is what
+  // a residential estate is laid to. Also what the dished driveway crossings in
+  // dressing.js measure their drop-down from.
+  walkH: 0.125,
   zMin: -40,
   zMax: 213,
 };
@@ -408,23 +411,55 @@ export const SET_PIECES = {
     [5.9, 46.75, Math.PI / 2],
     [-5.9, 18.25, -Math.PI / 2],
   ],
-  /** Overhead utility cable spans: [x0, y0, z0, x1, y1, z1, sag] */
+  /**
+   * Overhead utility cable spans: [x0, y0, z0, x1, y1, z1, sag]
+   *
+   * Clearances raised to ESB-plausible minima, measured at MID-SPAN (mean of
+   * the two endpoint heights, less the sag) rather than at the poles, which is
+   * where a span is actually lowest:
+   *   - spans that CROSS the carriageway need ~5.8 m. Two were fine (6.75,
+   *     6.20), one was exactly on the line (5.80) and one was under it (5.40).
+   *   - spans that run ALONG the street over the footpath need ~5.2 m. Both
+   *     were under, at 4.90 and 4.80.
+   * Endpoints raised so every span now clears its own minimum with margin.
+   */
   cables: [
-    [-6.4, 7.2, 127.5, 6.4, 6.6, 133.44, 1.1],
-    [-6.4, 8.4, 99.0, 6.4, 7.9, 102.56, 1.4],
-    [-6.4, 6.2, 65.75, 6.4, 6.6, 69.31, 1.0],
-    [-6.4, 7.6, 32.5, 6.4, 7.2, 37.25, 1.2],
-    [-6.4, 5.4, 148.88, -6.4, 5.6, 161.94, 0.6],
-    [6.4, 5.6, 108.5, 6.4, 5.4, 122.75, 0.7],
+    [-6.4, 7.6, 127.5, 6.4, 7.0, 133.44, 1.1], // crossing: 6.20 mid
+    [-6.4, 8.4, 99.0, 6.4, 7.9, 102.56, 1.4], // crossing: 6.75 mid — unchanged
+    [-6.4, 7.0, 65.75, 6.4, 7.4, 69.31, 1.0], // crossing: 6.20 mid (was 5.40)
+    [-6.4, 7.6, 32.5, 6.4, 7.2, 37.25, 1.2], // crossing: 6.20 mid — unchanged
+    [-6.4, 5.9, 148.88, -6.4, 6.1, 161.94, 0.6], // along street: 5.40 mid (was 4.90)
+    [6.4, 6.1, 108.5, 6.4, 5.9, 122.75, 0.7], // along street: 5.30 mid (was 4.80)
   ],
-  /** Back-garden washing lines with hanging laundry: [x0, y0, z0, x1, y1, z1] */
+  /**
+   * Washing lines with hanging laundry: [x0, y0, z0, x1, y1, z1]
+   *
+   * HEIGHTS CORRECTED. These were at 3.6-3.8 m on four lines and 6.4-6.7 m on
+   * two. A washing line is about 1.8 m — you have to be able to reach it — and
+   * once the houses came down to their correct 5.36 m eaves the two high ones
+   * floated ABOVE the roofline and read as bunting strung over the street.
+   * They are the "hanging cloth" visible in every hero frame. Now 1.95-2.05 m,
+   * which nets ~1.6 m at mid-span once the 0.42 m catenary sag is taken off.
+   *
+   * KNOWN WRONG, and deliberately left: x = +/-6.35 is inside the FRONT garden
+   * (kerb 5.815 -> house face 14.515), and nobody in Dublin hangs washing in
+   * the front garden. The right home is the rear garden — but there ISN'T one:
+   * the flat terrain band ends at |x| = 15.13 and a rear garden would start at
+   * |x| ~ 23.7, i.e. 8.6 m out onto undulating background terrain. Building
+   * rear gardens is its own pass; until then these are at least the right
+   * height and read as domestic laundry rather than street decoration.
+   *
+   * Entry COUNT must not change: overheadLines() draws from the shared
+   * placement rng per line and per garment, so adding or removing a line
+   * shifts every prop placed after it (see buildPerimeter's note).
+   */
   laundry: [
-    [6.35, 3.6, 125.12, 6.35, 3.75, 137.47],
-    [-6.35, 3.7, 106.12, -6.35, 3.6, 116.57],
-    [-6.35, 6.6, 55.06, -6.35, 6.4, 66.94],
-    [6.35, 6.5, 89.5, 6.35, 6.7, 101.38],
-    [-6.35, 3.65, 39.62, -6.35, 3.8, 51.5],
-    [6.4, 3.7, 153.62, 6.4, 3.6, 164.31],
+    [6.35, 1.95, 125.12, 6.35, 2.05, 137.47],
+    [-6.35, 2.0, 106.12, -6.35, 1.95, 116.57],
+    [-6.35, 2.05, 55.06, -6.35, 1.95, 66.94],
+    [6.35, 1.95, 89.5, 6.35, 2.05, 101.38],
+    [-6.35, 1.95, 39.62, -6.35, 2.05, 51.5],
+    [6.4, 2.0, 153.62, 6.4, 1.95, 164.31],
   ],
   /** Doorstep planters / window boxes: [x, y, z, ry, w] */
   doorstepPlanters: [

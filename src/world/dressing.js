@@ -742,6 +742,32 @@ function frontGardens(A, rng) {
     });
     A.box('concrete', midX, 0.03, (dz0 + dz1) / 2, depth, 0.06, driveW);
 
+    // ---- the drive crosses the grass verge: pave over it, and dish the kerb --
+    // ground.js lays a continuous 0.9 m verge against the kerb. A driveway has
+    // to cross it, so the crossing is laid ON TOP of the verge over exactly the
+    // drive's own z-span. Both spans come from `dz0/dz1` above, so a crossing
+    // can never drift off the drive it belongs to — which is the whole reason
+    // the verge is built continuous in ground.js and broken here, rather than
+    // both being computed twice from different sources.
+    const VERGE_W = 0.9; // must match ground.js's pavement-slab loop
+    const vergeCx = side * (STREET.halfWidth + VERGE_W / 2);
+    const crossZ = (dz0 + dz1) / 2;
+    A.add(
+      'concrete',
+      BOX_SOFT(A),
+      // +0.004 clear of the verge top so the two never z-fight
+      LL(IDENT, vergeCx, (STREET.walkH + 0.004) / 2, crossZ, 0, VERGE_W, STREET.walkH + 0.004, driveW),
+      { masks: [0.55, 0.4, 0.2] }
+    );
+    // The dished kerb: a shallower, wider stone across the crossing, sitting
+    // below the standing kerb either side of it so a car can ride over.
+    A.add(
+      'concrete',
+      BOX_SOFT(A),
+      LL(IDENT, side * (STREET.halfWidth + 0.11), STREET.walkH * 0.34, crossZ, 0, 0.26, STREET.walkH * 0.68, driveW),
+      { masks: [0.9, 0.35, 0.12] }
+    );
+
     // ---- low wall along the lawn's kerb edge only — the drive stays open ----
     const wallX = kerbX - side * 0.06;
     const wr = side > 0 ? -Math.PI / 2 : Math.PI / 2;
@@ -758,6 +784,74 @@ function frontGardens(A, rng) {
       }
       for (const pz of [gz0, gz1]) {
         A.put('garden_pier', wallX, groundY(wallX, pz), pz, wr, rng.range(0.95, 1.08));
+      }
+
+      // ---- clipped hedge standing behind the wall ------------------------
+      // The thing that actually gives an Irish front garden its depth: a low
+      // wall with a hedge grown up behind it, so the boundary reads as two
+      // layers rather than one thin slab. Deliberately NOT hedgeRow() — that
+      // helper draws from the shared placement rng, and adding draws here
+      // would shift every prop placed after frontGardens (see buildPerimeter).
+      // Built deterministically from plot geometry instead.
+      const hedgeX = wallX + side * 0.35;
+      const hedgeRun = gz1 - gz0 - 0.24;
+      if (hedgeRun > 0.8) {
+        const nBlk = Math.max(1, Math.round(hedgeRun / 1.2));
+        const blkW = hedgeRun / nBlk;
+        for (let i = 0; i < nBlk; i++) {
+          const bz = gz0 + 0.12 + (i + 0.5) * blkW;
+          // Height steps by block so the top line is not a ruler: a clipped
+          // hedge is even, not perfect.
+          const hh = 1.02 + ((i % 3) - 1) * 0.06;
+          A.add(
+            'hedge',
+            BOX_SOFT(A),
+            LL(IDENT, hedgeX, groundY(hedgeX, bz) + hh / 2, bz, 0, 0.46, hh, blkW - 0.05),
+            { masks: [0.1, 0.65, 0.4] }
+          );
+        }
+        A.box('foliage', hedgeX, groundY(hedgeX, b.z) + 0.5, (gz0 + gz1) / 2, 0.46, 1.0, hedgeRun);
+      }
+    }
+
+    // ---- driveway gate, hung between piers ------------------------------
+    // There was no gate anywhere in the level. It goes across the DRIVE rather
+    // than in the wall run: the drive is already an opening bounded by a pier,
+    // so a gate needs no hole cut in the wall and no change to the segment
+    // loop above (which would disturb the rng stream). Deterministic for the
+    // same reason — no rng in this block.
+    {
+      const gateH = 1.05;
+      const barR = 0.022;
+      const outerZ = driveAtStart ? z0 : z1; // the plot-boundary end of the drive
+      // matching pier on the open side, so the gate reads as hung, not floating
+      A.put('garden_pier', wallX, groundY(wallX, outerZ), outerZ, wr, 1.0);
+      const openZ0 = Math.min(dz0, dz1) + 0.1;
+      const openZ1 = Math.max(dz0, dz1) - 0.1;
+      const span = openZ1 - openZ0;
+      if (span > 0.8) {
+        // two horizontal rails
+        for (const ry2 of [0.24, gateH - 0.12]) {
+          A.add(
+            'metal_dark',
+            BOX(A),
+            LL(IDENT, wallX, groundY(wallX, (openZ0 + openZ1) / 2) + ry2, (openZ0 + openZ1) / 2, 0, 0.05, 0.07, span),
+            { masks: [0.4, 0.55, 0.2] }
+          );
+        }
+        // vertical bars, and a gap at the centre so it reads as two leaves
+        const nBar = Math.max(4, Math.round(span / 0.19));
+        const pitch = span / nBar;
+        for (let i = 0; i < nBar; i++) {
+          const bz = openZ0 + (i + 0.5) * pitch;
+          if (Math.abs(bz - (openZ0 + openZ1) / 2) < pitch * 0.45) continue; // meeting stiles
+          A.add(
+            'metal_dark',
+            BOX(A),
+            LL(IDENT, wallX, groundY(wallX, bz) + gateH / 2, bz, 0, barR * 2, gateH, barR * 2),
+            { masks: [0.4, 0.55, 0.2] }
+          );
+        }
       }
     }
 
@@ -852,7 +946,12 @@ function streetTrees(A, rng) {
   for (const [x, z, s] of SET_PIECES.trees) {
     const y = groundY(x, z);
     const ry = rng.float() * 6.28;
-    const h = 4.0 * s;
+    // 8.0, not 4.0. At 4.0 with s = 0.85-1.1 these stood 3.4-4.4 m — sapling
+    // height — while the trunk collider below is 0.4*s across, which is a
+    // MATURE trunk. So they read as thick stumps. An estate of this age has
+    // 6-12 m limes, cherries and sycamores; 8.0 puts them at 6.8-8.8 m and
+    // makes the existing trunk diameter correct instead of wrong.
+    const h = 8.0 * s;
     A.putS('tree_trunk', x, y, z, ry, s, s, s);
     A.putS('tree_canopy', x, y + h * 0.92, z, rng.float() * 6.28, s, s * rng.range(0.85, 1.1), s, [
       1,
@@ -903,7 +1002,11 @@ function streetLamps(A, rng) {
       const px = x + Math.cos(a) * r;
       const pz = z + Math.sin(a) * r;
       A.put(
-        rng.pick(['litter', 'brick_b', 'can', 'weeds']),
+        // brick_b dropped — masonry at a lamp base is demolition vocabulary,
+        // the same set the dressing pass took off the rest of the street.
+        // brick_b dropped — masonry at a lamp base is demolition vocabulary,
+        // the same set the dressing pass took off the rest of the street.
+        rng.pick(['litter', 'weeds', 'can', 'weeds']),
         px,
         groundY(px, pz) + 0.02,
         pz,

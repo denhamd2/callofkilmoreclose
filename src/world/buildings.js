@@ -363,6 +363,57 @@ function buildAttachments(A, rng, spec, wallKey, streetSide) {
     A.add(leafKey, BOX(A), LL(IDENT, lx, leafH / 2 + 0.03, lz, 0, leafX, leafH, leafZ), {
       masks: [0.3, 0.3, 0.1],
     });
+
+    // ---- a porch is GLAZED, a garage is not ------------------------------
+    // The Street View reference calls for a small glazed porch, and this was
+    // building it as a solid box with one opaque leaf — a windowless cupboard
+    // bolted to the front of the house. Garages stay solid, which is correct.
+    //
+    // Glazing goes either side of the door leaf on the outward face, plus a
+    // return panel down the exposed flank, which is what makes a porch read as
+    // an add-on rather than as part of the wall.
+    if (!isGarage) {
+      const glazeH = leafH - 0.45;
+      const glazeY = 0.42 + glazeH / 2;
+      const sideW = Math.max(0.28, (w - leafW) / 2 - 0.09);
+      // front glazing, one panel each side of the door
+      for (const s of [-1, 1]) {
+        const off = (leafW / 2 + 0.06 + sideW / 2) * s;
+        A.add(
+          'window_glass',
+          BOX(A),
+          LL(
+            IDENT,
+            lx + (alongX ? off : 0),
+            glazeY,
+            lz + (alongX ? 0 : off),
+            0,
+            alongX ? sideW : 0.05,
+            glazeH,
+            alongX ? 0.05 : sideW
+          ),
+          { masks: [0.15, 0.2, 0.05] }
+        );
+      }
+      // return panel down the flank facing away from the party wall
+      const flank = at.along >= 0 ? 1 : -1;
+      const retOff = (w / 2 - 0.05) * flank;
+      A.add(
+        'window_glass',
+        BOX(A),
+        LL(
+          IDENT,
+          cx + (alongX ? retOff : n[0] * 0.02),
+          glazeY,
+          cz + (alongX ? n[2] * 0.02 : retOff),
+          0,
+          alongX ? 0.05 : depth - 0.3,
+          glazeH,
+          alongX ? depth - 0.3 : 0.05
+        ),
+        { masks: [0.15, 0.2, 0.05] }
+      );
+    }
   }
 }
 
