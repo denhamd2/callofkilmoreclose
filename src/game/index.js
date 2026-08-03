@@ -42,7 +42,7 @@ export class GameSystem {
 
     const ui = ctx.get('ui');
     ui.setObjectives(this._objectives);
-    ui.banner.show('Kilmore Close', 'Clear the street', INTRO_LIFE);
+    ui.banner.show('GTA: Kilmore Close', 'Clear the street', INTRO_LIFE);
 
     this._offDeath = ctx.events.on('player:death', () => this._onPlayerDeath());
   }

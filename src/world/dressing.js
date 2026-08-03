@@ -114,7 +114,12 @@ export function groundSkirt(A, rng, x, y, z, radius, opts = {}) {
     const pz = z + Math.sin(a) * rr;
     if (!isOpen(px, pz, 0.05)) continue;
     A.put(
-      rng.pick(['rock_b', 'rock_b', 'brick_b', 'cinder', 'rock_a', 'litter']),
+      // groundSkirt runs at EVERY wall base, lamp column, tree, parked car and
+      // garden-wall segment on the street, so whatever is in this list ends up
+      // banked against everything the player walks past. It was rubble —
+      // rock, brick, cinder — which is why the close still read as a bomb site
+      // after the scatter pass was cleaned. Gutter litter and weeds only.
+      rng.pick(['litter', 'weeds', 'litter', 'weeds', 'can', 'litter']),
       px,
       groundY(px, pz) + 0.012,
       pz,
@@ -1073,7 +1078,7 @@ function overheadLines(A, rng) {
         fray: rng.range(0.01, 0.03),
       });
       A.addOnce(
-        rng.pick(['fabric_red', 'fabric_teal', 'fabric_cream', 'burlap']),
+        rng.pick(['fabric_cream', 'fabric_cream', 'fabric_cream', 'fabric_cream']),
         cloth,
         LL(IDENT, px, py - h / 2 + 0.02, pz, ry, 1, 1, 1),
         { masks: [0.3, rng.range(0.4, 0.8), 0.2] }
@@ -1232,7 +1237,7 @@ function dressBuilding(A, rng, info) {
           rng,
         });
         A.addOnce(
-          rng.pick(['fabric_red', 'fabric_teal', 'fabric_cream']),
+          rng.pick(['fabric_cream', 'fabric_cream', 'fabric_cream']),
           cloth,
           LL(
             IDENT,
@@ -1256,7 +1261,7 @@ function dressBuilding(A, rng, info) {
       const lz = -rng.range(0.35, bal.d - 0.3);
       const wp = worldOf(pm, lx, bal.y + 0.13, lz);
       A.put(
-        rng.pick(['crate_b', 'bucket', 'planter', 'box_card_b', 'stool', 'jerry_can', 'tyre_small']),
+        rng.pick(['crate_b', 'bucket', 'planter', 'box_card_b', 'stool', 'planter', 'bucket']),
         wp[0],
         wp[1],
         wp[2],
@@ -1278,7 +1283,7 @@ function dressBuilding(A, rng, info) {
       });
       const wp = worldOf(pm, bal.x + rng.range(-0.3, 0.3), bal.y + 0.95, -bal.d - 0.03);
       A.addOnce(
-        rng.pick(['fabric_red', 'fabric_teal', 'fabric_cream']),
+        rng.pick(['fabric_cream', 'fabric_cream', 'fabric_cream']),
         cloth,
         LL(IDENT, wp[0], wp[1], wp[2], ryOf(pm) + Math.PI),
         { masks: [0.4, 0.55, 0.2] }
@@ -1345,9 +1350,13 @@ function dressBuilding(A, rng, info) {
     const px = rng.range(rx0, rx1);
     const pz = rng.range(rz0, rz1);
     const pick = rng.float();
+    // Rooftop water tanks were the old setting's silhouette — an Irish
+    // pitched roof carries a chimney and a vent, not a cistern. The branch is
+    // kept (removing it would shift every rng draw after it) and re-pointed at
+    // a roof vent, which this file already builds.
     if (pick < 0.22) {
-      A.put('water_tank', px, roofY, pz, rng.float() * 6.28, rng.range(0.9, 1.15), [1, rng.range(0.9, 1.3), 1]);
-      A.box('metal', px, roofY + 0.55, pz, 1.2, 1.1, 1.2);
+      A.put('roof_vent', px, roofY, pz, rng.float() * 6.28, rng.range(0.9, 1.15), [1, rng.range(0.9, 1.3), 1]);
+      A.box('metal', px, roofY + 0.28, pz, 0.5, 0.55, 0.5);
     } else if (pick < 0.45) {
       A.put('sat_dish', px, roofY, pz, rng.float() * 6.28, rng.range(0.85, 1.15), [1, rng.range(0.8, 1.3), 1]);
     } else if (pick < 0.6) {
@@ -1394,7 +1403,7 @@ function dressBuilding(A, rng, info) {
     const px = rng.range(rx0 + 0.7, rx1 - 0.7);
     const pz = rng.range(rz0 + 0.7, rz1 - 0.7);
     A.put(
-      rng.pick(['brick_a', 'brick_b', 'rock_b', 'litter', 'cinder', 'can', 'plank_b']),
+      rng.pick(['litter', 'weeds', 'litter', 'litter', 'weeds', 'can', 'litter']),
       px,
       roofY + 0.02,
       pz,
@@ -1427,7 +1436,7 @@ function dressBuilding(A, rng, info) {
         rng,
       });
       A.addOnce(
-        rng.pick(['fabric_red', 'fabric_teal', 'fabric_cream', 'burlap']),
+        rng.pick(['fabric_cream', 'fabric_cream', 'fabric_cream', 'fabric_cream']),
         cloth,
         LL(
           IDENT,
@@ -1489,7 +1498,7 @@ function alleyLines(A, rng, infos) {
         rng,
       });
       A.addOnce(
-        rng.pick(['fabric_red', 'fabric_teal', 'fabric_cream', 'burlap']),
+        rng.pick(['fabric_cream', 'fabric_cream', 'fabric_cream', 'fabric_cream']),
         cloth,
         LL(
           IDENT,

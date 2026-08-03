@@ -267,12 +267,15 @@ export function buildGround(A, rng) {
           { masks: [0.15, sr.range(0.3, 0.8), sr.range(0.2, 0.5)] }
         );
       }
-      // loose stones lying across the join
-      if (A.has('rock_b')) {
+      // Was loose stones lying across the join — masonry scattered the length
+      // of both footpaths. Litter and weeds through the joint instead; the
+      // `A.has` guard and the draw count are unchanged so the placement stream
+      // is untouched.
+      if (A.has('litter')) {
         for (let k = 0; k < sr.int(1, 3); k++) {
           const off = sr.range(-0.55, 0.55);
           A.put(
-            sr.float() < 0.68 ? 'rock_b' : 'rock_a',
+            sr.float() < 0.68 ? 'litter' : 'weeds',
             px + nxs * off + sr.range(-0.2, 0.2),
             y + 0.01,
             pz + nzs * off + sr.range(-0.2, 0.2),
