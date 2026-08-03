@@ -1,4 +1,5 @@
 import { FONT_STACK, FONT_DISPLAY, FONT_MONO } from './util.js';
+import { PRICEDOWN_WOFF } from './pricedown.js';
 
 /**
  * All HUD styling lives here as one injected stylesheet.
@@ -19,6 +20,18 @@ import { FONT_STACK, FONT_DISPLAY, FONT_MONO } from './util.js';
  */
 
 const CSS = `
+/**
+ * Pricedown, inlined as a data URI (see pricedown.js for why it cannot be a
+ * linked webfont). Registered at document level, not inside .ow-hud, because
+ * @font-face is not scopeable — but nothing uses it unless it names the family.
+ */
+@font-face {
+  font-family: 'Pricedown';
+  src: url(${PRICEDOWN_WOFF}) format('opentype');
+  font-weight: 400 900;
+  font-display: block;
+}
+
 .ow-hud, .ow-hud * { margin:0; padding:0; box-sizing:border-box; }
 
 .ow-hud {
@@ -67,7 +80,13 @@ const CSS = `
   --sh-o2: var(--o2), 0 0 calc(5px * var(--k)) rgba(3,6,9,.85);
 
   --ff: ${FONT_STACK};
-  --fd: ${FONT_DISPLAY};
+  /**
+   * Display face. Pricedown first, the previous stack behind it as the fallback
+   * if the face ever fails to load. Everything GTA-shaped on the HUD keys off
+   * this one variable — health, ammo, match score, damage numbers, the mission
+   * banner — so the family swaps in one place rather than at every call site.
+   */
+  --fd: 'Pricedown', ${FONT_DISPLAY};
   --fm: ${FONT_MONO};
 
   position: fixed; inset: 0;
