@@ -317,15 +317,39 @@ export const BUILDINGS = [
    * decision to keep neighbouring streets as loose background only. These
    * are generic distant masses, not individually OSM-placed.
    */
-  { id: 'BGE1', x: 26, z: 172, w: 18, d: 22, floors: 2, wallKey: 'dash_cream', streetSide: 3, damage: 0.1, skipSides: [3], roofProps: 2 },
-  { id: 'BGE2', x: 27, z: 108, w: 18, d: 24, floors: 2, wallKey: 'dash_cream', streetSide: 3, damage: 0.1, skipSides: [3], roofProps: 2 },
-  { id: 'BGE3', x: 26, z: 52, w: 16, d: 18, floors: 2, wallKey: 'dash_sand', streetSide: 3, damage: 0.1, skipSides: [3], roofProps: 2 },
+  // BACKGROUND INFILL — the rears of the neighbouring streets.
+  //
+  // These were 16-22 m single blocks, which was fine while they were anonymous
+  // distant massing in a different material. They stopped being fine for two
+  // reasons: the pebbledash pass gave them the SAME wall material as the real
+  // houses, so they read as Kilmore Close houses rather than as background;
+  // and the roof rise cap (buildings.js) puts a 21-25 degree roof on anything
+  // that wide, against 36.7 on a real house — a 22 m block with a 21 degree
+  // roof is an agricultural shed, and that is exactly what it looked like.
+  //
+  // Subdivided into archetype-sized units instead: w 9.2 / d 7.0, the median
+  // of the 26 real footprints, which lands them at the same 36.7 degree pitch
+  // and the same eaves as the street. They are still cheap — no `rooms`, so no
+  // interiors are generated — and they now read as more of the same estate,
+  // which is what the far side of Kilmore Close actually is.
+  { id: 'BGE1a', x: 26, z: 165, w: 9.2, d: 7.0, floors: 2, wallKey: 'dash_cream', bandKey: 'plaster_wine', streetSide: 3, damage: 0.05, skipSides: [3], roofProps: 1 },
+  { id: 'BGE1b', x: 26, z: 172, w: 9.2, d: 7.0, floors: 2, wallKey: 'dash_white', bandKey: 'plaster_coral', streetSide: 3, damage: 0.05, skipSides: [3], roofProps: 1 },
+  { id: 'BGE1c', x: 26, z: 179.3, w: 9.2, d: 7.0, floors: 2, wallKey: 'dash_sand', bandKey: 'plaster_wine', streetSide: 3, damage: 0.05, skipSides: [3], roofProps: 1 },
+  { id: 'BGE2a', x: 27, z: 101, w: 9.2, d: 7.0, floors: 2, wallKey: 'dash_cream', bandKey: 'plaster_wine', streetSide: 3, damage: 0.05, skipSides: [3], roofProps: 1 },
+  { id: 'BGE2b', x: 27, z: 108, w: 9.2, d: 7.0, floors: 2, wallKey: 'dash_butter', bandKey: 'plaster_coral', streetSide: 3, damage: 0.05, skipSides: [3], roofProps: 1 },
+  { id: 'BGE2c', x: 27, z: 115.3, w: 9.2, d: 7.0, floors: 2, wallKey: 'dash_cream', bandKey: 'plaster_wine', streetSide: 3, damage: 0.05, skipSides: [3], roofProps: 1 },
+  { id: 'BGE3a', x: 26, z: 48, w: 9.2, d: 7.0, floors: 2, wallKey: 'dash_sand', bandKey: 'plaster_wine', streetSide: 3, damage: 0.05, skipSides: [3], roofProps: 1 },
+  { id: 'BGE3b', x: 26, z: 55.3, w: 9.2, d: 7.0, floors: 2, wallKey: 'dash_white', bandKey: 'plaster_coral', streetSide: 3, damage: 0.05, skipSides: [3], roofProps: 1 },
   // Far skyline beyond the lane's open (north) end, toward Kilmore Avenue — "the street continues off-map", not a dead end.
-  { id: 'BGN1', x: -18, z: 222, w: 20, d: 14, floors: 2, wallKey: 'dash_cream', streetSide: 0, damage: 0.1, roofProps: 2 },
-  { id: 'BGN2', x: 16, z: 226, w: 22, d: 16, floors: 2, wallKey: 'dash_cream', streetSide: 0, damage: 0.1, roofProps: 2 },
+  { id: 'BGN1a', x: -22, z: 222, w: 9.2, d: 7.0, floors: 2, wallKey: 'dash_cream', bandKey: 'plaster_wine', streetSide: 0, damage: 0.05, roofProps: 1 },
+  { id: 'BGN1b', x: -13.5, z: 222, w: 9.2, d: 7.0, floors: 2, wallKey: 'dash_white', bandKey: 'plaster_coral', streetSide: 0, damage: 0.05, roofProps: 1 },
+  { id: 'BGN2a', x: 12, z: 226, w: 9.2, d: 7.0, floors: 2, wallKey: 'dash_sand', bandKey: 'plaster_wine', streetSide: 0, damage: 0.05, roofProps: 1 },
+  { id: 'BGN2b', x: 20.5, z: 226, w: 9.2, d: 7.0, floors: 2, wallKey: 'dash_cream', bandKey: 'plaster_coral', streetSide: 0, damage: 0.05, roofProps: 1 },
   // Far skyline beyond the loop's open (south) end, toward Beechlawn Avenue — mirrors BGN1/BGN2, replaces the removed GATE backdrop (BGS1).
-  { id: 'BGS1', x: -18, z: -52, w: 20, d: 14, floors: 2, wallKey: 'dash_cream', streetSide: 2, damage: 0.1, roofProps: 2 },
-  { id: 'BGS2', x: 16, z: -56, w: 22, d: 16, floors: 2, wallKey: 'dash_cream', streetSide: 2, damage: 0.1, roofProps: 2 },
+  { id: 'BGS1a', x: -22, z: -52, w: 9.2, d: 7.0, floors: 2, wallKey: 'dash_cream', bandKey: 'plaster_wine', streetSide: 2, damage: 0.05, roofProps: 1 },
+  { id: 'BGS1b', x: -13.5, z: -52, w: 9.2, d: 7.0, floors: 2, wallKey: 'dash_sand', bandKey: 'plaster_coral', streetSide: 2, damage: 0.05, roofProps: 1 },
+  { id: 'BGS2a', x: 12, z: -56, w: 9.2, d: 7.0, floors: 2, wallKey: 'dash_white', bandKey: 'plaster_wine', streetSide: 2, damage: 0.05, roofProps: 1 },
+  { id: 'BGS2b', x: 20.5, z: -56, w: 9.2, d: 7.0, floors: 2, wallKey: 'dash_cream', bandKey: 'plaster_coral', streetSide: 2, damage: 0.05, roofProps: 1 },
 ];
 
 /**
