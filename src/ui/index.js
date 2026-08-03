@@ -517,6 +517,16 @@ export class UiSystem {
     this.compass.update(heading, this._compassObjs);
 
     this.markers.updateObjectives(this._objectives, ctx.camera, this.vw, this.vh, this.k);
+    // Nameplates are pulled, not pushed: `ai` owns who is alive and where, so
+    // asking it once a frame is cheaper and less error-prone than having it
+    // push a list into `ui` on every spawn and death.
+    this.markers.updateNameplates(
+      ctx.peek('ai')?.getNameplates?.() ?? null,
+      ctx.camera,
+      this.vw,
+      this.vh,
+      this.k
+    );
     this.markers.updateGrenades(dt, ctx.camera, this.vw, this.vh, this.k);
     this.markers.updateDamage(dt, ctx.camera, this.vw, this.vh, this.k);
 

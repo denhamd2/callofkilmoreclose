@@ -145,6 +145,14 @@ export class WorldSystem {
       yaw: yaw + LEVEL_YAW,
       tag,
     }));
+    /**
+     * The street's own section, published on the instance so other systems can
+     * duck-type it off `ctx.get('world')`. It was module-exported only, which
+     * meant anyone wanting the carriageway or kerb line had to either import
+     * across a subsystem boundary (forbidden) or hardcode the numbers — `ai`
+     * needs them to walk its civilians down the footpath rather than the road.
+     */
+    this.STREET = STREET;
     this.bounds = new THREE.Box3(
       new THREE.Vector3(-62, -2, -62),
       new THREE.Vector3(62, 26, 62)

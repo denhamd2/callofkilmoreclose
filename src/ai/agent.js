@@ -239,6 +239,17 @@ export class Agent {
     this.coverPos = new THREE.Vector3();
     this.patrolPoints = opts.patrol ?? null;
     this.patrolIndex = 0;
+    /**
+     * Does this character fight. Civilians (Oysters, Angela) never acquire a
+     * target and never enter a combat state: they walk their route, and gunfire
+     * makes them hurry rather than investigate.
+     *
+     * Defaults TRUE so nothing that spawns an agent without saying otherwise
+     * silently becomes a pacifist.
+     */
+    this.hostile = opts.hostile ?? true;
+    /** Seconds of "something just went off near me" left on a civilian. */
+    this.spooked = 0;
     this.stuckTimer = 0;
     this.vaultCooldown = 0;
     /** a path request the frame budget pushed to the next frame */
@@ -283,6 +294,7 @@ export class Agent {
     this.peekTimer -= dt;
     this.repathTimer -= dt;
     this.vaultCooldown -= dt;
+    if (this.spooked > 0) this.spooked = Math.max(0, this.spooked - dt);
     if (this.lastKnownAge < 1e6) this.lastKnownAge += dt;
 
     // a path the frame budget deferred: ask again before anything else does
@@ -304,6 +316,10 @@ export class Agent {
     // the player crosses their activation threshold, so the far encounter
     // doesn't merge into the near one via early sightlines.
     if (this.squad && !this.squad.active) return;
+    // Civilians never acquire a target. Every combat transition in `_think` is
+    // guarded by `hasTarget`, so blocking acquisition here is what keeps them
+    // out of the state machine's combat half rather than a parallel branch.
+    if (!this.hostile) return;
     const player = this.ai.playerPosition(this._v3);
     if (!player) return;
     const eye = this.eye;
@@ -346,6 +362,13 @@ export class Agent {
     const d = this.position.distanceTo(pos);
     if (d > loudness) return;
     const strength = 1 - d / loudness;
+    // A civilian who ignores gunfire reads as scenery. They don't investigate
+    // — that would walk them into the firefight — they just get a fright and
+    // move quicker for a few seconds (see STATE.PATROL).
+    if (!this.hostile) {
+      this.spooked = Math.max(this.spooked, 2.5 + strength * 3.5);
+      return;
+    }
     this.alertness = Math.max(this.alertness, Math.min(1, 0.35 + strength));
     if (this.lastKnownAge > 1.2 || strength > 0.6) {
       this.lastKnown.copy(pos);
@@ -381,12 +404,19 @@ export class Agent {
         this.desiredSpeed = 0;
         this.crouch = false;
         if (this.hasTarget) this._enterCombat();
-        else if (this.patrolPoints && this.stateTime > 2.5) this._setState(STATE.PATROL);
+        // Civilians don't loiter — the whole point of them is that they are
+        // moving whenever the player looks up the street — so they leave IDLE
+        // immediately rather than after the 2.5 s a sentry waits.
+        else if (this.patrolPoints && (!this.hostile || this.stateTime > 2.5)) {
+          this._setState(STATE.PATROL);
+        }
         break;
 
       case STATE.PATROL: {
         this.crouch = false;
-        this.desiredSpeed = 1.35;
+        // A spooked civilian hurries. Not a sprint — someone walking home who
+        // heard a bang two streets over, not someone fleeing a battle.
+        this.desiredSpeed = !this.hostile && this.spooked > 0 ? 2.15 : 1.35;
         if (this.hasTarget) {
           this._enterCombat();
           break;

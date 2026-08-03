@@ -95,6 +95,12 @@ export class AiSystem {
     this.forcePopulate = false;
     this._navPending = true;
     this.stats = { agents: 0, alive: 0, navMs: 0, coverPts: 0, walkable: 0 };
+    /**
+     * Reused nameplate rows. `ui` calls getNameplates() once a frame, so this
+     * must not allocate: the array and every row object are built once and
+     * refilled in place. Grows only if the cast ever does.
+     */
+    this._nameplates = [];
 
     /* scratch */
     this._v = new THREE.Vector3();
@@ -576,6 +582,7 @@ export class AiSystem {
         const a = this.spawn(identity, p, anchor.yaw + this.rng.signed() * 0.7, {
           patrol: route,
           name: identity,
+          hostile: true,
         });
         squad.add(a);
         made++;
@@ -612,8 +619,103 @@ export class AiSystem {
       }
     }
 
-    console.info(`[ai] garrison: ${made} enemies in ${squads} squads`);
+    made += this._populateCivilians();
+    console.info(`[ai] garrison: ${made} actors in ${squads} squads + ${CIVILIANS.length} civilians`);
     return made;
+  }
+
+  /**
+   * The civilians: Oysters walking and Angela cycling the length of Kilmore
+   * Close, all day, on the footpath.
+   *
+   * They are deliberately NOT part of the garrison and NOT in a squad. Two
+   * reasons. Behavioural: squad membership drives contact sharing and the
+   * position gate, neither of which means anything to someone who never
+   * fights. Compositional: the garrison spawns FAR from the player so enemies
+   * are found rather than dropped on top of you, which is exactly wrong for
+   * the characters whose whole job is to be visible — so these two are placed
+   * on the footpath near the player's end and walk the full street.
+   *
+   * The route runs along the footpath centreline, not the carriageway: the
+   * paved band sits between STREET.halfWidth and STREET.kerb, and the verge
+   * takes the kerb-side 0.9 m of it (see ground.js), so the walkable centre is
+   * about 1.35 m out from the carriageway edge.
+   */
+  _populateCivilians() {
+    const world = this.ctx.peek('world');
+    if (!world || !this.grid) return 0;
+    const S = world.STREET ?? null;
+    // Fall back to the known layout numbers if `world` does not re-export
+    // STREET — this must not throw and leave the street empty.
+    const halfWidth = S?.halfWidth ?? 3.815;
+    const kerb = S?.kerb ?? 5.815;
+    const zMin = S?.zMin ?? -40;
+    const zMax = S?.zMax ?? 213;
+    const pathX = halfWidth + 0.9 + (kerb - halfWidth - 0.9) / 2;
+
+    let made = 0;
+    for (let i = 0; i < CIVILIANS.length; i++) {
+      const identity = CIVILIANS[i];
+      // one each side, so the street has life on both footpaths
+      const side = i % 2 === 0 ? -1 : 1;
+      const x = side * pathX;
+      // Walk the full length, with the two of them starting at opposite ends so
+      // they pass each other rather than travelling in convoy.
+      const z0 = i % 2 === 0 ? zMin + 12 : zMax - 12;
+      const z1 = i % 2 === 0 ? zMax - 12 : zMin + 12;
+      // fromY = 4, not 0: groundAt raycasts DOWNWARD from the height given, so
+      // starting at ground level would begin the ray under the footpath and
+      // miss it. 4 m clears the kerb and any verge without reaching a roof.
+      const route = [
+        new THREE.Vector3(x, this.groundAt(x, z0, 4), z0),
+        new THREE.Vector3(x, this.groundAt(x, z1, 4), z1),
+      ];
+      const start = route[0].clone();
+      const ci = this.grid.nearest(start.x, start.z, start.y, 8, 1.4);
+      if (ci >= 0) {
+        start.set(
+          this.grid.worldX(ci % this.grid.nx),
+          this.grid.floor[ci],
+          this.grid.worldZ((ci / this.grid.nx) | 0)
+        );
+      }
+      this.spawn(identity, start, side > 0 ? Math.PI : 0, {
+        patrol: route,
+        name: identity,
+        hostile: false,
+      });
+      made++;
+    }
+    return made;
+  }
+
+  /**
+   * Who is on screen and what they are called, for `ui`'s floating nameplates.
+   *
+   * Returns a REUSED array of reused rows — called every frame, so it allocates
+   * nothing after the first few. `height` is the anchor above the agent's feet,
+   * scaled by the variant so the 6'3" Mick McCabe's plate does not sit in his
+   * ear while the 10-year-old's floats a metre over his head.
+   */
+  getNameplates() {
+    const out = this._nameplates;
+    let n = 0;
+    for (let i = 0; i < this.agents.length; i++) {
+      const a = this.agents[i];
+      if (!a.alive || !a.name) continue;
+      let row = out[n];
+      if (!row) {
+        row = { position: null, name: '', hostile: false, height: 1.85 };
+        out[n] = row;
+      }
+      row.position = a.position;
+      row.name = a.name;
+      row.hostile = a.hostile;
+      row.height = 1.78 * (a.def?.variant?.scale ?? 1) + 0.22;
+      n++;
+    }
+    out.length = n;
+    return out;
   }
 
   createSquad() {

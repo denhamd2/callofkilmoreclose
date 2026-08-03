@@ -509,6 +509,21 @@ const CSS = `
 .ow-mk-name { font-size: calc(9px * var(--k)); letter-spacing:.18em; color: var(--ink-2); text-shadow:var(--sh); }
 .ow-mk.threat .ow-mk-dist { color: var(--red); }
 
+/* character nameplates — who that is, above their head */
+.ow-np {
+  position:absolute; left:0; top:0; text-align:center; pointer-events:none;
+  will-change: transform, opacity;
+}
+.ow-np-name {
+  font-size: calc(10px * var(--k)); letter-spacing:.14em; text-transform:uppercase;
+  color: var(--ink); text-shadow: var(--sh);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+/* Hostiles read amber, the same language the killfeed already uses for the
+   rows that matter; civilians stay neutral so the street's regulars do not
+   look like targets. */
+.ow-np-foe .ow-np-name { color: var(--amber, #ffc247); }
+
 /* grenade danger */
 .ow-nade { position:absolute; left:0; top:0; will-change: transform, opacity; }
 .ow-nade-ring {
