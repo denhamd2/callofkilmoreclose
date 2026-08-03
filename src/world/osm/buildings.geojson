@@ -1,0 +1,7816 @@
+{
+  "type": "FeatureCollection",
+  "generator": "overpass-turbo",
+  "copyright": "The data included in this document is from www.openstreetmap.org. The data is made available under ODbL.",
+  "timestamp": "2026-08-01T15:02:56Z",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/190583739",
+        "addr:street": "Beechlawn Avenue",
+        "building": "house",
+        "building:levels": "2",
+        "house": "semi-detached",
+        "roof:shape": "pitched"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.208309,
+              53.3901217
+            ],
+            [
+              -6.2084116,
+              53.3901495
+            ],
+            [
+              -6.2084566,
+              53.3900905
+            ],
+            [
+              -6.208354,
+              53.3900627
+            ],
+            [
+              -6.208309,
+              53.3901217
+            ]
+          ]
+        ]
+      },
+      "id": "way/190583739"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/190583742",
+        "addr:street": "Beechlawn Avenue",
+        "building": "house",
+        "building:levels": "2",
+        "house": "semi-detached",
+        "roof:shape": "pitched"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2092886,
+              53.3897841
+            ],
+            [
+              -6.2091829,
+              53.3897609
+            ],
+            [
+              -6.2091454,
+              53.3898217
+            ],
+            [
+              -6.2092512,
+              53.3898449
+            ],
+            [
+              -6.2092886,
+              53.3897841
+            ]
+          ]
+        ]
+      },
+      "id": "way/190583742"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/190583757",
+        "addr:housenumber": "21",
+        "addr:street": "Beechlawn Close",
+        "building": "house",
+        "building:levels": "2",
+        "house": "semi-detached",
+        "roof:shape": "pitched"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2076385,
+              53.3903605
+            ],
+            [
+              -6.2075327,
+              53.3903373
+            ],
+            [
+              -6.2074953,
+              53.3903982
+            ],
+            [
+              -6.2076011,
+              53.3904213
+            ],
+            [
+              -6.2076385,
+              53.3903605
+            ]
+          ]
+        ]
+      },
+      "id": "way/190583757"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/190583760",
+        "addr:street": "Beechlawn Avenue",
+        "building": "house",
+        "building:levels": "2",
+        "house": "semi-detached",
+        "roof:shape": "pitched"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2081481,
+              53.3903467
+            ],
+            [
+              -6.2082507,
+              53.3903745
+            ],
+            [
+              -6.2082957,
+              53.3903155
+            ],
+            [
+              -6.2081931,
+              53.3902877
+            ],
+            [
+              -6.2081481,
+              53.3903467
+            ]
+          ]
+        ]
+      },
+      "id": "way/190583760"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/190583768",
+        "addr:street": "Beechlawn Avenue",
+        "building": "house",
+        "building:levels": "2",
+        "house": "semi-detached",
+        "roof:shape": "pitched"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2086762,
+              53.3906328
+            ],
+            [
+              -6.2087744,
+              53.3906531
+            ],
+            [
+              -6.2088072,
+              53.3905967
+            ],
+            [
+              -6.208709,
+              53.3905764
+            ],
+            [
+              -6.2086762,
+              53.3906328
+            ]
+          ]
+        ]
+      },
+      "id": "way/190583768"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/190583771",
+        "addr:housenumber": "11",
+        "addr:street": "Beechlawn Close",
+        "building": "house",
+        "building:levels": "2",
+        "house": "semi-detached",
+        "roof:shape": "pitched"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2078841,
+              53.3899427
+            ],
+            [
+              -6.2077783,
+              53.3899196
+            ],
+            [
+              -6.2077409,
+              53.3899804
+            ],
+            [
+              -6.2078467,
+              53.3900036
+            ],
+            [
+              -6.2078841,
+              53.3899427
+            ]
+          ]
+        ]
+      },
+      "id": "way/190583771"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/190583785",
+        "addr:street": "Beechlawn Avenue",
+        "building": "house",
+        "building:levels": "2",
+        "house": "semi-detached",
+        "roof:shape": "pitched"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2090916,
+              53.3899132
+            ],
+            [
+              -6.2091942,
+              53.389941
+            ],
+            [
+              -6.2092391,
+              53.389882
+            ],
+            [
+              -6.2091366,
+              53.3898542
+            ],
+            [
+              -6.2090916,
+              53.3899132
+            ]
+          ]
+        ]
+      },
+      "id": "way/190583785"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/190583794",
+        "addr:housenumber": "17",
+        "addr:street": "Beechlawn Close",
+        "building": "house",
+        "building:levels": "2",
+        "house": "semi-detached",
+        "roof:shape": "pitched"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2077174,
+              53.3902056
+            ],
+            [
+              -6.2076116,
+              53.3901824
+            ],
+            [
+              -6.2075742,
+              53.3902433
+            ],
+            [
+              -6.20768,
+              53.3902664
+            ],
+            [
+              -6.2077174,
+              53.3902056
+            ]
+          ]
+        ]
+      },
+      "id": "way/190583794"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/190583795",
+        "addr:street": "Beechlawn Avenue",
+        "building": "house",
+        "building:levels": "2",
+        "house": "semi-detached",
+        "roof:shape": "pitched"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2082641,
+              53.3901807
+            ],
+            [
+              -6.2083667,
+              53.3902085
+            ],
+            [
+              -6.2084116,
+              53.3901495
+            ],
+            [
+              -6.208309,
+              53.3901217
+            ],
+            [
+              -6.2082641,
+              53.3901807
+            ]
+          ]
+        ]
+      },
+      "id": "way/190583795"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/190583797",
+        "addr:housenumber": "5",
+        "addr:street": "Beechlawn Close",
+        "building": "house",
+        "building:levels": "2",
+        "house": "semi-detached",
+        "roof:shape": "pitched"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2080371,
+              53.3897048
+            ],
+            [
+              -6.2079291,
+              53.3896812
+            ],
+            [
+              -6.2078808,
+              53.3897602
+            ],
+            [
+              -6.2079887,
+              53.3897837
+            ],
+            [
+              -6.2080371,
+              53.3897048
+            ]
+          ]
+        ]
+      },
+      "id": "way/190583797"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/190583799",
+        "addr:street": "Beechlawn Avenue",
+        "building": "house",
+        "building:levels": "2",
+        "house": "semi-detached",
+        "roof:shape": "pitched"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2093261,
+              53.3897233
+            ],
+            [
+              -6.2092203,
+              53.3897001
+            ],
+            [
+              -6.2091829,
+              53.3897609
+            ],
+            [
+              -6.2092886,
+              53.3897841
+            ],
+            [
+              -6.2093261,
+              53.3897233
+            ]
+          ]
+        ]
+      },
+      "id": "way/190583799"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/190583800",
+        "addr:street": "Beechlawn Avenue",
+        "building": "house",
+        "building:levels": "2",
+        "house": "semi-detached",
+        "roof:shape": "pitched"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2079936,
+              53.3906058
+            ],
+            [
+              -6.2080962,
+              53.3906336
+            ],
+            [
+              -6.2081411,
+              53.3905746
+            ],
+            [
+              -6.2080385,
+              53.3905468
+            ],
+            [
+              -6.2079936,
+              53.3906058
+            ]
+          ]
+        ]
+      },
+      "id": "way/190583800"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/190583811",
+        "addr:street": "Beechlawn Avenue",
+        "building": "house",
+        "building:levels": "2",
+        "house": "semi-detached",
+        "roof:shape": "pitched"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2084093,
+              53.3899497
+            ],
+            [
+              -6.2085118,
+              53.3899775
+            ],
+            [
+              -6.2085568,
+              53.3899185
+            ],
+            [
+              -6.2084542,
+              53.3898907
+            ],
+            [
+              -6.2084093,
+              53.3899497
+            ]
+          ]
+        ]
+      },
+      "id": "way/190583811"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/190583822",
+        "addr:housenumber": "1",
+        "addr:street": "Beechlawn Close",
+        "building": "house",
+        "building:levels": "2",
+        "house": "semi-detached",
+        "roof:shape": "pitched"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2081117,
+              53.3895693
+            ],
+            [
+              -6.2080059,
+              53.3895462
+            ],
+            [
+              -6.2079685,
+              53.389607
+            ],
+            [
+              -6.2080743,
+              53.3896301
+            ],
+            [
+              -6.2081117,
+              53.3895693
+            ]
+          ]
+        ]
+      },
+      "id": "way/190583822"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/190583824",
+        "addr:street": "Beechlawn Avenue",
+        "building": "house",
+        "building:levels": "2",
+        "house": "semi-detached",
+        "roof:shape": "pitched"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2090789,
+              53.3899738
+            ],
+            [
+              -6.2091815,
+              53.3900015
+            ],
+            [
+              -6.2091942,
+              53.389941
+            ],
+            [
+              -6.2090916,
+              53.3899132
+            ],
+            [
+              -6.2090789,
+              53.3899738
+            ]
+          ]
+        ]
+      },
+      "id": "way/190583824"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/190583825",
+        "addr:housenumber": "19",
+        "addr:street": "Beechlawn Close",
+        "building": "house",
+        "building:levels": "2",
+        "house": "semi-detached",
+        "roof:shape": "pitched"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.20768,
+              53.3902664
+            ],
+            [
+              -6.2075742,
+              53.3902433
+            ],
+            [
+              -6.2075368,
+              53.3903041
+            ],
+            [
+              -6.2076426,
+              53.3903272
+            ],
+            [
+              -6.20768,
+              53.3902664
+            ]
+          ]
+        ]
+      },
+      "id": "way/190583825"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/190583826",
+        "addr:street": "Beechlawn Avenue",
+        "building": "house",
+        "building:levels": "2",
+        "house": "semi-detached",
+        "roof:shape": "pitched"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2080817,
+              53.3904398
+            ],
+            [
+              -6.2081843,
+              53.3904676
+            ],
+            [
+              -6.2082293,
+              53.3904087
+            ],
+            [
+              -6.2081267,
+              53.3903809
+            ],
+            [
+              -6.2080817,
+              53.3904398
+            ]
+          ]
+        ]
+      },
+      "id": "way/190583826"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/190583827",
+        "addr:housenumber": "7",
+        "addr:street": "Beechlawn Close",
+        "building": "house",
+        "building:levels": "2",
+        "house": "semi-detached",
+        "roof:shape": "pitched"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2079887,
+              53.3897837
+            ],
+            [
+              -6.2078808,
+              53.3897602
+            ],
+            [
+              -6.2078379,
+              53.3898301
+            ],
+            [
+              -6.2079459,
+              53.3898536
+            ],
+            [
+              -6.2079887,
+              53.3897837
+            ]
+          ]
+        ]
+      },
+      "id": "way/190583827"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/190583834",
+        "addr:street": "Beechlawn Avenue",
+        "building": "house",
+        "building:levels": "2",
+        "house": "semi-detached",
+        "roof:shape": "pitched"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.208459,
+              53.3897893
+            ],
+            [
+              -6.2085865,
+              53.3898164
+            ],
+            [
+              -6.2086372,
+              53.3897317
+            ],
+            [
+              -6.2084703,
+              53.3896962
+            ],
+            [
+              -6.2084507,
+              53.3897289
+            ],
+            [
+              -6.2084902,
+              53.3897373
+            ],
+            [
+              -6.208459,
+              53.3897893
+            ]
+          ]
+        ]
+      },
+      "id": "way/190583834"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/190583835",
+        "addr:street": "Beechlawn Avenue",
+        "building": "house",
+        "building:levels": "2",
+        "house": "semi-detached",
+        "roof:shape": "pitched"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2088182,
+              53.3904092
+            ],
+            [
+              -6.2089213,
+              53.3904322
+            ],
+            [
+              -6.2089611,
+              53.3903681
+            ],
+            [
+              -6.2088854,
+              53.3903518
+            ],
+            [
+              -6.2088573,
+              53.3903457
+            ],
+            [
+              -6.2088267,
+              53.3903961
+            ],
+            [
+              -6.2088182,
+              53.3904092
+            ]
+          ]
+        ]
+      },
+      "id": "way/190583835"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/190583842",
+        "addr:street": "Beechlawn Avenue",
+        "building": "house",
+        "building:levels": "2",
+        "house": "semi-detached",
+        "roof:shape": "pitched"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2079487,
+              53.3906648
+            ],
+            [
+              -6.2080513,
+              53.3906926
+            ],
+            [
+              -6.2080962,
+              53.3906336
+            ],
+            [
+              -6.2079936,
+              53.3906058
+            ],
+            [
+              -6.2079487,
+              53.3906648
+            ]
+          ]
+        ]
+      },
+      "id": "way/190583842"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/190583847",
+        "addr:housenumber": "13",
+        "addr:street": "Beechlawn Close",
+        "building": "house",
+        "building:levels": "2",
+        "house": "semi-detached",
+        "roof:shape": "pitched"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2078287,
+              53.3900424
+            ],
+            [
+              -6.2077229,
+              53.3900192
+            ],
+            [
+              -6.2076855,
+              53.39008
+            ],
+            [
+              -6.2077913,
+              53.3901032
+            ],
+            [
+              -6.2078287,
+              53.3900424
+            ]
+          ]
+        ]
+      },
+      "id": "way/190583847"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/190583850",
+        "addr:street": "Beechlawn Avenue",
+        "building": "house",
+        "building:levels": "2",
+        "house": "semi-detached",
+        "roof:shape": "pitched"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2083643,
+              53.3900087
+            ],
+            [
+              -6.2084669,
+              53.3900365
+            ],
+            [
+              -6.2085118,
+              53.3899775
+            ],
+            [
+              -6.2084093,
+              53.3899497
+            ],
+            [
+              -6.2083643,
+              53.3900087
+            ]
+          ]
+        ]
+      },
+      "id": "way/190583850"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/190583854",
+        "addr:housenumber": "3",
+        "addr:street": "Beechlawn Close",
+        "building": "house",
+        "building:levels": "2",
+        "house": "semi-detached",
+        "roof:shape": "pitched"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2080743,
+              53.3896301
+            ],
+            [
+              -6.2079685,
+              53.389607
+            ],
+            [
+              -6.2079311,
+              53.3896678
+            ],
+            [
+              -6.2080369,
+              53.389691
+            ],
+            [
+              -6.2080743,
+              53.3896301
+            ]
+          ]
+        ]
+      },
+      "id": "way/190583854"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/190583862",
+        "addr:street": "Beechlawn Avenue",
+        "building": "house",
+        "building:levels": "2",
+        "house": "semi-detached",
+        "roof:shape": "pitched"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2081931,
+              53.3902877
+            ],
+            [
+              -6.2082957,
+              53.3903155
+            ],
+            [
+              -6.2083406,
+              53.3902565
+            ],
+            [
+              -6.208238,
+              53.3902287
+            ],
+            [
+              -6.2081931,
+              53.3902877
+            ]
+          ]
+        ]
+      },
+      "id": "way/190583862"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/190583863",
+        "addr:street": "Beechlawn Avenue",
+        "building": "house",
+        "building:levels": "2",
+        "house": "semi-detached",
+        "roof:shape": "pitched"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.208709,
+              53.3905764
+            ],
+            [
+              -6.2088072,
+              53.3905967
+            ],
+            [
+              -6.20884,
+              53.3905403
+            ],
+            [
+              -6.2087418,
+              53.39052
+            ],
+            [
+              -6.208709,
+              53.3905764
+            ]
+          ]
+        ]
+      },
+      "id": "way/190583863"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/190583871",
+        "addr:street": "Beechlawn Avenue",
+        "building": "house",
+        "building:levels": "2",
+        "house": "semi-detached",
+        "roof:shape": "pitched"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2080368,
+              53.3904988
+            ],
+            [
+              -6.2081394,
+              53.3905266
+            ],
+            [
+              -6.2081843,
+              53.3904676
+            ],
+            [
+              -6.2080817,
+              53.3904398
+            ],
+            [
+              -6.2080368,
+              53.3904988
+            ]
+          ]
+        ]
+      },
+      "id": "way/190583871"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/190583875",
+        "addr:housenumber": "9",
+        "addr:street": "Beechlawn Close",
+        "building": "house",
+        "building:levels": "2",
+        "house": "semi-detached",
+        "roof:shape": "pitched"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2079215,
+              53.3898819
+            ],
+            [
+              -6.2078157,
+              53.3898588
+            ],
+            [
+              -6.2077783,
+              53.3899196
+            ],
+            [
+              -6.2078841,
+              53.3899427
+            ],
+            [
+              -6.2079215,
+              53.3898819
+            ]
+          ]
+        ]
+      },
+      "id": "way/190583875"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/190583877",
+        "addr:street": "Beechlawn Avenue",
+        "building": "house",
+        "building:levels": "2",
+        "house": "semi-detached",
+        "roof:shape": "pitched"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2084231,
+              53.3898494
+            ],
+            [
+              -6.2085506,
+              53.3898765
+            ],
+            [
+              -6.2085865,
+              53.3898164
+            ],
+            [
+              -6.208459,
+              53.3897893
+            ],
+            [
+              -6.2084231,
+              53.3898494
+            ]
+          ]
+        ]
+      },
+      "id": "way/190583877"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/190583878",
+        "addr:street": "Beechlawn Avenue",
+        "building": "house",
+        "building:levels": "2",
+        "house": "semi-detached",
+        "roof:shape": "pitched"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2078869,
+              53.3907469
+            ],
+            [
+              -6.2079895,
+              53.3907747
+            ],
+            [
+              -6.2080344,
+              53.3907157
+            ],
+            [
+              -6.2079319,
+              53.3906879
+            ],
+            [
+              -6.2078869,
+              53.3907469
+            ]
+          ]
+        ]
+      },
+      "id": "way/190583878"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/190583880",
+        "addr:street": "Beechlawn Avenue",
+        "building": "house",
+        "building:levels": "2",
+        "house": "semi-detached",
+        "roof:shape": "pitched"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2087748,
+              53.3904783
+            ],
+            [
+              -6.2088779,
+              53.3905013
+            ],
+            [
+              -6.2089213,
+              53.3904322
+            ],
+            [
+              -6.2088182,
+              53.3904092
+            ],
+            [
+              -6.2087748,
+              53.3904783
+            ]
+          ]
+        ]
+      },
+      "id": "way/190583880"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/190583881",
+        "addr:housenumber": "15",
+        "addr:street": "Beechlawn Close",
+        "building": "house",
+        "building:levels": "2",
+        "house": "semi-detached",
+        "roof:shape": "pitched"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2077913,
+              53.3901032
+            ],
+            [
+              -6.2076855,
+              53.39008
+            ],
+            [
+              -6.2076481,
+              53.3901409
+            ],
+            [
+              -6.2077539,
+              53.390164
+            ],
+            [
+              -6.2077913,
+              53.3901032
+            ]
+          ]
+        ]
+      },
+      "id": "way/190583881"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/644614594",
+        "building": "shed"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2128711,
+              53.3903971
+            ],
+            [
+              -6.2128823,
+              53.3903542
+            ],
+            [
+              -6.2128324,
+              53.3903495
+            ],
+            [
+              -6.2128212,
+              53.3903925
+            ],
+            [
+              -6.2128711,
+              53.3903971
+            ]
+          ]
+        ]
+      },
+      "id": "way/644614594"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/644614595",
+        "building": "house"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2132387,
+              53.3903242
+            ],
+            [
+              -6.2131047,
+              53.3903219
+            ],
+            [
+              -6.2131008,
+              53.3904055
+            ],
+            [
+              -6.2132348,
+              53.3904077
+            ],
+            [
+              -6.2132387,
+              53.3903242
+            ]
+          ]
+        ]
+      },
+      "id": "way/644614595"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/644614597",
+        "building": "house"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2126573,
+              53.3904827
+            ],
+            [
+              -6.2126977,
+              53.3903624
+            ],
+            [
+              -6.2125917,
+              53.3903498
+            ],
+            [
+              -6.2125738,
+              53.390403
+            ],
+            [
+              -6.2125513,
+              53.39047
+            ],
+            [
+              -6.2126573,
+              53.3904827
+            ]
+          ]
+        ]
+      },
+      "id": "way/644614597"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/644614598",
+        "addr:street": "Kilmore Close",
+        "building": "house"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2123722,
+              53.3904461
+            ],
+            [
+              -6.2123952,
+              53.3903801
+            ],
+            [
+              -6.2122301,
+              53.3903691
+            ],
+            [
+              -6.2122071,
+              53.3904352
+            ],
+            [
+              -6.2123722,
+              53.3904461
+            ]
+          ]
+        ]
+      },
+      "id": "way/644614598"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/644614599",
+        "building": "house"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2120747,
+              53.3904129
+            ],
+            [
+              -6.2121029,
+              53.3903441
+            ],
+            [
+              -6.2119382,
+              53.3903256
+            ],
+            [
+              -6.21191,
+              53.3903944
+            ],
+            [
+              -6.2120747,
+              53.3904129
+            ]
+          ]
+        ]
+      },
+      "id": "way/644614599"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/644614600",
+        "addr:street": "Kilmore Close",
+        "building": "house"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2117564,
+              53.390371
+            ],
+            [
+              -6.2117852,
+              53.39028
+            ],
+            [
+              -6.2118454,
+              53.3902868
+            ],
+            [
+              -6.2118539,
+              53.3902602
+            ],
+            [
+              -6.2117127,
+              53.3902443
+            ],
+            [
+              -6.2116982,
+              53.3902899
+            ],
+            [
+              -6.2116798,
+              53.3902878
+            ],
+            [
+              -6.211657,
+              53.3903598
+            ],
+            [
+              -6.2117564,
+              53.390371
+            ]
+          ]
+        ]
+      },
+      "id": "way/644614600"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/644614601",
+        "building": "house"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.209737,
+              53.3897504
+            ],
+            [
+              -6.2097563,
+              53.389675
+            ],
+            [
+              -6.2096439,
+              53.3896648
+            ],
+            [
+              -6.2096246,
+              53.3897402
+            ],
+            [
+              -6.209737,
+              53.3897504
+            ]
+          ]
+        ]
+      },
+      "id": "way/644614601"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/644614602",
+        "building": "house"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2100034,
+              53.3897854
+            ],
+            [
+              -6.2100277,
+              53.3897114
+            ],
+            [
+              -6.2098991,
+              53.3896963
+            ],
+            [
+              -6.2098747,
+              53.3897703
+            ],
+            [
+              -6.2100034,
+              53.3897854
+            ]
+          ]
+        ]
+      },
+      "id": "way/644614602"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/644614603",
+        "building": "house"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2102836,
+              53.3898205
+            ],
+            [
+              -6.2103099,
+              53.3897479
+            ],
+            [
+              -6.2102075,
+              53.3897348
+            ],
+            [
+              -6.2101812,
+              53.3898073
+            ],
+            [
+              -6.2102836,
+              53.3898205
+            ]
+          ]
+        ]
+      },
+      "id": "way/644614603"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/644614604",
+        "building": "house"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2105665,
+              53.3898504
+            ],
+            [
+              -6.2105922,
+              53.3897794
+            ],
+            [
+              -6.2104888,
+              53.3897661
+            ],
+            [
+              -6.2104632,
+              53.3898371
+            ],
+            [
+              -6.2105665,
+              53.3898504
+            ]
+          ]
+        ]
+      },
+      "id": "way/644614604"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/644614605",
+        "building": "house"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2108411,
+              53.3898763
+            ],
+            [
+              -6.2108651,
+              53.3898029
+            ],
+            [
+              -6.2107623,
+              53.389791
+            ],
+            [
+              -6.2107382,
+              53.3898642
+            ],
+            [
+              -6.2108411,
+              53.3898763
+            ]
+          ]
+        ]
+      },
+      "id": "way/644614605"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/644614606",
+        "building": "house"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2111244,
+              53.3899103
+            ],
+            [
+              -6.2111485,
+              53.3898437
+            ],
+            [
+              -6.21105,
+              53.3898311
+            ],
+            [
+              -6.2110259,
+              53.3898977
+            ],
+            [
+              -6.2111244,
+              53.3899103
+            ]
+          ]
+        ]
+      },
+      "id": "way/644614606"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/644614607",
+        "building": "shed"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2112752,
+              53.3900875
+            ],
+            [
+              -6.2112904,
+              53.3900456
+            ],
+            [
+              -6.2111637,
+              53.3900293
+            ],
+            [
+              -6.2111486,
+              53.3900712
+            ],
+            [
+              -6.2112752,
+              53.3900875
+            ]
+          ]
+        ]
+      },
+      "id": "way/644614607"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/644614608",
+        "building": "shed"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2113353,
+              53.3900909
+            ],
+            [
+              -6.2113456,
+              53.3900625
+            ],
+            [
+              -6.2112935,
+              53.3900559
+            ],
+            [
+              -6.2112832,
+              53.3900843
+            ],
+            [
+              -6.2113353,
+              53.3900909
+            ]
+          ]
+        ]
+      },
+      "id": "way/644614608"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/644614609",
+        "building": "shed"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2118886,
+              53.3901975
+            ],
+            [
+              -6.2119011,
+              53.390163
+            ],
+            [
+              -6.2118705,
+              53.3901591
+            ],
+            [
+              -6.211858,
+              53.3901937
+            ],
+            [
+              -6.2118886,
+              53.3901975
+            ]
+          ]
+        ]
+      },
+      "id": "way/644614609"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/644614610",
+        "building": "shed"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2123223,
+              53.3902424
+            ],
+            [
+              -6.2123322,
+              53.390215
+            ],
+            [
+              -6.2122691,
+              53.3902069
+            ],
+            [
+              -6.2122592,
+              53.3902343
+            ],
+            [
+              -6.2123223,
+              53.3902424
+            ]
+          ]
+        ]
+      },
+      "id": "way/644614610"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/644614613",
+        "building": "house"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.213093,
+              53.3901261
+            ],
+            [
+              -6.2131146,
+              53.3900555
+            ],
+            [
+              -6.2130039,
+              53.3900434
+            ],
+            [
+              -6.2129822,
+              53.390114
+            ],
+            [
+              -6.213093,
+              53.3901261
+            ]
+          ]
+        ]
+      },
+      "id": "way/644614613"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/644614614",
+        "addr:street": "Kilmore Close",
+        "building": "house"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2101648,
+              53.3901715
+            ],
+            [
+              -6.2101903,
+              53.3901011
+            ],
+            [
+              -6.2100706,
+              53.3900857
+            ],
+            [
+              -6.2100451,
+              53.3901561
+            ],
+            [
+              -6.2101648,
+              53.3901715
+            ]
+          ]
+        ]
+      },
+      "id": "way/644614614"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/644614615",
+        "addr:street": "Kilmore Close",
+        "building": "house"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2114946,
+              53.3903409
+            ],
+            [
+              -6.2115187,
+              53.3902742
+            ],
+            [
+              -6.2114181,
+              53.3902613
+            ],
+            [
+              -6.211394,
+              53.390328
+            ],
+            [
+              -6.2114946,
+              53.3903409
+            ]
+          ]
+        ]
+      },
+      "id": "way/644614615"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/644614616",
+        "addr:street": "Kilmore Close",
+        "building": "house"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2112474,
+              53.3903105
+            ],
+            [
+              -6.2112857,
+              53.3902045
+            ],
+            [
+              -6.2112299,
+              53.3901973
+            ],
+            [
+              -6.2112174,
+              53.3902319
+            ],
+            [
+              -6.2111728,
+              53.3902261
+            ],
+            [
+              -6.211147,
+              53.3902976
+            ],
+            [
+              -6.2112474,
+              53.3903105
+            ]
+          ]
+        ]
+      },
+      "id": "way/644614616"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/644614617",
+        "addr:street": "Kilmore Close",
+        "building": "house"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2109645,
+              53.3902788
+            ],
+            [
+              -6.2109916,
+              53.3902039
+            ],
+            [
+              -6.2108898,
+              53.3901908
+            ],
+            [
+              -6.2108627,
+              53.3902658
+            ],
+            [
+              -6.2109645,
+              53.3902788
+            ]
+          ]
+        ]
+      },
+      "id": "way/644614617"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/644614618",
+        "addr:street": "Kilmore Close",
+        "building": "house"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2106849,
+              53.3902397
+            ],
+            [
+              -6.21071,
+              53.3901703
+            ],
+            [
+              -6.2106112,
+              53.3901576
+            ],
+            [
+              -6.2105861,
+              53.390227
+            ],
+            [
+              -6.2106849,
+              53.3902397
+            ]
+          ]
+        ]
+      },
+      "id": "way/644614618"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/644614619",
+        "addr:street": "Kilmore Close",
+        "building": "house"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2104042,
+              53.3902023
+            ],
+            [
+              -6.2104297,
+              53.3901319
+            ],
+            [
+              -6.21031,
+              53.3901165
+            ],
+            [
+              -6.2102845,
+              53.3901869
+            ],
+            [
+              -6.2104042,
+              53.3902023
+            ]
+          ]
+        ]
+      },
+      "id": "way/644614619"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/644614620",
+        "addr:street": "Kilmore Close",
+        "building": "house"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2098887,
+              53.3901373
+            ],
+            [
+              -6.209912,
+              53.3900727
+            ],
+            [
+              -6.2097916,
+              53.3900572
+            ],
+            [
+              -6.2097683,
+              53.3901218
+            ],
+            [
+              -6.2098887,
+              53.3901373
+            ]
+          ]
+        ]
+      },
+      "id": "way/644614620"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/644614621",
+        "addr:street": "Kilmore Close",
+        "building": "house"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2095907,
+              53.3901049
+            ],
+            [
+              -6.2096182,
+              53.3900289
+            ],
+            [
+              -6.2095086,
+              53.3900149
+            ],
+            [
+              -6.2094811,
+              53.3900908
+            ],
+            [
+              -6.2095907,
+              53.3901049
+            ]
+          ]
+        ]
+      },
+      "id": "way/644614621"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/644614622",
+        "addr:street": "Kilmore Close",
+        "building": "house"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2093219,
+              53.3904222
+            ],
+            [
+              -6.2093485,
+              53.3903488
+            ],
+            [
+              -6.2092266,
+              53.3903331
+            ],
+            [
+              -6.2092,
+              53.3904066
+            ],
+            [
+              -6.2093219,
+              53.3904222
+            ]
+          ]
+        ]
+      },
+      "id": "way/644614622"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/644614623",
+        "addr:street": "Kilmore Close",
+        "building": "house"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2096129,
+              53.3904582
+            ],
+            [
+              -6.209637,
+              53.3903917
+            ],
+            [
+              -6.2095284,
+              53.3903778
+            ],
+            [
+              -6.2095043,
+              53.3904443
+            ],
+            [
+              -6.2096129,
+              53.3904582
+            ]
+          ]
+        ]
+      },
+      "id": "way/644614623"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/644614624",
+        "addr:street": "Kilmore Close",
+        "building": "house"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2098879,
+              53.3904966
+            ],
+            [
+              -6.209914,
+              53.3904243
+            ],
+            [
+              -6.2098124,
+              53.3904112
+            ],
+            [
+              -6.2097863,
+              53.3904835
+            ],
+            [
+              -6.2098879,
+              53.3904966
+            ]
+          ]
+        ]
+      },
+      "id": "way/644614624"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/644614625",
+        "building": "shed"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2104289,
+              53.3908545
+            ],
+            [
+              -6.2104446,
+              53.390826
+            ],
+            [
+              -6.210399,
+              53.3908171
+            ],
+            [
+              -6.2103834,
+              53.3908456
+            ],
+            [
+              -6.2104289,
+              53.3908545
+            ]
+          ]
+        ]
+      },
+      "id": "way/644614625"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/644614626",
+        "building": "shed"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.210219,
+              53.3908341
+            ],
+            [
+              -6.2102446,
+              53.3907877
+            ],
+            [
+              -6.2101707,
+              53.3907732
+            ],
+            [
+              -6.2101452,
+              53.3908196
+            ],
+            [
+              -6.210219,
+              53.3908341
+            ]
+          ]
+        ]
+      },
+      "id": "way/644614626"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/644614627",
+        "building": "shed"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2116383,
+              53.3912173
+            ],
+            [
+              -6.2116779,
+              53.3911531
+            ],
+            [
+              -6.2116335,
+              53.3911434
+            ],
+            [
+              -6.2115938,
+              53.3912076
+            ],
+            [
+              -6.2116383,
+              53.3912173
+            ]
+          ]
+        ]
+      },
+      "id": "way/644614627"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/644614628",
+        "building": "shed"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2117968,
+              53.3910806
+            ],
+            [
+              -6.2118145,
+              53.391045
+            ],
+            [
+              -6.2117561,
+              53.3910347
+            ],
+            [
+              -6.2117384,
+              53.3910703
+            ],
+            [
+              -6.2117968,
+              53.3910806
+            ]
+          ]
+        ]
+      },
+      "id": "way/644614628"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/644614629",
+        "building": "shed"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2114112,
+              53.3912368
+            ],
+            [
+              -6.2114494,
+              53.3911769
+            ],
+            [
+              -6.2113927,
+              53.3911641
+            ],
+            [
+              -6.2113546,
+              53.391224
+            ],
+            [
+              -6.2114112,
+              53.3912368
+            ]
+          ]
+        ]
+      },
+      "id": "way/644614629"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/644614630",
+        "building": "shed"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2117976,
+              53.3911451
+            ],
+            [
+              -6.2118294,
+              53.3910967
+            ],
+            [
+              -6.2117888,
+              53.3910873
+            ],
+            [
+              -6.2117571,
+              53.3911356
+            ],
+            [
+              -6.2117976,
+              53.3911451
+            ]
+          ]
+        ]
+      },
+      "id": "way/644614630"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/644614631",
+        "building": "shed"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2122614,
+              53.3911329
+            ],
+            [
+              -6.2122784,
+              53.3910858
+            ],
+            [
+              -6.2122217,
+              53.3910785
+            ],
+            [
+              -6.2122046,
+              53.3911256
+            ],
+            [
+              -6.2122614,
+              53.3911329
+            ]
+          ]
+        ]
+      },
+      "id": "way/644614631"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/644614633",
+        "building": "shed"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2126037,
+              53.3910908
+            ],
+            [
+              -6.2126196,
+              53.3910469
+            ],
+            [
+              -6.2125751,
+              53.3910412
+            ],
+            [
+              -6.2125593,
+              53.391085
+            ],
+            [
+              -6.2126037,
+              53.3910908
+            ]
+          ]
+        ]
+      },
+      "id": "way/644614633"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/644614634",
+        "building": "shed"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.212412,
+              53.3909184
+            ],
+            [
+              -6.2124354,
+              53.3908538
+            ],
+            [
+              -6.2123676,
+              53.3908451
+            ],
+            [
+              -6.2123442,
+              53.3909097
+            ],
+            [
+              -6.212412,
+              53.3909184
+            ]
+          ]
+        ]
+      },
+      "id": "way/644614634"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/644614635",
+        "building": "house"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2128379,
+              53.3908663
+            ],
+            [
+              -6.2128651,
+              53.3907906
+            ],
+            [
+              -6.2127662,
+              53.3907779
+            ],
+            [
+              -6.2127388,
+              53.3908536
+            ],
+            [
+              -6.2128379,
+              53.3908663
+            ]
+          ]
+        ]
+      },
+      "id": "way/644614635"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/644614636",
+        "addr:street": "Kilmore Avenue",
+        "building": "house"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2131319,
+              53.3908525
+            ],
+            [
+              -6.2130082,
+              53.3908479
+            ],
+            [
+              -6.2129984,
+              53.390942
+            ],
+            [
+              -6.2131221,
+              53.3909466
+            ],
+            [
+              -6.2131319,
+              53.3908525
+            ]
+          ]
+        ]
+      },
+      "id": "way/644614636"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/644614637",
+        "building": "house"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2137476,
+              53.3909485
+            ],
+            [
+              -6.2137522,
+              53.3908873
+            ],
+            [
+              -6.213633,
+              53.3908842
+            ],
+            [
+              -6.2136284,
+              53.3909453
+            ],
+            [
+              -6.2137476,
+              53.3909485
+            ]
+          ]
+        ]
+      },
+      "id": "way/644614637"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/644614638",
+        "building": "house"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2137704,
+              53.3907765
+            ],
+            [
+              -6.213776,
+              53.3907173
+            ],
+            [
+              -6.2136513,
+              53.3907131
+            ],
+            [
+              -6.2136457,
+              53.3907723
+            ],
+            [
+              -6.2137704,
+              53.3907765
+            ]
+          ]
+        ]
+      },
+      "id": "way/644614638"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/644614639",
+        "building": "house"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2138405,
+              53.3903874
+            ],
+            [
+              -6.2138503,
+              53.3902957
+            ],
+            [
+              -6.2137089,
+              53.3902904
+            ],
+            [
+              -6.2137037,
+              53.390339
+            ],
+            [
+              -6.2137158,
+              53.3903394
+            ],
+            [
+              -6.2137112,
+              53.3903825
+            ],
+            [
+              -6.2138405,
+              53.3903874
+            ]
+          ]
+        ]
+      },
+      "id": "way/644614639"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/644614640",
+        "building": "shed"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2140605,
+              53.3901804
+            ],
+            [
+              -6.2140619,
+              53.3900968
+            ],
+            [
+              -6.2139987,
+              53.3900965
+            ],
+            [
+              -6.2139974,
+              53.39018
+            ],
+            [
+              -6.2140605,
+              53.3901804
+            ]
+          ]
+        ]
+      },
+      "id": "way/644614640"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/644614644",
+        "building": "shed"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.214072,
+              53.3902325
+            ],
+            [
+              -6.2140719,
+              53.3901904
+            ],
+            [
+              -6.2139675,
+              53.3901904
+            ],
+            [
+              -6.2139675,
+              53.3902325
+            ],
+            [
+              -6.214072,
+              53.3902325
+            ]
+          ]
+        ]
+      },
+      "id": "way/644614644"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/655447826",
+        "building": "house"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2138356,
+              53.3901788
+            ],
+            [
+              -6.2138382,
+              53.3901571
+            ],
+            [
+              -6.2138636,
+              53.3901582
+            ],
+            [
+              -6.2138705,
+              53.3901014
+            ],
+            [
+              -6.2137038,
+              53.3900941
+            ],
+            [
+              -6.2136942,
+              53.3901726
+            ],
+            [
+              -6.2138356,
+              53.3901788
+            ]
+          ]
+        ]
+      },
+      "id": "way/655447826"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/655447827",
+        "building": "house"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2136862,
+              53.3902383
+            ],
+            [
+              -6.2138275,
+              53.3902445
+            ],
+            [
+              -6.2138356,
+              53.3901788
+            ],
+            [
+              -6.2136942,
+              53.3901726
+            ],
+            [
+              -6.2136862,
+              53.3902383
+            ]
+          ]
+        ]
+      },
+      "id": "way/655447827"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/655447831",
+        "building": "house"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2137078,
+              53.3900698
+            ],
+            [
+              -6.2138279,
+              53.3900733
+            ],
+            [
+              -6.2138321,
+              53.390021
+            ],
+            [
+              -6.213712,
+              53.3900176
+            ],
+            [
+              -6.2137078,
+              53.3900698
+            ]
+          ]
+        ]
+      },
+      "id": "way/655447831"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/655447832",
+        "building": "house"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2113165,
+              53.3898579
+            ],
+            [
+              -6.211212,
+              53.3898471
+            ],
+            [
+              -6.2111914,
+              53.3899178
+            ],
+            [
+              -6.2112959,
+              53.3899286
+            ],
+            [
+              -6.2113165,
+              53.3898579
+            ]
+          ]
+        ]
+      },
+      "id": "way/655447832"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/655447833",
+        "building": "house"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2114069,
+              53.38994
+            ],
+            [
+              -6.2114274,
+              53.3898693
+            ],
+            [
+              -6.2113165,
+              53.3898579
+            ],
+            [
+              -6.2112959,
+              53.3899286
+            ],
+            [
+              -6.2114069,
+              53.38994
+            ]
+          ]
+        ]
+      },
+      "id": "way/655447833"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/655447834",
+        "building": "house"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2116015,
+              53.3898912
+            ],
+            [
+              -6.211497,
+              53.3898805
+            ],
+            [
+              -6.2114764,
+              53.3899512
+            ],
+            [
+              -6.211581,
+              53.389962
+            ],
+            [
+              -6.2116015,
+              53.3898912
+            ]
+          ]
+        ]
+      },
+      "id": "way/655447834"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/655447835",
+        "building": "house"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2116919,
+              53.3899734
+            ],
+            [
+              -6.2117124,
+              53.3899027
+            ],
+            [
+              -6.2116015,
+              53.3898912
+            ],
+            [
+              -6.211581,
+              53.389962
+            ],
+            [
+              -6.2116919,
+              53.3899734
+            ]
+          ]
+        ]
+      },
+      "id": "way/655447835"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/655447836",
+        "building": "house"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2118684,
+              53.389923
+            ],
+            [
+              -6.2117639,
+              53.3899122
+            ],
+            [
+              -6.2117433,
+              53.389983
+            ],
+            [
+              -6.2118479,
+              53.3899937
+            ],
+            [
+              -6.2118684,
+              53.389923
+            ]
+          ]
+        ]
+      },
+      "id": "way/655447836"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/655447837",
+        "building": "house"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2119885,
+              53.3900513
+            ],
+            [
+              -6.2120119,
+              53.3899711
+            ],
+            [
+              -6.2119699,
+              53.3899668
+            ],
+            [
+              -6.2119794,
+              53.3899345
+            ],
+            [
+              -6.2118684,
+              53.389923
+            ],
+            [
+              -6.2118479,
+              53.3899937
+            ],
+            [
+              -6.2118357,
+              53.3900355
+            ],
+            [
+              -6.2119885,
+              53.3900513
+            ]
+          ]
+        ]
+      },
+      "id": "way/655447837"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/655447838",
+        "building": "house"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2121385,
+              53.3899526
+            ],
+            [
+              -6.212034,
+              53.3899418
+            ],
+            [
+              -6.2120135,
+              53.3900125
+            ],
+            [
+              -6.212118,
+              53.3900233
+            ],
+            [
+              -6.2121385,
+              53.3899526
+            ]
+          ]
+        ]
+      },
+      "id": "way/655447838"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/655447839",
+        "building": "house"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.212229,
+              53.3900348
+            ],
+            [
+              -6.2122495,
+              53.3899641
+            ],
+            [
+              -6.2121385,
+              53.3899526
+            ],
+            [
+              -6.212118,
+              53.3900233
+            ],
+            [
+              -6.212229,
+              53.3900348
+            ]
+          ]
+        ]
+      },
+      "id": "way/655447839"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/655447840",
+        "building": "house"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2124276,
+              53.3899826
+            ],
+            [
+              -6.2123231,
+              53.3899718
+            ],
+            [
+              -6.2123025,
+              53.3900425
+            ],
+            [
+              -6.212407,
+              53.3900533
+            ],
+            [
+              -6.2124276,
+              53.3899826
+            ]
+          ]
+        ]
+      },
+      "id": "way/655447840"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/655447841",
+        "building": "house"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2125071,
+              53.3901023
+            ],
+            [
+              -6.2125385,
+              53.3899941
+            ],
+            [
+              -6.2124276,
+              53.3899826
+            ],
+            [
+              -6.212407,
+              53.3900533
+            ],
+            [
+              -6.2123961,
+              53.3900908
+            ],
+            [
+              -6.2125071,
+              53.3901023
+            ]
+          ]
+        ]
+      },
+      "id": "way/655447841"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/655447842",
+        "building": "house"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2127259,
+              53.3900154
+            ],
+            [
+              -6.2125919,
+              53.3900022
+            ],
+            [
+              -6.2125605,
+              53.3901107
+            ],
+            [
+              -6.212665,
+              53.3901215
+            ],
+            [
+              -6.2127054,
+              53.3900861
+            ],
+            [
+              -6.2127259,
+              53.3900154
+            ]
+          ]
+        ]
+      },
+      "id": "way/655447842"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/655447843",
+        "building": "house"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2128164,
+              53.3900976
+            ],
+            [
+              -6.2128369,
+              53.3900269
+            ],
+            [
+              -6.2127259,
+              53.3900154
+            ],
+            [
+              -6.2127054,
+              53.3900861
+            ],
+            [
+              -6.2128164,
+              53.3900976
+            ]
+          ]
+        ]
+      },
+      "id": "way/655447843"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/655447866",
+        "building": "house"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2130039,
+              53.3900434
+            ],
+            [
+              -6.2128996,
+              53.3900321
+            ],
+            [
+              -6.2128779,
+              53.3901026
+            ],
+            [
+              -6.2129822,
+              53.390114
+            ],
+            [
+              -6.2130039,
+              53.3900434
+            ]
+          ]
+        ]
+      },
+      "id": "way/655447866"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/655449109",
+        "building": "house"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2132475,
+              53.390236
+            ],
+            [
+              -6.2132514,
+              53.3901712
+            ],
+            [
+              -6.2131137,
+              53.3901683
+            ],
+            [
+              -6.2131129,
+              53.3901816
+            ],
+            [
+              -6.2131098,
+              53.390233
+            ],
+            [
+              -6.2132475,
+              53.390236
+            ]
+          ]
+        ]
+      },
+      "id": "way/655449109"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/655449111",
+        "building": "house"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2131062,
+              53.3902929
+            ],
+            [
+              -6.213244,
+              53.3902958
+            ],
+            [
+              -6.2132475,
+              53.390236
+            ],
+            [
+              -6.2131098,
+              53.390233
+            ],
+            [
+              -6.2131062,
+              53.3902929
+            ]
+          ]
+        ]
+      },
+      "id": "way/655449111"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/655449125",
+        "building": "house"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2141335,
+              53.3902016
+            ],
+            [
+              -6.2143472,
+              53.3901984
+            ],
+            [
+              -6.2143448,
+              53.3901424
+            ],
+            [
+              -6.2141518,
+              53.3901453
+            ],
+            [
+              -6.2141311,
+              53.3901456
+            ],
+            [
+              -6.2141335,
+              53.3902016
+            ]
+          ]
+        ]
+      },
+      "id": "way/655449125"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/655449126",
+        "building": "house"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2143497,
+              53.3902719
+            ],
+            [
+              -6.214347,
+              53.3902087
+            ],
+            [
+              -6.2141957,
+              53.390211
+            ],
+            [
+              -6.2141173,
+              53.390212
+            ],
+            [
+              -6.2141186,
+              53.3902473
+            ],
+            [
+              -6.214197,
+              53.3902463
+            ],
+            [
+              -6.214198,
+              53.3902742
+            ],
+            [
+              -6.2143497,
+              53.3902719
+            ]
+          ]
+        ]
+      },
+      "id": "way/655449126"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/655449127",
+        "building": "house"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2142009,
+              53.3903414
+            ],
+            [
+              -6.2143526,
+              53.390339
+            ],
+            [
+              -6.2143497,
+              53.3902719
+            ],
+            [
+              -6.214198,
+              53.3902742
+            ],
+            [
+              -6.2142009,
+              53.3903414
+            ]
+          ]
+        ]
+      },
+      "id": "way/655449127"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/655709350",
+        "building": "house"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2122757,
+              53.390793
+            ],
+            [
+              -6.2123019,
+              53.3907172
+            ],
+            [
+              -6.2121816,
+              53.3907024
+            ],
+            [
+              -6.2121308,
+              53.3908494
+            ],
+            [
+              -6.2122075,
+              53.3908588
+            ],
+            [
+              -6.2122321,
+              53.3907876
+            ],
+            [
+              -6.2122757,
+              53.390793
+            ]
+          ]
+        ]
+      },
+      "id": "way/655709350"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/655709351",
+        "building": "house"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2123019,
+              53.3907172
+            ],
+            [
+              -6.2122757,
+              53.390793
+            ],
+            [
+              -6.2123824,
+              53.3908062
+            ],
+            [
+              -6.2124086,
+              53.3907303
+            ],
+            [
+              -6.2123019,
+              53.3907172
+            ]
+          ]
+        ]
+      },
+      "id": "way/655709351"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/655709352",
+        "building": "house"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2125677,
+              53.3908348
+            ],
+            [
+              -6.2125926,
+              53.3907589
+            ],
+            [
+              -6.2124857,
+              53.3907464
+            ],
+            [
+              -6.2124608,
+              53.3908223
+            ],
+            [
+              -6.2125677,
+              53.3908348
+            ]
+          ]
+        ]
+      },
+      "id": "way/655709352"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/655709353",
+        "building": "house"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2125926,
+              53.3907589
+            ],
+            [
+              -6.2125677,
+              53.3908348
+            ],
+            [
+              -6.212667,
+              53.3908465
+            ],
+            [
+              -6.212692,
+              53.3907705
+            ],
+            [
+              -6.2125926,
+              53.3907589
+            ]
+          ]
+        ]
+      },
+      "id": "way/655709353"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/655709354",
+        "building": "house"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2091069,
+              53.3908029
+            ],
+            [
+              -6.2091551,
+              53.390731
+            ],
+            [
+              -6.2090539,
+              53.3907069
+            ],
+            [
+              -6.2090058,
+              53.3907787
+            ],
+            [
+              -6.2091069,
+              53.3908029
+            ]
+          ]
+        ]
+      },
+      "id": "way/655709354"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/655709355",
+        "building": "house"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2091551,
+              53.390731
+            ],
+            [
+              -6.2091069,
+              53.3908029
+            ],
+            [
+              -6.2092009,
+              53.3908253
+            ],
+            [
+              -6.2092491,
+              53.3907534
+            ],
+            [
+              -6.2091551,
+              53.390731
+            ]
+          ]
+        ]
+      },
+      "id": "way/655709355"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/655709356",
+        "building": "house"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2093738,
+              53.3908628
+            ],
+            [
+              -6.209422,
+              53.390791
+            ],
+            [
+              -6.2093208,
+              53.3907669
+            ],
+            [
+              -6.2092727,
+              53.3908387
+            ],
+            [
+              -6.2093738,
+              53.3908628
+            ]
+          ]
+        ]
+      },
+      "id": "way/655709356"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/655709357",
+        "building": "house"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.209422,
+              53.390791
+            ],
+            [
+              -6.2093738,
+              53.3908628
+            ],
+            [
+              -6.2094678,
+              53.3908853
+            ],
+            [
+              -6.209516,
+              53.3908134
+            ],
+            [
+              -6.209422,
+              53.390791
+            ]
+          ]
+        ]
+      },
+      "id": "way/655709357"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/655709358",
+        "building": "house"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.209645,
+              53.3909274
+            ],
+            [
+              -6.2096913,
+              53.3908551
+            ],
+            [
+              -6.2096131,
+              53.3908373
+            ],
+            [
+              -6.2096353,
+              53.3908028
+            ],
+            [
+              -6.209573,
+              53.3907886
+            ],
+            [
+              -6.209527,
+              53.3908605
+            ],
+            [
+              -6.2095656,
+              53.3908693
+            ],
+            [
+              -6.2095432,
+              53.3909042
+            ],
+            [
+              -6.209645,
+              53.3909274
+            ]
+          ]
+        ]
+      },
+      "id": "way/655709358"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/655709359",
+        "building": "house"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2096913,
+              53.3908551
+            ],
+            [
+              -6.209645,
+              53.3909274
+            ],
+            [
+              -6.2097395,
+              53.390949
+            ],
+            [
+              -6.2097859,
+              53.3908767
+            ],
+            [
+              -6.2096913,
+              53.3908551
+            ]
+          ]
+        ]
+      },
+      "id": "way/655709359"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/655709360",
+        "building": "house"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2098896,
+              53.390994
+            ],
+            [
+              -6.2099363,
+              53.3909218
+            ],
+            [
+              -6.2098455,
+              53.3909009
+            ],
+            [
+              -6.2097988,
+              53.3909731
+            ],
+            [
+              -6.2098896,
+              53.390994
+            ]
+          ]
+        ]
+      },
+      "id": "way/655709360"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/655709361",
+        "building": "house"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2099363,
+              53.3909218
+            ],
+            [
+              -6.2098896,
+              53.390994
+            ],
+            [
+              -6.2099841,
+              53.3910158
+            ],
+            [
+              -6.2100308,
+              53.3909435
+            ],
+            [
+              -6.2099363,
+              53.3909218
+            ]
+          ]
+        ]
+      },
+      "id": "way/655709361"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/655709362",
+        "building": "house"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2101733,
+              53.3910681
+            ],
+            [
+              -6.2102158,
+              53.3909951
+            ],
+            [
+              -6.2101129,
+              53.3909738
+            ],
+            [
+              -6.2100704,
+              53.3910468
+            ],
+            [
+              -6.2101733,
+              53.3910681
+            ]
+          ]
+        ]
+      },
+      "id": "way/655709362"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/655709363",
+        "building": "house"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2102158,
+              53.3909951
+            ],
+            [
+              -6.2101733,
+              53.3910681
+            ],
+            [
+              -6.2103039,
+              53.3910952
+            ],
+            [
+              -6.2103465,
+              53.3910221
+            ],
+            [
+              -6.2102158,
+              53.3909951
+            ]
+          ]
+        ]
+      },
+      "id": "way/655709363"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/655709364",
+        "building": "house"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2104469,
+              53.3911339
+            ],
+            [
+              -6.210492,
+              53.3910613
+            ],
+            [
+              -6.2103899,
+              53.3910387
+            ],
+            [
+              -6.2103448,
+              53.3911113
+            ],
+            [
+              -6.2104469,
+              53.3911339
+            ]
+          ]
+        ]
+      },
+      "id": "way/655709364"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/655709365",
+        "building": "house"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.210492,
+              53.3910613
+            ],
+            [
+              -6.2104469,
+              53.3911339
+            ],
+            [
+              -6.2105418,
+              53.3911549
+            ],
+            [
+              -6.210587,
+              53.3910823
+            ],
+            [
+              -6.210492,
+              53.3910613
+            ]
+          ]
+        ]
+      },
+      "id": "way/655709365"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/655709367",
+        "building": "house"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2106949,
+              53.391202
+            ],
+            [
+              -6.2107389,
+              53.3911292
+            ],
+            [
+              -6.2106363,
+              53.3911072
+            ],
+            [
+              -6.2105924,
+              53.39118
+            ],
+            [
+              -6.2106949,
+              53.391202
+            ]
+          ]
+        ]
+      },
+      "id": "way/655709367"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/655709369",
+        "building": "house"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2107389,
+              53.3911292
+            ],
+            [
+              -6.2106949,
+              53.391202
+            ],
+            [
+              -6.2107902,
+              53.3912225
+            ],
+            [
+              -6.2108342,
+              53.3911496
+            ],
+            [
+              -6.2107389,
+              53.3911292
+            ]
+          ]
+        ]
+      },
+      "id": "way/655709369"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/655709387",
+        "building": "house"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2129446,
+              53.3914458
+            ],
+            [
+              -6.2130742,
+              53.3914495
+            ],
+            [
+              -6.2130792,
+              53.3913892
+            ],
+            [
+              -6.2129496,
+              53.3913854
+            ],
+            [
+              -6.2129446,
+              53.3914458
+            ]
+          ]
+        ]
+      },
+      "id": "way/655709387"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/655709389",
+        "building": "house"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2129661,
+              53.3912718
+            ],
+            [
+              -6.2130957,
+              53.3912756
+            ],
+            [
+              -6.2131007,
+              53.3912153
+            ],
+            [
+              -6.212971,
+              53.3912115
+            ],
+            [
+              -6.2129661,
+              53.3912718
+            ]
+          ]
+        ]
+      },
+      "id": "way/655709389"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/655709390",
+        "building": "house"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2130957,
+              53.3912756
+            ],
+            [
+              -6.2129661,
+              53.3912718
+            ],
+            [
+              -6.2129608,
+              53.3913367
+            ],
+            [
+              -6.2130904,
+              53.3913405
+            ],
+            [
+              -6.2130957,
+              53.3912756
+            ]
+          ]
+        ]
+      },
+      "id": "way/655709390"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/655709391",
+        "building": "house"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.212993,
+              53.3911081
+            ],
+            [
+              -6.2131226,
+              53.3911118
+            ],
+            [
+              -6.2131276,
+              53.3910515
+            ],
+            [
+              -6.2129979,
+              53.3910477
+            ],
+            [
+              -6.212993,
+              53.3911081
+            ]
+          ]
+        ]
+      },
+      "id": "way/655709391"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/655709392",
+        "building": "house"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2131226,
+              53.3911118
+            ],
+            [
+              -6.212993,
+              53.3911081
+            ],
+            [
+              -6.2129911,
+              53.3911318
+            ],
+            [
+              -6.2129205,
+              53.3911297
+            ],
+            [
+              -6.2129171,
+              53.3911708
+            ],
+            [
+              -6.2131173,
+              53.3911767
+            ],
+            [
+              -6.2131226,
+              53.3911118
+            ]
+          ]
+        ]
+      },
+      "id": "way/655709392"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/655709393",
+        "building": "house"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2128651,
+              53.3907906
+            ],
+            [
+              -6.2128379,
+              53.3908663
+            ],
+            [
+              -6.2129444,
+              53.3908799
+            ],
+            [
+              -6.2129716,
+              53.3908043
+            ],
+            [
+              -6.2128651,
+              53.3907906
+            ]
+          ]
+        ]
+      },
+      "id": "way/655709393"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/655712795",
+        "building": "shed"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2092877,
+              53.3905964
+            ],
+            [
+              -6.2093645,
+              53.3906081
+            ],
+            [
+              -6.2093767,
+              53.3905797
+            ],
+            [
+              -6.2093,
+              53.390568
+            ],
+            [
+              -6.2092877,
+              53.3905964
+            ]
+          ]
+        ]
+      },
+      "id": "way/655712795"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/655712796",
+        "building": "shed"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2093447,
+              53.3906469
+            ],
+            [
+              -6.2093623,
+              53.390612
+            ],
+            [
+              -6.2092272,
+              53.3905878
+            ],
+            [
+              -6.2092096,
+              53.3906228
+            ],
+            [
+              -6.2093447,
+              53.3906469
+            ]
+          ]
+        ]
+      },
+      "id": "way/655712796"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/655712797",
+        "building": "shed"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2089997,
+              53.3906343
+            ],
+            [
+              -6.2090265,
+              53.3905931
+            ],
+            [
+              -6.2089712,
+              53.3905803
+            ],
+            [
+              -6.2089444,
+              53.3906216
+            ],
+            [
+              -6.2089997,
+              53.3906343
+            ]
+          ]
+        ]
+      },
+      "id": "way/655712797"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/655712798",
+        "building": "shed"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2090138,
+              53.3906901
+            ],
+            [
+              -6.2089575,
+              53.3906775
+            ],
+            [
+              -6.2089332,
+              53.3907162
+            ],
+            [
+              -6.2089895,
+              53.3907288
+            ],
+            [
+              -6.2090138,
+              53.3906901
+            ]
+          ]
+        ]
+      },
+      "id": "way/655712798"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/655712799",
+        "building": "shed"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2097497,
+              53.3907245
+            ],
+            [
+              -6.209769,
+              53.3906985
+            ],
+            [
+              -6.209718,
+              53.3906851
+            ],
+            [
+              -6.2096988,
+              53.3907111
+            ],
+            [
+              -6.2097497,
+              53.3907245
+            ]
+          ]
+        ]
+      },
+      "id": "way/655712799"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/655712800",
+        "building": "shed"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2098795,
+              53.3907525
+            ],
+            [
+              -6.2099016,
+              53.3907157
+            ],
+            [
+              -6.2098379,
+              53.3907021
+            ],
+            [
+              -6.2098158,
+              53.3907389
+            ],
+            [
+              -6.2098795,
+              53.3907525
+            ]
+          ]
+        ]
+      },
+      "id": "way/655712800"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/655712801",
+        "building": "house"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2100754,
+              53.3905198
+            ],
+            [
+              -6.2101033,
+              53.3904442
+            ],
+            [
+              -6.2099969,
+              53.3904303
+            ],
+            [
+              -6.2099556,
+              53.3905421
+            ],
+            [
+              -6.2100295,
+              53.3905519
+            ],
+            [
+              -6.2100429,
+              53.3905155
+            ],
+            [
+              -6.2100754,
+              53.3905198
+            ]
+          ]
+        ]
+      },
+      "id": "way/655712801"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/655712802",
+        "building": "house"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2101033,
+              53.3904442
+            ],
+            [
+              -6.2100754,
+              53.3905198
+            ],
+            [
+              -6.2101582,
+              53.390532
+            ],
+            [
+              -6.2101861,
+              53.3904564
+            ],
+            [
+              -6.2101033,
+              53.3904442
+            ]
+          ]
+        ]
+      },
+      "id": "way/655712802"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/655712803",
+        "building": "house"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2103345,
+              53.390556
+            ],
+            [
+              -6.2103645,
+              53.3904808
+            ],
+            [
+              -6.2102586,
+              53.3904657
+            ],
+            [
+              -6.2102285,
+              53.390541
+            ],
+            [
+              -6.2103345,
+              53.390556
+            ]
+          ]
+        ]
+      },
+      "id": "way/655712803"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/655712804",
+        "building": "house"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2103645,
+              53.3904808
+            ],
+            [
+              -6.2103345,
+              53.390556
+            ],
+            [
+              -6.2104329,
+              53.3905701
+            ],
+            [
+              -6.2104631,
+              53.3904948
+            ],
+            [
+              -6.2103645,
+              53.3904808
+            ]
+          ]
+        ]
+      },
+      "id": "way/655712804"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/655712805",
+        "building": "house"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2106157,
+              53.3905883
+            ],
+            [
+              -6.2106479,
+              53.3905133
+            ],
+            [
+              -6.2105424,
+              53.3904972
+            ],
+            [
+              -6.2105102,
+              53.3905722
+            ],
+            [
+              -6.2106157,
+              53.3905883
+            ]
+          ]
+        ]
+      },
+      "id": "way/655712805"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/655712806",
+        "building": "house"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2106479,
+              53.3905133
+            ],
+            [
+              -6.2106157,
+              53.3905883
+            ],
+            [
+              -6.2107137,
+              53.3906033
+            ],
+            [
+              -6.210746,
+              53.3905283
+            ],
+            [
+              -6.2106479,
+              53.3905133
+            ]
+          ]
+        ]
+      },
+      "id": "way/655712806"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/655712807",
+        "building": "house"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2108792,
+              53.3906197
+            ],
+            [
+              -6.2109075,
+              53.3905442
+            ],
+            [
+              -6.2107742,
+              53.3905265
+            ],
+            [
+              -6.2107459,
+              53.390602
+            ],
+            [
+              -6.2108792,
+              53.3906197
+            ]
+          ]
+        ]
+      },
+      "id": "way/655712807"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/655712808",
+        "building": "house"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2109075,
+              53.3905442
+            ],
+            [
+              -6.2108792,
+              53.3906197
+            ],
+            [
+              -6.2108588,
+              53.3906742
+            ],
+            [
+              -6.2109673,
+              53.3906887
+            ],
+            [
+              -6.2110161,
+              53.3905587
+            ],
+            [
+              -6.2109075,
+              53.3905442
+            ]
+          ]
+        ]
+      },
+      "id": "way/655712808"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/655712809",
+        "building": "house"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.21117,
+              53.3906597
+            ],
+            [
+              -6.2111973,
+              53.3905841
+            ],
+            [
+              -6.2110908,
+              53.3905704
+            ],
+            [
+              -6.2110635,
+              53.3906461
+            ],
+            [
+              -6.21117,
+              53.3906597
+            ]
+          ]
+        ]
+      },
+      "id": "way/655712809"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/655712810",
+        "building": "house"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2111973,
+              53.3905841
+            ],
+            [
+              -6.21117,
+              53.3906597
+            ],
+            [
+              -6.211269,
+              53.3906725
+            ],
+            [
+              -6.2112964,
+              53.3905968
+            ],
+            [
+              -6.2111973,
+              53.3905841
+            ]
+          ]
+        ]
+      },
+      "id": "way/655712810"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/655712811",
+        "building": "house"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2114516,
+              53.3906903
+            ],
+            [
+              -6.2114764,
+              53.3906143
+            ],
+            [
+              -6.2113695,
+              53.3906019
+            ],
+            [
+              -6.2113447,
+              53.3906779
+            ],
+            [
+              -6.2114516,
+              53.3906903
+            ]
+          ]
+        ]
+      },
+      "id": "way/655712811"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/655712812",
+        "building": "house"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2114764,
+              53.3906143
+            ],
+            [
+              -6.2114516,
+              53.3906903
+            ],
+            [
+              -6.2114387,
+              53.3907296
+            ],
+            [
+              -6.2115381,
+              53.3907412
+            ],
+            [
+              -6.2115758,
+              53.3906259
+            ],
+            [
+              -6.2114764,
+              53.3906143
+            ]
+          ]
+        ]
+      },
+      "id": "way/655712812"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/655712813",
+        "building": "house"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2117304,
+              53.3907282
+            ],
+            [
+              -6.2117555,
+              53.3906523
+            ],
+            [
+              -6.2116486,
+              53.3906398
+            ],
+            [
+              -6.2116235,
+              53.3907157
+            ],
+            [
+              -6.2117304,
+              53.3907282
+            ]
+          ]
+        ]
+      },
+      "id": "way/655712813"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/655712814",
+        "building": "house"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2117555,
+              53.3906523
+            ],
+            [
+              -6.2117304,
+              53.3907282
+            ],
+            [
+              -6.211714,
+              53.3907778
+            ],
+            [
+              -6.2118133,
+              53.3907896
+            ],
+            [
+              -6.2118549,
+              53.390664
+            ],
+            [
+              -6.2117555,
+              53.3906523
+            ]
+          ]
+        ]
+      },
+      "id": "way/655712814"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/655717789",
+        "building": "house"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2120043,
+              53.3907628
+            ],
+            [
+              -6.212031,
+              53.3906871
+            ],
+            [
+              -6.2119368,
+              53.3906753
+            ],
+            [
+              -6.2119101,
+              53.390751
+            ],
+            [
+              -6.2120043,
+              53.3907628
+            ]
+          ]
+        ]
+      },
+      "id": "way/655717789"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/655717790",
+        "building": "house"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.212031,
+              53.3906871
+            ],
+            [
+              -6.2120043,
+              53.3907628
+            ],
+            [
+              -6.212049,
+              53.3907684
+            ],
+            [
+              -6.2120243,
+              53.3908387
+            ],
+            [
+              -6.2121026,
+              53.3908485
+            ],
+            [
+              -6.212154,
+              53.3907025
+            ],
+            [
+              -6.212031,
+              53.3906871
+            ]
+          ]
+        ]
+      },
+      "id": "way/655717790"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/655717791",
+        "building": "shed"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2124162,
+              53.391201
+            ],
+            [
+              -6.2124292,
+              53.3911759
+            ],
+            [
+              -6.212291,
+              53.3911505
+            ],
+            [
+              -6.212278,
+              53.3911756
+            ],
+            [
+              -6.2124162,
+              53.391201
+            ]
+          ]
+        ]
+      },
+      "id": "way/655717791"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/655717792",
+        "building": "shed"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2126629,
+              53.3909299
+            ],
+            [
+              -6.2126505,
+              53.3909693
+            ],
+            [
+              -6.2126883,
+              53.3909735
+            ],
+            [
+              -6.2127008,
+              53.3909341
+            ],
+            [
+              -6.2126629,
+              53.3909299
+            ]
+          ]
+        ]
+      },
+      "id": "way/655717792"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/655717793",
+        "building": "shed"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2128017,
+              53.3911286
+            ],
+            [
+              -6.2127411,
+              53.3911238
+            ],
+            [
+              -6.2127339,
+              53.3911559
+            ],
+            [
+              -6.2127946,
+              53.3911607
+            ],
+            [
+              -6.2128017,
+              53.3911286
+            ]
+          ]
+        ]
+      },
+      "id": "way/655717793"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/655717799",
+        "building": "house"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2140368,
+              53.3913934
+            ],
+            [
+              -6.214046,
+              53.3913162
+            ],
+            [
+              -6.213859,
+              53.3913082
+            ],
+            [
+              -6.2138428,
+              53.3914432
+            ],
+            [
+              -6.2139706,
+              53.3914486
+            ],
+            [
+              -6.2139775,
+              53.3913908
+            ],
+            [
+              -6.2140368,
+              53.3913934
+            ]
+          ]
+        ]
+      },
+      "id": "way/655717799"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/655717800",
+        "building": "house"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.214046,
+              53.3913162
+            ],
+            [
+              -6.2140368,
+              53.3913934
+            ],
+            [
+              -6.2141326,
+              53.3913974
+            ],
+            [
+              -6.2141418,
+              53.3913202
+            ],
+            [
+              -6.214046,
+              53.3913162
+            ]
+          ]
+        ]
+      },
+      "id": "way/655717800"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/655717801",
+        "building": "house"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2135951,
+              53.3913741
+            ],
+            [
+              -6.2137245,
+              53.3913795
+            ],
+            [
+              -6.2137339,
+              53.3912983
+            ],
+            [
+              -6.2136044,
+              53.3912929
+            ],
+            [
+              -6.2135951,
+              53.3913741
+            ]
+          ]
+        ]
+      },
+      "id": "way/655717801"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/655717802",
+        "building": "house"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2137245,
+              53.3913795
+            ],
+            [
+              -6.2135951,
+              53.3913741
+            ],
+            [
+              -6.2135884,
+              53.3914313
+            ],
+            [
+              -6.2137178,
+              53.3914366
+            ],
+            [
+              -6.2137245,
+              53.3913795
+            ]
+          ]
+        ]
+      },
+      "id": "way/655717802"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/655974467",
+        "building": "shed"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2142226,
+              53.3907265
+            ],
+            [
+              -6.214223,
+              53.3907012
+            ],
+            [
+              -6.2141872,
+              53.390701
+            ],
+            [
+              -6.2141868,
+              53.3907263
+            ],
+            [
+              -6.2142226,
+              53.3907265
+            ]
+          ]
+        ]
+      },
+      "id": "way/655974467"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/655974468",
+        "building": "shed"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2141244,
+              53.3906665
+            ],
+            [
+              -6.2141123,
+              53.3907633
+            ],
+            [
+              -6.2141588,
+              53.3907654
+            ],
+            [
+              -6.2141708,
+              53.3906686
+            ],
+            [
+              -6.2141244,
+              53.3906665
+            ]
+          ]
+        ]
+      },
+      "id": "way/655974468"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/655974826",
+        "building": "house"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2138225,
+              53.3905568
+            ],
+            [
+              -6.2136991,
+              53.3905522
+            ],
+            [
+              -6.2136926,
+              53.3906136
+            ],
+            [
+              -6.213816,
+              53.3906183
+            ],
+            [
+              -6.2138225,
+              53.3905568
+            ]
+          ]
+        ]
+      },
+      "id": "way/655974826"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/655974827",
+        "building": "house"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2138318,
+              53.3904691
+            ],
+            [
+              -6.2137085,
+              53.3904644
+            ],
+            [
+              -6.2136991,
+              53.3905522
+            ],
+            [
+              -6.2138225,
+              53.3905568
+            ],
+            [
+              -6.2138318,
+              53.3904691
+            ]
+          ]
+        ]
+      },
+      "id": "way/655974827"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/655974828",
+        "building": "house"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2138405,
+              53.3903874
+            ],
+            [
+              -6.2137112,
+              53.3903825
+            ],
+            [
+              -6.2137025,
+              53.3904642
+            ],
+            [
+              -6.2137085,
+              53.3904644
+            ],
+            [
+              -6.2138318,
+              53.3904691
+            ],
+            [
+              -6.2138405,
+              53.3903874
+            ]
+          ]
+        ]
+      },
+      "id": "way/655974828"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/655974829",
+        "building": "house"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2137522,
+              53.3908873
+            ],
+            [
+              -6.2137563,
+              53.3908302
+            ],
+            [
+              -6.2136371,
+              53.3908271
+            ],
+            [
+              -6.213633,
+              53.3908842
+            ],
+            [
+              -6.2137522,
+              53.3908873
+            ]
+          ]
+        ]
+      },
+      "id": "way/655974829"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/655974830",
+        "building": "house"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.213776,
+              53.3907173
+            ],
+            [
+              -6.2137817,
+              53.3906568
+            ],
+            [
+              -6.213657,
+              53.3906526
+            ],
+            [
+              -6.2136513,
+              53.3907131
+            ],
+            [
+              -6.213776,
+              53.3907173
+            ]
+          ]
+        ]
+      },
+      "id": "way/655974830"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/658398332",
+        "building": "house"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.208363,
+              53.3895444
+            ],
+            [
+              -6.2084106,
+              53.3894725
+            ],
+            [
+              -6.2083154,
+              53.3894501
+            ],
+            [
+              -6.2082678,
+              53.389522
+            ],
+            [
+              -6.208363,
+              53.3895444
+            ]
+          ]
+        ]
+      },
+      "id": "way/658398332"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/658398333",
+        "building": "house"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2086403,
+              53.3896161
+            ],
+            [
+              -6.2086884,
+              53.3895436
+            ],
+            [
+              -6.2085813,
+              53.3895184
+            ],
+            [
+              -6.2085332,
+              53.3895909
+            ],
+            [
+              -6.2086403,
+              53.3896161
+            ]
+          ]
+        ]
+      },
+      "id": "way/658398333"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/960176166",
+        "building": "shed"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2116796,
+              53.391054
+            ],
+            [
+              -6.2117006,
+              53.3909973
+            ],
+            [
+              -6.2116387,
+              53.3909891
+            ],
+            [
+              -6.2116177,
+              53.3910459
+            ],
+            [
+              -6.2116796,
+              53.391054
+            ]
+          ]
+        ]
+      },
+      "id": "way/960176166"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/960176167",
+        "building": "shed"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2090698,
+              53.3904774
+            ],
+            [
+              -6.209099,
+              53.3904271
+            ],
+            [
+              -6.2090483,
+              53.3904166
+            ],
+            [
+              -6.2090191,
+              53.3904669
+            ],
+            [
+              -6.2090698,
+              53.3904774
+            ]
+          ]
+        ]
+      },
+      "id": "way/960176167"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/960176168",
+        "building": "house"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2089277,
+              53.3902787
+            ],
+            [
+              -6.2088508,
+              53.3902629
+            ],
+            [
+              -6.2087793,
+              53.3903863
+            ],
+            [
+              -6.2088267,
+              53.3903961
+            ],
+            [
+              -6.2088573,
+              53.3903457
+            ],
+            [
+              -6.2088854,
+              53.3903518
+            ],
+            [
+              -6.2089277,
+              53.3902787
+            ]
+          ]
+        ]
+      },
+      "id": "way/960176168"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/960176169",
+        "addr:street": "Kilmore Close",
+        "building": "house"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2092,
+              53.3904066
+            ],
+            [
+              -6.2092266,
+              53.3903331
+            ],
+            [
+              -6.2091047,
+              53.3903174
+            ],
+            [
+              -6.2090781,
+              53.3903909
+            ],
+            [
+              -6.2092,
+              53.3904066
+            ]
+          ]
+        ]
+      },
+      "id": "way/960176169"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/960176170",
+        "addr:street": "Kilmore Close",
+        "building": "house"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2095043,
+              53.3904443
+            ],
+            [
+              -6.2095284,
+              53.3903778
+            ],
+            [
+              -6.2094198,
+              53.3903638
+            ],
+            [
+              -6.2093958,
+              53.3904303
+            ],
+            [
+              -6.2095043,
+              53.3904443
+            ]
+          ]
+        ]
+      },
+      "id": "way/960176170"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/960176171",
+        "addr:street": "Kilmore Close",
+        "building": "house"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2097863,
+              53.3904835
+            ],
+            [
+              -6.2098124,
+              53.3904112
+            ],
+            [
+              -6.2097109,
+              53.3903982
+            ],
+            [
+              -6.2096847,
+              53.3904705
+            ],
+            [
+              -6.2097863,
+              53.3904835
+            ]
+          ]
+        ]
+      },
+      "id": "way/960176171"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/960176172",
+        "addr:street": "Kilmore Close",
+        "building": "house"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2094811,
+              53.3900908
+            ],
+            [
+              -6.2095086,
+              53.3900149
+            ],
+            [
+              -6.209399,
+              53.3900008
+            ],
+            [
+              -6.2093715,
+              53.3900767
+            ],
+            [
+              -6.2094811,
+              53.3900908
+            ]
+          ]
+        ]
+      },
+      "id": "way/960176172"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/960176173",
+        "addr:street": "Kilmore Close",
+        "building": "house"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2097683,
+              53.3901218
+            ],
+            [
+              -6.2097916,
+              53.3900572
+            ],
+            [
+              -6.2096711,
+              53.3900417
+            ],
+            [
+              -6.2096478,
+              53.3901063
+            ],
+            [
+              -6.2097683,
+              53.3901218
+            ]
+          ]
+        ]
+      },
+      "id": "way/960176173"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/960176174",
+        "addr:street": "Kilmore Close",
+        "building": "house"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2100451,
+              53.3901561
+            ],
+            [
+              -6.2100706,
+              53.3900857
+            ],
+            [
+              -6.2099509,
+              53.3900703
+            ],
+            [
+              -6.2099254,
+              53.3901407
+            ],
+            [
+              -6.2100451,
+              53.3901561
+            ]
+          ]
+        ]
+      },
+      "id": "way/960176174"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/960176175",
+        "addr:street": "Kilmore Close",
+        "building": "house"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2102845,
+              53.3901869
+            ],
+            [
+              -6.21031,
+              53.3901165
+            ],
+            [
+              -6.2101903,
+              53.3901011
+            ],
+            [
+              -6.2101648,
+              53.3901715
+            ],
+            [
+              -6.2102845,
+              53.3901869
+            ]
+          ]
+        ]
+      },
+      "id": "way/960176175"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/960176176",
+        "addr:street": "Kilmore Close",
+        "building": "house"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2105861,
+              53.390227
+            ],
+            [
+              -6.2106112,
+              53.3901576
+            ],
+            [
+              -6.2105124,
+              53.3901449
+            ],
+            [
+              -6.2104873,
+              53.3902143
+            ],
+            [
+              -6.2105861,
+              53.390227
+            ]
+          ]
+        ]
+      },
+      "id": "way/960176176"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/960176177",
+        "addr:street": "Kilmore Close",
+        "building": "house"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2108627,
+              53.3902658
+            ],
+            [
+              -6.2108898,
+              53.3901908
+            ],
+            [
+              -6.210788,
+              53.3901777
+            ],
+            [
+              -6.2107609,
+              53.3902527
+            ],
+            [
+              -6.2108627,
+              53.3902658
+            ]
+          ]
+        ]
+      },
+      "id": "way/960176177"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/960176178",
+        "addr:street": "Kilmore Close",
+        "building": "house"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.211147,
+              53.3902976
+            ],
+            [
+              -6.2111728,
+              53.3902261
+            ],
+            [
+              -6.2110724,
+              53.3902132
+            ],
+            [
+              -6.2110466,
+              53.3902846
+            ],
+            [
+              -6.211147,
+              53.3902976
+            ]
+          ]
+        ]
+      },
+      "id": "way/960176178"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/960176179",
+        "addr:street": "Kilmore Close",
+        "building": "house"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.211394,
+              53.390328
+            ],
+            [
+              -6.2114181,
+              53.3902613
+            ],
+            [
+              -6.2113443,
+              53.3902468
+            ],
+            [
+              -6.2113202,
+              53.3903134
+            ],
+            [
+              -6.211394,
+              53.390328
+            ]
+          ]
+        ]
+      },
+      "id": "way/960176179"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/960176180",
+        "addr:street": "Kilmore Close",
+        "building": "house"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.211657,
+              53.3903598
+            ],
+            [
+              -6.2116798,
+              53.3902878
+            ],
+            [
+              -6.2115804,
+              53.3902766
+            ],
+            [
+              -6.2115576,
+              53.3903486
+            ],
+            [
+              -6.211657,
+              53.3903598
+            ]
+          ]
+        ]
+      },
+      "id": "way/960176180"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/960176181",
+        "addr:street": "Kilmore Close",
+        "building": "house"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2122071,
+              53.3904352
+            ],
+            [
+              -6.2122301,
+              53.3903691
+            ],
+            [
+              -6.2122448,
+              53.3903269
+            ],
+            [
+              -6.212124,
+              53.390312
+            ],
+            [
+              -6.2120863,
+              53.3904203
+            ],
+            [
+              -6.2122071,
+              53.3904352
+            ]
+          ]
+        ]
+      },
+      "id": "way/960176181"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/960176182",
+        "building": "house"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.21191,
+              53.3903944
+            ],
+            [
+              -6.2119382,
+              53.3903256
+            ],
+            [
+              -6.2118218,
+              53.3903086
+            ],
+            [
+              -6.2117936,
+              53.3903774
+            ],
+            [
+              -6.21191,
+              53.3903944
+            ]
+          ]
+        ]
+      },
+      "id": "way/960176182"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/960176183",
+        "building": "house"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2125513,
+              53.39047
+            ],
+            [
+              -6.2125738,
+              53.390403
+            ],
+            [
+              -6.2124678,
+              53.3903903
+            ],
+            [
+              -6.2124453,
+              53.3904574
+            ],
+            [
+              -6.2125513,
+              53.39047
+            ]
+          ]
+        ]
+      },
+      "id": "way/960176183"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/960178569",
+        "building": "house"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2107382,
+              53.3898642
+            ],
+            [
+              -6.2107623,
+              53.389791
+            ],
+            [
+              -6.2106592,
+              53.3897789
+            ],
+            [
+              -6.2106353,
+              53.3898522
+            ],
+            [
+              -6.2107382,
+              53.3898642
+            ]
+          ]
+        ]
+      },
+      "id": "way/960178569"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/960178570",
+        "building": "house"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2110259,
+              53.3898977
+            ],
+            [
+              -6.21105,
+              53.3898311
+            ],
+            [
+              -6.2109514,
+              53.3898184
+            ],
+            [
+              -6.2109273,
+              53.389885
+            ],
+            [
+              -6.2110259,
+              53.3898977
+            ]
+          ]
+        ]
+      },
+      "id": "way/960178570"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/1028347743",
+        "building": "shed"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2117238,
+              53.3902295
+            ],
+            [
+              -6.2117443,
+              53.390165
+            ],
+            [
+              -6.2116353,
+              53.3901527
+            ],
+            [
+              -6.2116149,
+              53.3902172
+            ],
+            [
+              -6.2117238,
+              53.3902295
+            ]
+          ]
+        ]
+      },
+      "id": "way/1028347743"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/1028347744",
+        "building": "shed"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2116045,
+              53.3901279
+            ],
+            [
+              -6.2114999,
+              53.3901167
+            ],
+            [
+              -6.2114924,
+              53.3901416
+            ],
+            [
+              -6.211597,
+              53.3901528
+            ],
+            [
+              -6.2116045,
+              53.3901279
+            ]
+          ]
+        ]
+      },
+      "id": "way/1028347744"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/1028347745",
+        "building": "shed"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2122402,
+              53.3901695
+            ],
+            [
+              -6.2121342,
+              53.3901567
+            ],
+            [
+              -6.2121222,
+              53.3901921
+            ],
+            [
+              -6.2122281,
+              53.3902049
+            ],
+            [
+              -6.2122402,
+              53.3901695
+            ]
+          ]
+        ]
+      },
+      "id": "way/1028347745"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/1032353289",
+        "building": "house"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2104632,
+              53.3898371
+            ],
+            [
+              -6.2104888,
+              53.3897661
+            ],
+            [
+              -6.2103854,
+              53.3897528
+            ],
+            [
+              -6.2103598,
+              53.3898238
+            ],
+            [
+              -6.2104632,
+              53.3898371
+            ]
+          ]
+        ]
+      },
+      "id": "way/1032353289"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/1032353290",
+        "building": "house"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2101812,
+              53.3898073
+            ],
+            [
+              -6.2102075,
+              53.3897348
+            ],
+            [
+              -6.2101051,
+              53.3897216
+            ],
+            [
+              -6.2100789,
+              53.3897941
+            ],
+            [
+              -6.2101812,
+              53.3898073
+            ]
+          ]
+        ]
+      },
+      "id": "way/1032353290"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/1032353291",
+        "building": "house"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2098747,
+              53.3897703
+            ],
+            [
+              -6.2098991,
+              53.3896963
+            ],
+            [
+              -6.2097704,
+              53.3896812
+            ],
+            [
+              -6.2097319,
+              53.3897979
+            ],
+            [
+              -6.2098401,
+              53.3898106
+            ],
+            [
+              -6.2098542,
+              53.3897679
+            ],
+            [
+              -6.2098747,
+              53.3897703
+            ]
+          ]
+        ]
+      },
+      "id": "way/1032353291"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/1032353292",
+        "building": "house"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2096246,
+              53.3897402
+            ],
+            [
+              -6.2096439,
+              53.3896648
+            ],
+            [
+              -6.2095315,
+              53.3896545
+            ],
+            [
+              -6.2095123,
+              53.3897301
+            ],
+            [
+              -6.2096246,
+              53.3897402
+            ]
+          ]
+        ]
+      },
+      "id": "way/1032353292"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/1032353293",
+        "building": "house"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2094889,
+              53.3897056
+            ],
+            [
+              -6.209504,
+              53.3896638
+            ],
+            [
+              -6.2094677,
+              53.3896592
+            ],
+            [
+              -6.2094788,
+              53.3896285
+            ],
+            [
+              -6.2093877,
+              53.3896168
+            ],
+            [
+              -6.2093615,
+              53.3896892
+            ],
+            [
+              -6.2094889,
+              53.3897056
+            ]
+          ]
+        ]
+      },
+      "id": "way/1032353293"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/1032353294",
+        "building": "house"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2082678,
+              53.389522
+            ],
+            [
+              -6.2083154,
+              53.3894501
+            ],
+            [
+              -6.2082202,
+              53.3894277
+            ],
+            [
+              -6.2081725,
+              53.3894996
+            ],
+            [
+              -6.2082678,
+              53.389522
+            ]
+          ]
+        ]
+      },
+      "id": "way/1032353294"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/1032353295",
+        "building": "house"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2085332,
+              53.3895909
+            ],
+            [
+              -6.2085813,
+              53.3895184
+            ],
+            [
+              -6.2084742,
+              53.3894932
+            ],
+            [
+              -6.2083957,
+              53.3896114
+            ],
+            [
+              -6.2085028,
+              53.3896367
+            ],
+            [
+              -6.2085332,
+              53.3895909
+            ]
+          ]
+        ]
+      },
+      "id": "way/1032353295"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/1032356968",
+        "building": "shed"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2082919,
+              53.3897024
+            ],
+            [
+              -6.2083147,
+              53.3896672
+            ],
+            [
+              -6.2082733,
+              53.3896577
+            ],
+            [
+              -6.2082506,
+              53.3896929
+            ],
+            [
+              -6.2082919,
+              53.3897024
+            ]
+          ]
+        ]
+      },
+      "id": "way/1032356968"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/1032356969",
+        "building": "shed"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2083161,
+              53.3895848
+            ],
+            [
+              -6.208237,
+              53.3895672
+            ],
+            [
+              -6.2082269,
+              53.3895834
+            ],
+            [
+              -6.208306,
+              53.389601
+            ],
+            [
+              -6.2083161,
+              53.3895848
+            ]
+          ]
+        ]
+      },
+      "id": "way/1032356969"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/1033122253",
+        "building": "shed"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2141781,
+              53.3904798
+            ],
+            [
+              -6.2141834,
+              53.3903918
+            ],
+            [
+              -6.2141192,
+              53.3903904
+            ],
+            [
+              -6.2141139,
+              53.3904784
+            ],
+            [
+              -6.2141781,
+              53.3904798
+            ]
+          ]
+        ]
+      },
+      "id": "way/1033122253"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/1033122254",
+        "addr:city": "Dublin",
+        "addr:street": "Kilmore Road",
+        "building": "house",
+        "building:levels": "2"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2147092,
+              53.3909093
+            ],
+            [
+              -6.21457,
+              53.3909019
+            ],
+            [
+              -6.214566,
+              53.3909288
+            ],
+            [
+              -6.2145063,
+              53.3909256
+            ],
+            [
+              -6.2145009,
+              53.3909614
+            ],
+            [
+              -6.2146998,
+              53.3909719
+            ],
+            [
+              -6.2147092,
+              53.3909093
+            ]
+          ]
+        ]
+      },
+      "id": "way/1033122254"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/1033122255",
+        "addr:city": "Dublin",
+        "addr:street": "Kilmore Road",
+        "building": "house",
+        "building:levels": "2"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2147386,
+              53.3907405
+            ],
+            [
+              -6.2147174,
+              53.3907393
+            ],
+            [
+              -6.2147217,
+              53.3907136
+            ],
+            [
+              -6.2145499,
+              53.3907035
+            ],
+            [
+              -6.21454,
+              53.3907629
+            ],
+            [
+              -6.2145933,
+              53.3907661
+            ],
+            [
+              -6.2145889,
+              53.3907926
+            ],
+            [
+              -6.2147286,
+              53.3908009
+            ],
+            [
+              -6.2147386,
+              53.3907405
+            ]
+          ]
+        ]
+      },
+      "id": "way/1033122255"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/1033122256",
+        "addr:city": "Dublin",
+        "addr:street": "Kilmore Road",
+        "building": "house",
+        "building:levels": "2"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2147588,
+              53.3905518
+            ],
+            [
+              -6.2146232,
+              53.3905459
+            ],
+            [
+              -6.2146145,
+              53.390617
+            ],
+            [
+              -6.21475,
+              53.390623
+            ],
+            [
+              -6.2147588,
+              53.3905518
+            ]
+          ]
+        ]
+      },
+      "id": "way/1033122256"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/1033122655",
+        "addr:city": "Dublin",
+        "addr:street": "Kilmore Road",
+        "building": "house",
+        "building:levels": "2"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2146998,
+              53.3909719
+            ],
+            [
+              -6.2145009,
+              53.3909614
+            ],
+            [
+              -6.2144556,
+              53.3909589
+            ],
+            [
+              -6.2144475,
+              53.3910133
+            ],
+            [
+              -6.2146917,
+              53.3910263
+            ],
+            [
+              -6.2146998,
+              53.3909719
+            ]
+          ]
+        ]
+      },
+      "id": "way/1033122655"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/1033122656",
+        "addr:city": "Dublin",
+        "addr:street": "Kilmore Road",
+        "building": "house",
+        "building:levels": "2"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2147286,
+              53.3908009
+            ],
+            [
+              -6.2145889,
+              53.3907926
+            ],
+            [
+              -6.214534,
+              53.3907894
+            ],
+            [
+              -6.2145275,
+              53.3908283
+            ],
+            [
+              -6.2145824,
+              53.3908316
+            ],
+            [
+              -6.2145788,
+              53.390853
+            ],
+            [
+              -6.2147185,
+              53.3908613
+            ],
+            [
+              -6.2147286,
+              53.3908009
+            ]
+          ]
+        ]
+      },
+      "id": "way/1033122656"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/1033122657",
+        "addr:city": "Dublin",
+        "addr:street": "Kilmore Road",
+        "building": "house",
+        "building:levels": "2"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.21475,
+              53.390623
+            ],
+            [
+              -6.2146145,
+              53.390617
+            ],
+            [
+              -6.2146058,
+              53.3906882
+            ],
+            [
+              -6.2147413,
+              53.3906941
+            ],
+            [
+              -6.21475,
+              53.390623
+            ]
+          ]
+        ]
+      },
+      "id": "way/1033122657"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/1033122658",
+        "addr:city": "Dublin",
+        "addr:street": "Kilmore Road",
+        "building": "house",
+        "building:levels": "2"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2147802,
+              53.3904534
+            ],
+            [
+              -6.2146395,
+              53.3904458
+            ],
+            [
+              -6.2145941,
+              53.3904433
+            ],
+            [
+              -6.21458,
+              53.3905356
+            ],
+            [
+              -6.2146352,
+              53.3905386
+            ],
+            [
+              -6.2146385,
+              53.3905167
+            ],
+            [
+              -6.2147695,
+              53.3905238
+            ],
+            [
+              -6.2147802,
+              53.3904534
+            ]
+          ]
+        ]
+      },
+      "id": "way/1033122658"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/1033125707",
+        "building": "house"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2130395,
+              53.3905042
+            ],
+            [
+              -6.2130409,
+              53.390487
+            ],
+            [
+              -6.2130862,
+              53.3904883
+            ],
+            [
+              -6.2130908,
+              53.3904336
+            ],
+            [
+              -6.2129649,
+              53.3904298
+            ],
+            [
+              -6.2129588,
+              53.3905018
+            ],
+            [
+              -6.2130395,
+              53.3905042
+            ]
+          ]
+        ]
+      },
+      "id": "way/1033125707"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/1033125708",
+        "building": "house"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2128242,
+              53.3904322
+            ],
+            [
+              -6.2127969,
+              53.3905021
+            ],
+            [
+              -6.2129263,
+              53.3905201
+            ],
+            [
+              -6.2129536,
+              53.3904502
+            ],
+            [
+              -6.2128242,
+              53.3904322
+            ]
+          ]
+        ]
+      },
+      "id": "way/1033125708"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/1033125709",
+        "building": "house"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2126948,
+              53.3904142
+            ],
+            [
+              -6.2126675,
+              53.3904841
+            ],
+            [
+              -6.2127969,
+              53.3905021
+            ],
+            [
+              -6.2128242,
+              53.3904322
+            ],
+            [
+              -6.2126948,
+              53.3904142
+            ]
+          ]
+        ]
+      },
+      "id": "way/1033125709"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/1033125710",
+        "building": "house"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2132348,
+              53.3904077
+            ],
+            [
+              -6.2131008,
+              53.3904055
+            ],
+            [
+              -6.213098,
+              53.3904652
+            ],
+            [
+              -6.213232,
+              53.3904674
+            ],
+            [
+              -6.2132348,
+              53.3904077
+            ]
+          ]
+        ]
+      },
+      "id": "way/1033125710"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/1033125711",
+        "addr:street": "Kilmore Avenue",
+        "building": "house"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -6.2131221,
+              53.3909466
+            ],
+            [
+              -6.2129984,
+              53.390942
+            ],
+            [
+              -6.2129922,
+              53.3910006
+            ],
+            [
+              -6.2131159,
+              53.3910052
+            ],
+            [
+              -6.2131221,
+              53.3909466
+            ]
+          ]
+        ]
+      },
+      "id": "way/1033125711"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/1184065295",
+        "addr:street": "Kilmore Close",
+        "building": "house"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -5.9565389,
+              54.5984073
+            ],
+            [
+              -5.9564267,
+              54.5984431
+            ],
+            [
+              -5.9564642,
+              54.5984825
+            ],
+            [
+              -5.9565764,
+              54.5984467
+            ],
+            [
+              -5.9565389,
+              54.5984073
+            ]
+          ]
+        ]
+      },
+      "id": "way/1184065295"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/1184065296",
+        "addr:street": "Kilmore Close",
+        "building": "house"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -5.9565014,
+              54.5983679
+            ],
+            [
+              -5.9563893,
+              54.5984037
+            ],
+            [
+              -5.9564267,
+              54.5984431
+            ],
+            [
+              -5.9565389,
+              54.5984073
+            ],
+            [
+              -5.9565014,
+              54.5983679
+            ]
+          ]
+        ]
+      },
+      "id": "way/1184065296"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/1184065297",
+        "addr:street": "Kilmore Close",
+        "building": "house"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -5.9563139,
+              54.5982548
+            ],
+            [
+              -5.9561917,
+              54.5982327
+            ],
+            [
+              -5.9561686,
+              54.5982757
+            ],
+            [
+              -5.9562908,
+              54.5982978
+            ],
+            [
+              -5.9563139,
+              54.5982548
+            ]
+          ]
+        ]
+      },
+      "id": "way/1184065297"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/1184065298",
+        "addr:street": "Kilmore Close",
+        "building": "house"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -5.9563371,
+              54.5982119
+            ],
+            [
+              -5.9562148,
+              54.5981898
+            ],
+            [
+              -5.9561917,
+              54.5982327
+            ],
+            [
+              -5.9563139,
+              54.5982548
+            ],
+            [
+              -5.9563371,
+              54.5982119
+            ]
+          ]
+        ]
+      },
+      "id": "way/1184065298"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/1184065299",
+        "addr:street": "Kilmore Close",
+        "building": "house"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -5.9563923,
+              54.5983403
+            ],
+            [
+              -5.9562779,
+              54.5983736
+            ],
+            [
+              -5.9563127,
+              54.5984138
+            ],
+            [
+              -5.9564272,
+              54.5983805
+            ],
+            [
+              -5.9563923,
+              54.5983403
+            ]
+          ]
+        ]
+      },
+      "id": "way/1184065299"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/1184065300",
+        "addr:street": "Kilmore Close",
+        "building": "house"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -5.9563574,
+              54.5983001
+            ],
+            [
+              -5.956243,
+              54.5983334
+            ],
+            [
+              -5.9562779,
+              54.5983736
+            ],
+            [
+              -5.9563923,
+              54.5983403
+            ],
+            [
+              -5.9563574,
+              54.5983001
+            ]
+          ]
+        ]
+      },
+      "id": "way/1184065300"
+    }
+  ]
+}

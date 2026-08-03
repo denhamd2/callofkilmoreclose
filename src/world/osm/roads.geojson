@@ -1,0 +1,201 @@
+{
+  "type": "FeatureCollection",
+  "generator": "overpass-turbo",
+  "copyright": "The data included in this document is from www.openstreetmap.org. The data is made available under ODbL.",
+  "timestamp": "2026-08-01T15:06:06Z",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/26595749",
+        "cycleway:both": "no",
+        "highway": "residential",
+        "lane_markings": "no",
+        "lanes": "2",
+        "lit": "yes",
+        "logainm:ref": "1379974",
+        "logainm:url": "https://www.logainm.ie/1379974.aspx",
+        "maxspeed": "30",
+        "name": "Beechlawn Avenue",
+        "name:en": "Beechlawn Avenue",
+        "name:ga": "Ascaill Phlásóg na Feá",
+        "surface": "concrete"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            -6.2072079,
+            53.3926013
+          ],
+          [
+            -6.2072511,
+            53.3925238
+          ],
+          [
+            -6.2076545,
+            53.3918338
+          ],
+          [
+            -6.2078097,
+            53.3915638
+          ],
+          [
+            -6.2079572,
+            53.3913297
+          ],
+          [
+            -6.2083048,
+            53.3907996
+          ],
+          [
+            -6.208472,
+            53.3905334
+          ],
+          [
+            -6.2087244,
+            53.3901538
+          ],
+          [
+            -6.2088896,
+            53.389872
+          ],
+          [
+            -6.2091232,
+            53.3894941
+          ]
+        ]
+      },
+      "id": "way/26595749"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/27814285",
+        "alt_name:ga": "Ascaill na Coille Móire",
+        "cycleway:both": "no",
+        "highway": "residential",
+        "lane_markings": "no",
+        "lanes": "2",
+        "lit": "yes",
+        "logainm:ref": "1379919",
+        "logainm:url": "https://www.logainm.ie/1379919.aspx",
+        "maxspeed": "30",
+        "name": "Kilmore Avenue",
+        "name:en": "Kilmore Avenue",
+        "name:ga": "Ascaill Chill Mhór",
+        "surface": "concrete"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            -6.2083048,
+            53.3907996
+          ],
+          [
+            -6.2090116,
+            53.3909527
+          ],
+          [
+            -6.2094628,
+            53.3910516
+          ],
+          [
+            -6.210523,
+            53.3913152
+          ],
+          [
+            -6.2115841,
+            53.3916186
+          ],
+          [
+            -6.2118746,
+            53.3917187
+          ],
+          [
+            -6.212314,
+            53.3918155
+          ],
+          [
+            -6.2127029,
+            53.3918404
+          ],
+          [
+            -6.2129592,
+            53.3918235
+          ],
+          [
+            -6.2131562,
+            53.3917589
+          ],
+          [
+            -6.2132752,
+            53.391678
+          ],
+          [
+            -6.2133423,
+            53.3915844
+          ],
+          [
+            -6.2134107,
+            53.3911477
+          ],
+          [
+            -6.2134347,
+            53.3907331
+          ]
+        ]
+      },
+      "id": "way/27814285"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/28698421",
+        "cycleway:both": "no",
+        "fixme": "Kilmore Drive?",
+        "highway": "residential",
+        "lane_markings": "no",
+        "lanes": "2",
+        "lit": "yes",
+        "maxspeed": "30",
+        "surface": "concrete"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            -6.2091232,
+            53.3894941
+          ],
+          [
+            -6.2101802,
+            53.3896189
+          ],
+          [
+            -6.212962,
+            53.3899255
+          ],
+          [
+            -6.213378,
+            53.3899752
+          ],
+          [
+            -6.2134441,
+            53.3900067
+          ],
+          [
+            -6.2134857,
+            53.390079
+          ],
+          [
+            -6.2134347,
+            53.3907331
+          ]
+        ]
+      },
+      "id": "way/28698421"
+    }
+  ]
+}

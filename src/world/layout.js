@@ -9,6 +9,57 @@
  *
  * Sides: 0 = -Z, 1 = +X, 2 = +Z, 3 = -X.
  *
+ * ==========================================================================
+ * 2026-08 RE-SURVEY — supersedes parts of the OSM notes below. READ FIRST.
+ * ==========================================================================
+ * Re-derived from three Overpass GeoJSON exports of the area (checked in under
+ * `src/world/osm/`). Three findings changed the table below; the older notes
+ * are kept where still true and struck through in prose where not.
+ *
+ * 1. TWO HOUSES WERE MISSING. `way/644614599` and `way/960176182` are tagged
+ *    `building=house` with NO `addr:street`, so the earlier
+ *    `addr:street=Kilmore Close` query never saw them — but they sit squarely
+ *    in the row line (along -102.4 / -93.0, perp +8.0 / +6.5). They exactly
+ *    fill what the old notes called a real ~20 m `kilmoreGap` "between KW2 and
+ *    KW3". That gap was a TAGGING HOLE, not a feature of the street.
+ *    -> the row is 28 houses, not 26.
+ *
+ * 2. THE TWO LOOP ARMS WERE ON THE WRONG SIDES. Sorting all 28 by along-axis
+ *    position and reading their perpendicular offset shows the lane ending at
+ *    perp -14.2 and continuing smoothly into the FOUR-house arm
+ *    (-15.5, -16.9, -18.8, -20.0), while the SIX-house arm sits at
+ *    +16.1..+24.1 — about 40 m across the road. The previous table had it
+ *    backwards: it welded the six-house arm onto the end of the long row and
+ *    put the four-house arm opposite. That is precisely the reported
+ *    "one long row, one short row" symptom, and it was a data error, not a
+ *    dressing problem.
+ *    -> near side (streetSide 1) = 18 lane + 4 continuation = 22 houses
+ *    -> far  side (streetSide 3) = the six-house arm          =  6 houses
+ *
+ * 3. REAL OSM SPACING IS RESTORED. The previous pass replaced real
+ *    house-to-house spacing with a constant 3.0 m wall-to-wall gap, which
+ *    flattened the semi-detached rhythm into an evenly spaced terrace. Real
+ *    along-axis spacing alternates ~6-7 m (within a joined semi pair) and
+ *    ~11-13 m (between pairs); `z` is now that real position, 1:1, so the
+ *    pairing reads again. Total along-axis extent 209.0 m, unchanged.
+ *
+ * OSM-vs-MEASUREMENT CONFLICTS, recorded rather than reconciled away:
+ *  - Semi-pair width: the Google Earth reference measures a joined pair at
+ *    16.55 m. Real OSM pair spans here run ~11.8-16.9 m (mean ~13). OSM
+ *    per-house footprints are canonical per the brief, so `w`/`d` are left as
+ *    mapped and 16.55 m is used only as a reference check. The likely cause is
+ *    the party-wall double-counting already noted below.
+ *  - Road length: Google Earth measures 304.69 m. The OSM along-axis extent of
+ *    the 28 footprints is 209.0 m and the drawn ribbon runs 253 m
+ *    (STREET.zMin..zMax) so the street does not stop dead at the end houses.
+ *    No geometry is fabricated to reach 304.69 m.
+ *  - HOUSE NUMBERS ARE NOT IN OSM AT ALL. Every one of the 32
+ *    `addr:street=Kilmore Close` features carries zero `addr:housenumber`.
+ *    (The only house numbers anywhere in the export belong to Beechlawn Close,
+ *    odds 1-21 — which does confirm the local odd-one-side/even-the-other
+ *    convention.) The `no` field below is therefore a DOCUMENTED CONVENTION,
+ *    not an OSM fact. See HOUSE_NUMBERS.
+ *
  * --------------------------------------------------------------------------
  * OSM-GROUNDED vs PROVISIONAL — read this before touching a number below.
  * --------------------------------------------------------------------------
@@ -204,10 +255,15 @@ function attachments(d) {
   ];
 }
 
-/** One house. `extra` carries only the playable-interior fields (3 houses). */
-function house(id, x, z, w, d, streetSide, extra) {
+/**
+ * One house. `no` is the Kilmore Close house number (see HOUSE_NUMBERS — a
+ * documented convention, not an OSM fact). `extra` carries only the
+ * playable-interior fields (3 houses).
+ */
+function house(id, no, x, z, w, d, streetSide, extra) {
   return {
     id,
+    no,
     x,
     z,
     w,
@@ -222,48 +278,141 @@ function house(id, x, z, w, d, streetSide, extra) {
 }
 
 /**
- * Buildings. KW* = the single-sided lane + the west arm of the loop (22
- * houses, streetSide 1). KE* = the loop's east arm (4 houses, streetSide 3),
- * the only stretch of Kilmore Close with buildings on both sides.
+ * Stair void for an enterable house, in world coords. Kept as a helper so the
+ * three interiors stay consistent when a house moves: the previous table had
+ * these typed as absolute literals, which silently desynced from `x`/`z` every
+ * time the row was re-spaced.
+ */
+function stairHole(x, z) {
+  return { 1: { x0: x - 0.79, x1: x + 0.41, z0: z - 1.74, z1: z + 1.06 } };
+}
+
+/** The two-floor plan shared by the three enterable houses. */
+const ROOMS = [
+  {
+    walls: [[0.4, 0, 0.4, 0.55, 0.28]],
+    furnish: [
+      { kind: 'living', x0: 0.4, z0: 0, x1: 1, z1: 1 },
+      { kind: 'storage', x0: 0, z0: 0, x1: 0.4, z1: 0.55 },
+      { kind: 'living', x0: 0, z0: 0.55, x1: 0.4, z1: 1 },
+    ],
+  },
+  {
+    walls: [[0.5, 0, 0.5, 1, 0.3]],
+    furnish: [
+      { kind: 'living', x0: 0, z0: 0, x1: 0.5, z1: 1 },
+      { kind: 'living', x0: 0.5, z0: 0, x1: 1, z1: 1 },
+    ],
+  },
+];
+
+/** Playable-interior payload for a house at (x, z). */
+function interior(x, z) {
+  return {
+    enterable: true,
+    // roofAccess stays false everywhere: buildings.js derives
+    // `pitchedRoof = !roofAccess && ...`, so a roof-access house is the one
+    // thing on the street that gets a FLAT roof — an archetype outlier.
+    roofAccess: false,
+    stairFlights: [{ floor: 0, x: 0.18, z: 0.3, ry: 0, w: 0.9, railing: 'right' }],
+    stairHoles: stairHole(x, z),
+    rooms: ROOMS,
+  };
+}
+
+/**
+ * Buildings — 28 houses, from the 2026-08 re-survey (see the file header).
  *
- * Real OSM footprints (w/d) and the real house order are preserved; the row is
- * re-spaced to a constant 3.0 m wall-to-wall gap. That gap is the mean of the
- * street's own original spacing, so the row still occupies the same stretch of
- * z and STREET.zMin/zMax, ROAD_ENDS and the cross-street ALLEYS all stay valid.
- * The provisional BG* background infill has been removed — one building type
- * only.
+ * KW* = the near side (streetSide 1): the 18-house single-sided lane plus the
+ * 4-house arm that continues its line around the loop = 22 houses.
+ * KE* = the far side (streetSide 3): the 6-house arm, ~40 m across. This is
+ * the only stretch of Kilmore Close with houses facing each other, and it is
+ * where the encounter is staged.
+ *
+ * `no` is the house number (HOUSE_NUMBERS convention, not OSM). `z` is the
+ * real OSM along-axis position, 1:1 — the uniform 3.0 m re-spacing of the
+ * previous pass is gone, so joined semi pairs sit ~6-7 m apart and the gap
+ * between pairs reads ~11-13 m again. `x` places every near face exactly
+ * STREET.setback (8.71 m) back from the kerb line, so `w` varying per house
+ * does not vary the garden depth.
+ *
+ * Ordered north (the Kilmore Avenue end, high z) to south (the Beechlawn
+ * Avenue end, low z). House numbers run the other way — from the south end
+ * up — which is why KW22 is number 14 and KW1 is number 56.
  */
 export const BUILDINGS = [
-  // --------------------------------------------- KW row (single lane + loop west arm) --
-  house('KW1', -18.585, 197.505, 8.1, 9.73, 1), // osm way/644614598
-  house('KW2', -21.245, 185.875, 13.4, 7.53, 1), // osm way/960176181 — irregular/larger footprint, kept as mapped
-  house('KW3', -21.505, 174.06, 14, 10.1, 1), // osm way/644614600 — irregular/larger footprint (likely a mapped semi-D pair), kept as mapped
-  house('KW4', -19.035, 163.31, 9, 5.4, 1), // osm way/960176180
-  house('KW5', -18.835, 154.295, 8.6, 6.63, 1, { enterable: true, roofAccess: false, stairFlights: [{ floor: 0, x: 0.18, z: 0.3, ry: 0, w: 0.9, railing: 'right' }], stairHoles: { '1': { x0: -19.625, x1: -18.425, z0: 152.555, z1: 155.355 } }, rooms: [{ walls: [[0.4, 0, 0.4, 0.55, 0.28]], furnish: [{ kind: 'living', x0: 0.4, z0: 0, x1: 1, z1: 1 }, { kind: 'storage', x0: 0, z0: 0, x1: 0.4, z1: 0.55 }, { kind: 'living', x0: 0, z0: 0.55, x1: 0.4, z1: 1 }] }, { walls: [[0.5, 0, 0.5, 1, 0.3]], furnish: [{ kind: 'living', x0: 0, z0: 0, x1: 0.5, z1: 1 }, { kind: 'living', x0: 0.5, z0: 0, x1: 1, z1: 1 }] }] }),
-  house('KW6', -18.965, 145.565, 8.9, 4.83, 1), // osm way/960176179
-  house('KW7', -20.795, 136.73, 12.5, 6.84, 1), // osm way/644614616 — irregular footprint, kept as mapped
-  house('KW8', -19.105, 127.19, 9.2, 6.24, 1), // osm way/960176178
-  house('KW9', -19.305, 117.81, 9.6, 6.52, 1), // osm way/644614617
-  house('KW10', -19.305, 108.29, 9.6, 6.52, 1), // osm way/960176177
-  house('KW11', -18.975, 98.87, 8.9, 6.32, 1), // osm way/644614618
-  house('KW12', -18.975, 89.55, 8.9, 6.32, 1), // osm way/960176176
-  house('KW13', -19.145, 79.53, 9.2, 7.72, 1, { enterable: true, roofAccess: false, stairFlights: [{ floor: 0, x: 0.18, z: 0.3, ry: 0, w: 0.9, railing: 'right' }], stairHoles: { '1': { x0: -19.725, x1: -18.525, z0: 77.7, z1: 81.4 } }, rooms: [{ walls: [[0.4, 0, 0.4, 0.55, 0.28]], furnish: [{ kind: 'living', x0: 0.4, z0: 0, x1: 1, z1: 1 }, { kind: 'storage', x0: 0, z0: 0, x1: 0.4, z1: 0.55 }, { kind: 'living', x0: 0, z0: 0.55, x1: 0.4, z1: 1 }] }, { walls: [[0.5, 0, 0.5, 1, 0.3]], furnish: [{ kind: 'living', x0: 0, z0: 0, x1: 0.5, z1: 1 }, { kind: 'living', x0: 0.5, z0: 0, x1: 1, z1: 1 }] }] }),
-  house('KW14', -19.145, 69.21, 9.2, 6.92, 1), // osm way/960176175
-  house('KW15', -19.145, 59.09, 9.2, 7.32, 1), // osm way/644614614
-  house('KW16', -19.145, 48.52, 9.2, 7.82, 1), // osm way/960176174
-  house('KW17', -19.155, 38.43, 9.3, 6.36, 1), // osm way/644614624 — loop's west arm begins here
-  house('KW18', -19.155, 28.92, 9.3, 6.66, 1), // osm way/960176171
-  house('KW19', -18.865, 19.105, 8.7, 6.97, 1), // osm way/644614623 — porch centred on the doorBays{1:0} entrance (bay0 sits at along ~ -1.74)
-  house('KW20', -18.865, 9.135, 8.7, 6.97, 1), // osm way/960176170
-  house('KW21', -19.335, -1.285, 9.6, 7.87, 1), // osm way/644614622 — KW22 (roofAccess finale) excluded from this pattern, so KW21 gets a porch with no paired garage neighbour
-  house('KW22', -19.335, -12.155, 9.6, 7.87, 1, { enterable: true, roofAccess: true, stairFlights: [{ floor: 0, x: 0.18, z: 0.3, ry: 0, w: 0.9, railing: 'right' }], stairHoles: { '1': { x0: -19.925, x1: -18.725, z0: -13.955, z1: -10.355 } }, rooms: [{ walls: [[0.4, 0, 0.4, 0.55, 0.28]], furnish: [{ kind: 'living', x0: 0.4, z0: 0, x1: 1, z1: 1 }, { kind: 'storage', x0: 0, z0: 0, x1: 0.4, z1: 0.55 }, { kind: 'living', x0: 0, z0: 0.55, x1: 0.4, z1: 1 }] }, { walls: [[0.5, 0, 0.5, 1, 0.3]], furnish: [{ kind: 'living', x0: 0, z0: 0, x1: 0.5, z1: 1 }, { kind: 'living', x0: 0.5, z0: 0, x1: 1, z1: 1 }] }] }),
+  // ------------------------------------------- KW: near side, 22 houses --
+  house('KW1', 56, -18.266, 197.509, 7.48, 11.73, 1), // osm way/644614598
+  house('KW2', 54, -20.685, 188.341, 12.32, 8.19, 1), // osm way/960176181 — larger footprint, kept as mapped
+  house('KW3', 52, -18.461, 177.767, 7.87, 11.55, 1), // osm way/644614599 — RESTORED: building=house, no addr:street
+  house('KW4', 50, -18.467, 168.355, 7.88, 7.96, 1), // osm way/960176182 — RESTORED: building=house, no addr:street
+  house('KW5', 48, -21.186, 160.815, 13.32, 10.79, 1), // osm way/644614600 — likely a mapped semi-D pair, kept as mapped
+  house('KW6', 46, -18.604, 151.789, 8.16, 6.72, 1), // osm way/960176180
+  house('KW7', 44, -18.324, 140.934, 7.6, 6.83, 1), // osm way/644614615
+  house('KW8', 42, -18.595, 135.08, 8.14, 5.13, 1), // osm way/960176179
+  house('KW9', 40, -20.562, 124.759, 12.07, 6.82, 1), // osm way/644614616 — larger footprint, kept as mapped
+  house('KW10', 38, -18.596, 117.709, 8.14, 6.82, 1), // osm way/960176178
+  house('KW11', 36, -18.795, 105.497, 8.54, 6.91, 1), // osm way/644614617
+  house('KW12', 34, -18.796, 98.678, 8.54, 6.91, 1), // osm way/960176177
+  house('KW13', 32, -18.477, 86.8, 7.9, 6.71, 1), // osm way/644614618
+  house('KW14', 30, -18.477, 80.183, 7.9, 6.71, 1), // osm way/960176176
+  house('KW15', 28, -18.534, 67.303, 8.02, 8.13, 1), // osm way/644614619
+  house('KW16', 26, -18.534, 59.285, 8.02, 8.13, 1, interior(-18.534, 59.285)), // osm way/960176175 — 26: Oysters
+  house('KW17', 24, -18.534, 51.267, 8.02, 8.13, 1), // osm way/644614614
+  house('KW18', 22, -18.534, 43.249, 8.02, 8.13, 1), // osm way/960176174
+  // --- the loop's near arm: the only stretch with houses opposite ---
+  house('KW19', 20, -18.203, 32.699, 7.36, 8.18, 1), // osm way/644614620
+  house('KW20', 18, -18.203, 24.631, 7.36, 8.19, 1, interior(-18.203, 24.631)), // osm way/960176173 — 18: David
+  house('KW21', 16, -18.853, 13.24, 8.66, 7.44, 1), // osm way/644614621
+  house('KW22', 14, -18.848, 5.899, 8.65, 7.44, 1, interior(-18.848, 5.899)), // osm way/960176172 — 14: the McCabes
 
-  // --------------------------------------------- KE row (loop's east arm — the only two-sided stretch) --
-  house('KE1', 18.825, 34.395, 8.6, 7.76, 3), // osm way/644614620
-  house('KE2', 18.825, 23.635, 8.6, 7.76, 3), // osm way/960176173
-  house('KE3', 19.405, 13.235, 9.8, 7.04, 3), // osm way/644614621
-  house('KE4', 19.405, 3.195, 9.8, 7.04, 3), // osm way/960176172
+  // ------------------------------------------- KE: far side, 6 houses ----
+  house('KE1', 31, 18.644, 35.212, 8.24, 6.9, 3), // osm way/644614624 — 31: Paddy Mason
+  house('KE2', 29, 18.644, 28.406, 8.24, 6.9, 3), // osm way/960176171
+  house('KE3', 27, 18.317, 16.49, 7.58, 7.37, 3), // osm way/644614623 — 27: Angela, across from 18
+  house('KE4', 25, 18.312, 9.219, 7.57, 7.38, 3), // osm way/960176170
+  house('KE5', 23, 18.71, -3.374, 8.37, 8.28, 3), // osm way/644614622
+  house('KE6', 21, 18.711, -11.54, 8.37, 8.28, 3), // osm way/960176169
 ];
+
+/**
+ * HOUSE NUMBERS — a documented convention, NOT an OSM fact.
+ *
+ * OSM carries zero `addr:housenumber` for Kilmore Close (all 32 matching
+ * features), so nothing here can be reconciled against it. What IS supported:
+ * neighbouring Beechlawn Close is mapped with odds 1-21, confirming the local
+ * odd-one-side / even-the-other convention. That convention is applied here:
+ *
+ *   near side (streetSide 1, 22 houses) -> EVENS, 14..56, from the south end up
+ *   far  side (streetSide 3,  6 houses) -> ODDS,  21..31, from the south end up
+ *
+ * The sides start at 14 and 21 rather than 2 and 1 because the numbered stretch
+ * of the close nearest Beechlawn Avenue is not in the OSM extract; the low
+ * numbers are assumed to live there. This is the assumption that makes the
+ * brief's five addresses land on real, correctly-sided houses:
+ *
+ *   14 KW22  z   5.9  near   the McCabes — two doors from 18 (14 -> 16 -> 18)
+ *   18 KW20  z  24.6  near   David
+ *   26 KW16  z  59.3  near   Oysters
+ *   27 KE3   z  16.5  far    Angela — across the road, 8.1 m off David's frontage
+ *   31 KE1   z  35.2  far    Paddy Mason
+ *
+ * Documented residual: 27 is genuinely across the road from 18 but not exactly
+ * opposite it — the two rows are offset by roughly one house width. Kilmore
+ * Close is only two-sided for its last ~47 m, so this is as close as the real
+ * geometry allows without moving a house off its OSM position.
+ */
+export const HOUSE_NUMBERS = Object.freeze(
+  BUILDINGS.reduce((m, b) => {
+    m[b.no] = b.id;
+    return m;
+  }, {}),
+);
+
+/** Look a house up by its Kilmore Close number. Returns undefined if absent. */
+export function houseByNumber(no) {
+  return BUILDINGS.find((b) => b.no === no);
+}
 
 /**
  * Real OSM road continuity at each end of the map. Replaces the removed
