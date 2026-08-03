@@ -293,7 +293,15 @@ export const BUILDINGS = (() => {
         const z = p * PITCH + k * HOUSE_W + HOUSE_W / 2;
         // The low-z half of each pair is the mirrored one, so its garage lands
         // in the gap below the pair and both front doors meet at the party wall.
-        const mirror = k === 0;
+        //
+        // TWO handings, not one. Attachments are positioned in WORLD z —
+        // buildings.js sets `alongZ = 1` for both streetSides — but bay kinds
+        // are positioned in PANEL-LOCAL x, and panelMatrix maps local +x to
+        // world +Z on side 1 and world -Z on side 3. Using one flag for both
+        // put the solid garage box directly over the front-door opening on all
+        // 26 far-side houses.
+        const attachMirror = k === 0;
+        const bayMirror = side === 1 ? k === 0 : k === 1;
         const x = sgn * cx;
         out.push({
           id: `${prefix}${i + 1}`,
@@ -304,11 +312,11 @@ export const BUILDINGS = (() => {
           d: HOUSE_W,
           streetSide: side,
           pair: p,
-          mirror,
+          mirror: attachMirror,
           ...ARCHETYPE,
-          doorBays: { [side]: mirror ? bays(HOUSE_W) - 1 : 0 },
-          bayKinds: windows(side, HOUSE_W, mirror),
-          attachments: attachments(HOUSE_W, mirror),
+          doorBays: { [side]: bayMirror ? bays(HOUSE_W) - 1 : 0 },
+          bayKinds: windows(side, HOUSE_W, bayMirror),
+          attachments: attachments(HOUSE_W, attachMirror),
           ...(ENTERABLE.has(no) ? interior(x, +z.toFixed(3)) : null),
         });
       }

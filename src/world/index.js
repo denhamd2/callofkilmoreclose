@@ -18,12 +18,12 @@ import {
  * WORLD — level geometry, the modular building kit, props, set dressing and
  * static collision.
  *
- * Kilmore Close, a real Dublin residential street (OSM way 37211091):
- * a single-sided lane forking into a two-sided loop, ~209 m of real building
- * frontage, three enterable houses furnished across multiple floors, both
- * ends left open toward the real connecting roads (see ROAD_ENDS in
- * layout.js), and several thousand props. Nothing is loaded from disk —
- * every vertex is generated here.
+ * Kilmore Close, a real Dublin residential street: a straight road with
+ * thirteen joined semi-detached pairs on each side (52 front doors), a 251 m
+ * housing run inside a 304 m carriageway, cross roads closing both ends, three
+ * enterable houses furnished across multiple floors, and several thousand
+ * props. Nothing is loaded from disk — every vertex is generated here.
+ * See layout.js for why the layout is map-derived rather than OSM-derived.
  *
  * HOW IT FITS TOGETHER
  *   layout.js     the map: footprints, facade programmes, set-piece positions
@@ -196,9 +196,28 @@ export class WorldSystem {
       };
     });
     this._housesByNo = new Map(this.houses.map((h) => [h.no, h]));
+    /**
+     * Level bounds, in world space. `ai` builds its NavGrid from this.
+     *
+     * This was a fixed +/-62 m box inherited from the original 104 m fictional
+     * street and never updated. The street is now 304 m long, so only 22 of 52
+     * doorsteps fell inside it — `grid.nearest()` returned -1 for the rest and
+     * three of the cast (Oysters at 26, Angela at 27, Paddy Mason at 31) could
+     * never path anywhere. They stood at their doors for the whole game.
+     *
+     * Derived from the street itself so it cannot desync again. `x` is the
+     * building line plus plot depth and a small margin rather than the full
+     * cross-road width: the grid cost is dominated by the 304 m length, and
+     * spending cells on empty ground either side of the cross roads buys
+     * nothing. Cell size stays 0.8 m deliberately — the footpath is only 2.0 m
+     * wide and NavGrid inflates obstacles by the agent radius, so a coarser
+     * grid closes the pavement and pushes everyone into the carriageway.
+     */
+    let halfX = STREET.kerb + STREET.setback + 6;
+    for (const b of BUILDINGS) halfX = Math.max(halfX, Math.abs(b.x) + b.w / 2 + 4);
     this.bounds = new THREE.Box3(
-      new THREE.Vector3(-62, -2, -62),
-      new THREE.Vector3(62, 26, 62)
+      new THREE.Vector3(-halfX, -2, STREET.zMin - 10),
+      new THREE.Vector3(halfX, 26, STREET.zMax + 10)
     ).applyMatrix4(A.xform);
     this.stats = A.stats;
 

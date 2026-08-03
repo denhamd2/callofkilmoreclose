@@ -10,6 +10,7 @@ const WHEEL_HOLD = 0.18;
 import { buildRifle } from './models/rifle.js';
 import { buildSmg } from './models/smg.js';
 import { buildPistol } from './models/pistol.js';
+import { buildUnarmed } from './models/unarmed.js';
 import { clamp, clamp01, lerp, damp, DEG } from './mathx.js';
 
 /**
@@ -169,9 +170,11 @@ export class WeaponSystem {
 
     const t0 = performance.now();
     const builders = {
-      // Empty group: the viewmodel still draws the hands, there is just nothing
-      // in them.
-      unarmed: () => new THREE.Group(),
+      // A real descriptor with an empty Assembly body — NOT a bare Object3D.
+      // addWeapon() calls model.body.build() and buildClips() dereferences
+      // nodes.gripL/magSeat unconditionally, so anything less throws inside
+      // init() and the game boots to a black screen.
+      unarmed: buildUnarmed,
       rifle: buildRifle,
       smg: buildSmg,
       pistol: buildPistol,
