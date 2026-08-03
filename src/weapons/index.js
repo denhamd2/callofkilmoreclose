@@ -7,6 +7,8 @@ import { WEAPON_DEFS, buildRecoilPattern, SPREAD_MODS } from './defs.js';
 
 /** Seconds Tab must be held before it opens the wheel rather than cycling. */
 const WHEEL_HOLD = 0.18;
+/** Time scale while the weapon wheel is held open. */
+const WHEEL_TIME_SCALE = 0.25;
 import { buildRifle } from './models/rifle.js';
 import { buildSmg } from './models/smg.js';
 import { buildPistol } from './models/pistol.js';
@@ -295,6 +297,10 @@ export class WeaponSystem {
     const vm = this.viewmodel;
     h.name = s.def.label ?? s.def.id;
     h.mode = s.mode;
+    // Melee has no magazine. `ui` collapses the ammo panel and hides the
+    // reticle on this rather than inferring it from magSize === 0, which
+    // AmmoPanel was silently coercing back to a 30-round strip.
+    h.melee = s.def.melee === true;
     // `a.mag` counts the chambered round, so a topped-off rifle is 31. The HUD
     // draws one pip per round against magSize, so clamp the *display* to the
     // magazine capacity rather than overflowing the pip strip.
@@ -336,6 +342,15 @@ export class WeaponSystem {
    * keys jump straight to a slot; with it closed those number keys equip
    * directly, which is what they already did.
    */
+  /**
+   * Hand time back after the wheel closes. Never writes 1 over a 0: the pause
+   * menu parks `time.scale` at 0 and would be un-paused by a stray restore.
+   */
+  _restoreTime() {
+    const t = this.ctx.time;
+    if (t.scale > 0 && t.scale < 1) t.scale = 1;
+  }
+
   _updateWheel(dt, input) {
     // NOT `this.weaponIds`: that getter spreads the Map into a fresh array on
     // every call and this runs every frame. The loadout is fixed at init.
@@ -351,9 +366,16 @@ export class WeaponSystem {
         w.open = true;
         w.index = Math.max(0, ids.indexOf(this.activeId));
       }
+      // Slow the world while the wheel is held. This is the single thing that
+      // makes a radial selector feel considered rather than panicked, and the
+      // engine already supports it: `core/engine.js` scales dt by `time.scale`
+      // and `ui` deliberately animates off `time.raw`, so the HUD keeps running
+      // at full speed while the world crawls.
+      if (w.open) this.ctx.time.scale = WHEEL_TIME_SCALE;
     } else if (w.open) {
       // Key lost without a release event (focus loss): close, do not equip.
       w.open = false;
+      this._restoreTime();
     }
 
     if (w.open) {
@@ -369,6 +391,7 @@ export class WeaponSystem {
       if (w.open) {
         this.setWeapon(ids[w.index]);
         w.open = false;
+        this._restoreTime();
       } else if (this._wheelHold < WHEEL_HOLD) {
         this.nextWeapon();
       }
@@ -544,8 +567,25 @@ export class WeaponSystem {
     const origin = this._meleeOrigin ?? (this._meleeOrigin = new THREE.Vector3());
     const fwd = this._meleeFwd ?? (this._meleeFwd = new THREE.Vector3());
     const to = this._meleeTo ?? (this._meleeTo = new THREE.Vector3());
-    cam.getWorldPosition(origin);
+
+    // Strike from DAVID, not from the camera. The third-person boom sits up to
+    // 3.1 m behind him, so measuring reach from `cam.getWorldPosition` meant a
+    // 2.3 m punch could essentially never reach someone standing in front of
+    // you — and when it did connect it was because the target was beside or
+    // behind David, near the boom.
+    const p0 = this.player;
+    if (p0?.position) {
+      origin.copy(p0.position);
+      origin.y += 1.3; // chest height, not feet
+    } else {
+      cam.getWorldPosition(origin);
+    }
+    // Aim still comes from where the player is looking, flattened: a punch is
+    // thrown level, not down the camera pitch.
     cam.getWorldDirection(fwd);
+    fwd.y = 0;
+    if (fwd.lengthSq() < 1e-6) fwd.set(0, 0, -1);
+    else fwd.normalize();
 
     const ai = this.ctx.peek('ai');
     const cone = Math.cos(def.meleeArc);
@@ -555,12 +595,19 @@ export class WeaponSystem {
       for (let i = 0; i < ai.agents.length; i++) {
         const a = ai.agents[i];
         if (!a.alive) continue;
+        // Range is measured to the target's CHEST, so a tall or crouched actor
+        // reads at the right distance; the arc test is then done flat, because
+        // the strike direction is flat. Squashing y before normalising (as this
+        // used to) made the cone silently anisotropic and skewed it by pitch.
         to.copy(a.position).sub(origin);
-        to.y *= 0.5; // a strike lands on a body, not a point at its feet
+        to.y += 1.0;
         const d = to.length();
         if (d > reach || d < 1e-3) continue;
-        to.multiplyScalar(1 / d);
-        if (fwd.x * to.x + fwd.y * to.y + fwd.z * to.z < cone) continue;
+        to.y = 0;
+        const flat = Math.hypot(to.x, to.z);
+        if (flat < 1e-4) continue;
+        to.multiplyScalar(1 / flat);
+        if (fwd.x * to.x + fwd.z * to.z < cone) continue;
         if (d < bestD) {
           bestD = d;
           best = a;
@@ -569,14 +616,24 @@ export class WeaponSystem {
     }
 
     if (best) {
-      this.ctx.events.emit('damage:dealt', {
-        target: best,
-        amount: dmg,
-        headshot: false,
-        killed: false,
-        point: best.position,
-        incident: fwd,
-      });
+      // Preallocated, like `_firePayload` — this used to build a fresh literal
+      // per strike and pass a LIVE reference to the agent's own position.
+      const pay =
+        this._meleePayload ??
+        (this._meleePayload = {
+          target: null,
+          amount: 0,
+          headshot: false,
+          killed: false,
+          point: new THREE.Vector3(),
+          incident: new THREE.Vector3(),
+        });
+      pay.target = best;
+      pay.amount = dmg;
+      pay.killed = false;
+      pay.point.copy(best.position).setY(best.position.y + 1.0);
+      pay.incident.copy(fwd);
+      this.ctx.events.emit('damage:dealt', pay);
     }
 
     const p = this.player;

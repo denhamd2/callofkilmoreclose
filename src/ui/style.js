@@ -599,6 +599,11 @@ const CSS = `
 .ow-dn.kill { color: var(--red);   font-size: calc(23px * var(--k)); }
 .ow-dn.armour { color: var(--cyan); }
 
+/* melee: no magazine, so the panel collapses to just the weapon name */
+.ow-ammo-melee .ow-ammo-row,
+.ow-ammo-melee .ow-mag,
+.ow-ammo-melee .ow-ammo-mode { display:none; }
+
 /* ============================================================== controls */
 .ow-controls {
   position:absolute; left: calc(var(--u) * 3); bottom: calc(var(--u) * 3);

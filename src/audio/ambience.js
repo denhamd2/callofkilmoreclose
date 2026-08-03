@@ -1,7 +1,7 @@
 /**
  * AUDIO / AMBIENCE
  *
- * Three continuous beds (wind, city, distant war) plus a scheduler that drops
+ * Three continuous beds (wind, city, low traffic rumble) plus a scheduler that drops
  * positioned one-shots into the world. Everything is driven by audio-rate LFOs
  * rather than per-frame JS automation, so the beds cost nothing on the main
  * thread, and every scheduled event's time, position, pitch and level comes from
@@ -51,7 +51,10 @@ export class Ambience {
     this.nodes.push(sendTap);
 
     /* ---- wind: two decorrelated brown-noise layers ---------------- */
-    this._windGain = gain(actx, 0.5);
+    // Wind was 0.5 against a city bed of 0.06 — about 18 dB apart, which made a
+    // suburban street sound like open moorland. Pulled down so the town sits
+    // under it rather than beneath it.
+    this._windGain = gain(actx, 0.26);
     this._windGain.connect(outdoorLP);
     this.nodes.push(this._windGain);
     for (let i = 0; i < 2; i++) {
@@ -90,7 +93,9 @@ export class Ambience {
       const src = bank.source('pink', rng, 0.9, true);
       const lp = biquad(actx, 'lowpass', 480, 0.7);
       const hp = biquad(actx, 'highpass', 70, 0.7);
-      const g = gain(actx, 0.06);
+      // Raised from 0.06. This is the bed that says "town" rather than
+      // "moor" — distant traffic on the Malahide Road, indistinct life.
+      const g = gain(actx, 0.14);
       series(src, hp, lp, g).connect(outdoorLP);
       src.start(0, src._offset);
       this._lfo(0.023, 0.025, g.gain);
@@ -99,11 +104,14 @@ export class Ambience {
       this._cityGain = g;
     }
 
-    /* ---- distant war rumble: sub-100 Hz, always there ------------- */
+    /* ---- low traffic rumble: sub-100 Hz, always there ------------- */
     {
+      // Was the "distant war rumble" bed. The synthesis is right for a city
+      // floor — it is the artillery framing that was wrong — so it is kept and
+      // relabelled, at a lower level, as the sub end of the distant traffic.
       const src = bank.source('brown', rng, 0.7, true);
       const lp = biquad(actx, 'lowpass', 105, 0.9);
-      const g = gain(actx, 0.05);
+      const g = gain(actx, 0.028);
       series(src, lp, g).connect(outdoorLP);
       src.start(0, src._offset);
       this._lfo(0.0137, 0.035, g.gain);
@@ -155,29 +163,26 @@ export class Ambience {
       this._gust();
     }
 
-    T.volley -= dt;
-    if (T.volley <= 0) {
-      T.volley = r.range(2.5, 12) / clamp(this.intensity, 0.25, 2);
-      api?.distantVolley?.();
-    }
-
-    T.boom -= dt;
-    if (T.boom <= 0) {
-      T.boom = r.range(16, 50) / clamp(this.intensity, 0.25, 2);
-      api?.distantBoom?.();
-    }
-
+    /**
+     * The distant-gunfire, explosion and combat-radio schedulers that used to
+     * run here are gone.
+     *
+     * They fired 1-6 rounds of rifle/LMG fire every 2.5-12 s, an explosion
+     * every 16-50 s, and military radio barks ("advance", "flank", "copy")
+     * every 20-60 s. That is inherited from the fictional war-zone street and
+     * it made a Dublin residential cul-de-sac sound like an active battlefield
+     * — by far the loudest thing wrong with the atmosphere.
+     *
+     * `distantVolley`/`distantBoom`/`distantChatter` still exist on the audio
+     * API for any future set piece that genuinely wants them; nothing schedules
+     * them ambiently any more.
+     */
     T.oneshot -= dt;
     if (T.oneshot <= 0) {
-      T.oneshot = r.range(6, 20);
+      T.oneshot = r.range(4, 13);
       api?.oneShot?.();
     }
 
-    T.chatter -= dt;
-    if (T.chatter <= 0) {
-      T.chatter = r.range(20, 60);
-      api?.distantChatter?.();
-    }
   }
 
   /** A gust: level swell plus the lowpass opening as the air speeds up. */
@@ -211,7 +216,21 @@ export class Ambience {
 /* ------------------------------------------------------------------ */
 
 /** Weighted table used by the scheduler. */
-export const ONE_SHOTS = ['dog', 'siren', 'creak', 'settle', 'birds', 'vehicle', 'heli', 'shout'];
+/**
+ * Weighted table used by the scheduler — entries repeat to carry the weight.
+ *
+ * This was a uniform pick over ['dog','siren','creak','settle','birds',
+ * 'vehicle','heli','shout'], so on a 6-20 s timer birds came up about once
+ * every 100 seconds while rubble `settle`, `creak`, a helicopter and combat
+ * `shout` each came up just as often. On an Irish residential street at
+ * evening, birds are near-continuous and the rest do not happen at all.
+ */
+export const ONE_SHOTS = [
+  'birds', 'birds', 'birds', 'birds', 'birds',
+  'dog', 'dog',
+  'vehicle', 'vehicle',
+  'siren',
+];
 
 export function ambientOneShot(actx, bank, rng, kind, o = {}) {
   const t0 = o.when ?? actx.currentTime;

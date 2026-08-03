@@ -518,7 +518,12 @@ export class UiSystem {
     // `weapons` owns the wheel's contents and selection; this only draws them.
     const wpn = this.ctx.peek('weapons');
     if (wpn?.wheel) this.weaponWheel.setState(wpn.wheel);
-    this.controls.setContext(this.ctx.peek('vehicle')?.driving ? 'drive' : 'foot');
+    // No reticle with your fists up or behind the wheel of a car — it read as a
+    // floating crosshair on the windscreen. `hidden` was already honoured by
+    // Crosshair and simply never set by anything.
+    this.state.hidden = this.state.melee === true || driving;
+    const driving = this.ctx.peek('vehicle')?.driving === true;
+    this.controls.setContext(driving ? 'drive' : 'foot');
     this.matchBar.update(s);
     this.prompt.update(dt);
     this.banner.update(dt);

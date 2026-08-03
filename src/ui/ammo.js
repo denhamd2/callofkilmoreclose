@@ -98,6 +98,21 @@ export class AmmoPanel {
    *                     reloadProgress, lethal, lethalCount, tacticalCount }
    */
   update(dt, s) {
+    /**
+     * Melee carries no ammunition. Without this the panel drew a 30-pip EMPTY
+     * magazine, `0 / 0` in red, and `PRESS R TO RELOAD` pulsing forever — while
+     * unarmed, which is David's DEFAULT state. `magSize: 0` did not save it:
+     * `0 | 0 || 30` evaluates to 30.
+     */
+    if (s.melee) {
+      setClass(this.root, 'ow-ammo-melee', true);
+      setClass(this.root, 'ow-ammo-empty', false);
+      setClass(this.root, 'ow-ammo-low', false);
+      this._fitName(String(s.weaponName ?? s.name ?? 'FISTS'));
+      setStyle(this.reload, 'display', 'none');
+      return;
+    }
+    setClass(this.root, 'ow-ammo-melee', false);
     const ammo = Math.max(0, s.ammo | 0);
     const magSize = Math.max(1, s.magSize | 0 || 30);
 
@@ -108,7 +123,7 @@ export class AmmoPanel {
     }
     setText(this.res, Math.max(0, s.reserve | 0));
     this._fitName(String(s.weaponName ?? s.name ?? 'M4A1'));
-    setText(this.mode, s.fireMode ?? 'AUTO');
+    setText(this.mode, String(s.fireMode ?? 'AUTO').toUpperCase());
 
     this.punch = Math.max(0, this.punch - dt * 6.5);
     const p = 1 - 0.075 * ease.outQuad(this.punch);
