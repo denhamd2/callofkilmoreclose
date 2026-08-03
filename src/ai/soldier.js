@@ -103,7 +103,214 @@ const GEAR = {
  * part by the table above, so a variant can change colour family without
  * dragging every piece of its kit out of the albedo budget.
  */
+/**
+ * ---------------------------------------------------------------------------
+ * THE KILMORE CLOSE CAST
+ * ---------------------------------------------------------------------------
+ * These are people on a Dublin street, not a fireteam, so most of them are
+ * civilians and the military kit is switched OFF rather than recoloured.
+ *
+ * New knobs, all read by buildSoldier below:
+ *   civilian   skips carrier/webbing/pouches/radio/antenna/knee pads entirely
+ *   hostile    does this character fight (drives ai/index.js and agent.js)
+ *   hair       null for bald, else { tint, length, curl, volume }
+ *   moustache  boolean
+ *   vest       sleeveless — bare arms, no sleeve tubes
+ *   child      6-head proportions rather than the adult 8 (see rig.js)
+ *   makeup     face tint strength, for Joan
+ *   handStain  a brown stain on the hands, for Christopher
+ *
+ * `scale` is against the rig's authored H = 1.8 m, so a 6'3" character is
+ * 1.905 / 1.8 = 1.058. Heights are the ones given for the real cast.
+ *
+ * `beard` was previously declared on every variant and read by NOTHING — dead
+ * data. It is gone; facial hair is `moustache`, which is actually built.
+ */
 export const VARIANTS = {
+  /**
+   * DAVID DENHAM — the player. 6'2", dark hair, brown eyes.
+   * Kept as a buildable variant for the shot harness, the character preview and
+   * any third-person/killcam use, but removed from the enemy roster in
+   * ai/index.js: he was occupying one of only five hostile slots.
+   */
+  'David Denham': {
+    civilian: true,
+    hostile: false,
+    player: true,
+    hair: { tint: [0.24, 0.19, 0.16], length: 0.4, curl: 0.15, volume: 0.9 },
+    moustache: false,
+    clothTint: [0.62, 0.66, 0.72],
+    gearTint: [0.5, 0.52, 0.56],
+    skinTint: [1.0, 0.94, 0.88],
+    eyeTint: [0.34, 0.24, 0.16], // brown
+    helmet: false,
+    goggles: false,
+    faceWrap: false,
+    kneePads: false,
+    fullCarrier: false,
+    weapon: 'carbine',
+    bulk: 1.0,
+    scale: 1.044, // 6'2"
+  },
+
+  /**
+   * PADDY MASON — local gangster, early 60s. Bald with a moustache.
+   * Dressed as himself: a dark coat, no kit. The oldest silhouette in the cast,
+   * so slightly heavier through the middle and slightly stooped in bulk terms.
+   */
+  'Paddy Mason': {
+    civilian: true,
+    hostile: true,
+    hair: null, // bald
+    moustache: true,
+    moustacheTint: [0.62, 0.60, 0.58], // grey, early 60s
+    clothTint: [0.30, 0.30, 0.33], // dark coat
+    gearTint: [0.26, 0.26, 0.28],
+    skinTint: [1.0, 0.92, 0.86],
+    helmet: false,
+    goggles: false,
+    faceWrap: false,
+    kneePads: false,
+    fullCarrier: false,
+    weapon: 'carbine',
+    bulk: 1.08,
+    scale: 0.99,
+  },
+
+  /** MICK McCABE — 6'3", short dark hair. The tallest of the cast. */
+  MickMcCabe: {
+    civilian: true,
+    hostile: true,
+    hair: { tint: [0.20, 0.16, 0.14], length: 0.32, curl: 0.1, volume: 0.85 },
+    moustache: false,
+    clothTint: [0.40, 0.44, 0.50],
+    gearTint: [0.34, 0.36, 0.40],
+    skinTint: [0.92, 0.86, 0.80],
+    helmet: false,
+    goggles: false,
+    faceWrap: false,
+    kneePads: false,
+    fullCarrier: false,
+    weapon: 'ak',
+    bulk: 0.98,
+    scale: 1.058, // 6'3"
+  },
+
+  /** DECO McCABE — 5'10", short ginger hair. */
+  'Deco McCabe': {
+    civilian: true,
+    hostile: true,
+    hair: { tint: [0.72, 0.34, 0.14], length: 0.3, curl: 0.2, volume: 0.9 },
+    moustache: false,
+    clothTint: [0.48, 0.44, 0.40],
+    gearTint: [0.40, 0.38, 0.36],
+    skinTint: [1.06, 0.94, 0.88], // fairer, goes with the colouring
+    helmet: false,
+    goggles: false,
+    faceWrap: false,
+    kneePads: false,
+    fullCarrier: false,
+    weapon: 'carbine',
+    bulk: 1.0,
+    scale: 0.988, // 5'10"
+  },
+
+  /** JOAN — short and petite, blonde, face heavily made up. */
+  Joan: {
+    civilian: true,
+    hostile: true,
+    hair: { tint: [0.86, 0.74, 0.42], length: 0.55, curl: 0.25, volume: 1.0 },
+    moustache: false,
+    makeup: 0.8, // strong face tint: foundation, blusher, hard lip line
+    clothTint: [0.62, 0.34, 0.42],
+    gearTint: [0.44, 0.30, 0.34],
+    skinTint: [1.12, 0.96, 0.92],
+    helmet: false,
+    goggles: false,
+    faceWrap: false,
+    kneePads: false,
+    fullCarrier: false,
+    weapon: 'carbine',
+    bulk: 0.85, // petite
+    scale: 0.872,
+  },
+
+  /**
+   * CHRISTOPHER BURGESS — 10 years old, blonde, brown substance on his hands.
+   * `child: true` switches rig.js to 6-head proportions. He is NOT scale 0.78
+   * on the adult rig: an eight-head build shrunk to child height reads as a
+   * small man, because a child's head is a much larger fraction of its height.
+   */
+  'Christopher Burgess': {
+    civilian: true,
+    hostile: true,
+    child: true,
+    hair: { tint: [0.90, 0.80, 0.52], length: 0.34, curl: 0.18, volume: 1.05 },
+    moustache: false,
+    handStain: [0.34, 0.22, 0.12], // brown, on the hands only
+    clothTint: [0.44, 0.56, 0.64],
+    gearTint: [0.38, 0.44, 0.50],
+    skinTint: [1.08, 0.96, 0.92],
+    helmet: false,
+    goggles: false,
+    faceWrap: false,
+    kneePads: false,
+    fullCarrier: false,
+    weapon: 'carbine',
+    bulk: 0.82,
+    scale: 0.78, // height only; `child` does the proportions
+  },
+
+  /**
+   * OYSTERS — short, stocky, bald, moustache, white sleeveless vest.
+   * CIVILIAN: never fights. Walks the footpath from one end of Kilmore Close to
+   * the other, all day. `vest` means bare arms — no sleeve tubes.
+   */
+  Oysters: {
+    civilian: true,
+    hostile: false,
+    walker: true,
+    hair: null, // bald
+    moustache: true,
+    moustacheTint: [0.34, 0.28, 0.24],
+    vest: true,
+    clothTint: [1.0, 1.0, 0.98], // white vest
+    gearTint: [0.36, 0.36, 0.38], // dark trousers
+    skinTint: [1.02, 0.90, 0.82],
+    helmet: false,
+    goggles: false,
+    faceWrap: false,
+    kneePads: false,
+    fullCarrier: false,
+    weapon: null, // unarmed
+    bulk: 1.18, // stocky
+    scale: 0.933,
+  },
+
+  /**
+   * ANGELA CARPENTER — chubby, short, 30s, mid-length brown curly hair.
+   * CIVILIAN: never fights. Cycles up and down the footpath all day.
+   */
+  'Angela Carpenter': {
+    civilian: true,
+    hostile: false,
+    cyclist: true,
+    hair: { tint: [0.42, 0.28, 0.18], length: 0.95, curl: 0.85, volume: 1.25 },
+    moustache: false,
+    clothTint: [0.46, 0.52, 0.40],
+    gearTint: [0.34, 0.36, 0.42],
+    skinTint: [1.04, 0.94, 0.88],
+    helmet: false,
+    goggles: false,
+    faceWrap: false,
+    kneePads: false,
+    fullCarrier: false,
+    weapon: null, // unarmed
+    bulk: 1.18, // chubby
+    scale: 0.889,
+  },
+
+  /** ---- legacy soldier variants, kept for the preview/shot harness ---- */
   David: {
     camo: 'arid',
     clothTint: [1.03, 1.0, 0.94],
@@ -122,89 +329,6 @@ export const VARIANTS = {
     weapon: 'carbine',
     bulk: 1.0,
     scale: 1.0,
-  },
-  MickMcCabe: {
-    camo: 'woodland',
-    clothTint: [0.98, 1.02, 0.94],
-    gearTint: [0.92, 0.96, 0.74], // olive drab
-    plateTint: [0.90, 0.94, 0.80],
-    skinTint: [0.86, 0.80, 0.74],
-    helmet: false,
-    headWrap: true,
-    goggles: false,
-    // dark wrap-around shooting glasses: the bare head needs a hard horizontal
-    // dark band at the eye line or it is a featureless egg at 35 m
-    shades: true,
-    faceWrap: true,
-    beard: true,
-    kneePads: false,
-    fullCarrier: false,
-    weapon: 'ak',
-    bulk: 0.94,
-    scale: 0.985,
-  },
-  'Deco McCabe': {
-    camo: 'urban',
-    clothTint: [0.98, 0.99, 1.02],
-    gearTint: [0.84, 0.86, 0.90], // wolf grey
-    plateTint: [0.86, 0.88, 0.92],
-    skinTint: [1.06, 0.98, 0.92],
-    helmet: true,
-    helmetCover: false, // bare painted shell instead of a cloth cover
-    helmetTint: [0.82, 0.83, 0.86],
-    // goggles parked on the shell (not over the eyes like David) plus a hard
-    // ballistic half-mask: same helmet family, completely different head read
-    goggles: true,
-    gogglesDown: false,
-    faceWrap: true,
-    maskHard: true,
-    beard: true,
-    kneePads: true,
-    fullCarrier: true,
-    weapon: 'carbine',
-    bulk: 1.06,
-    scale: 1.025,
-  },
-  'Paddy Mason': {
-    // Same woodland family as MickMcCabe but helmeted and heavier-kitted, so
-    // the two read as distinct silhouettes rather than a recolour of one another.
-    camo: 'woodland',
-    clothTint: [1.0, 1.01, 0.96],
-    gearTint: [0.88, 0.92, 0.78],
-    plateTint: [0.94, 0.96, 0.84],
-    skinTint: [1.02, 0.96, 0.90],
-    helmet: true,
-    helmetCover: true,
-    helmetTint: [0.70, 0.74, 0.66],
-    goggles: true,
-    gogglesDown: true,
-    faceWrap: true,
-    beard: false,
-    kneePads: true,
-    fullCarrier: true,
-    weapon: 'ak',
-    bulk: 1.02,
-    scale: 1.01,
-  },
-  Oysters: {
-    // Urban family, but bare-headed and lightly kitted for the leanest
-    // silhouette of the five — no helmet, no goggles, no plate carrier.
-    camo: 'urban',
-    clothTint: [0.96, 0.98, 1.0],
-    gearTint: [0.80, 0.82, 0.86],
-    plateTint: [0.82, 0.84, 0.88],
-    skinTint: [0.90, 0.84, 0.78],
-    helmet: false,
-    headWrap: true,
-    goggles: false,
-    shades: false,
-    faceWrap: false,
-    beard: true,
-    kneePads: false,
-    fullCarrier: false,
-    weapon: 'carbine',
-    bulk: 0.9,
-    scale: 0.97,
   },
 };
 
@@ -742,7 +866,16 @@ export function buildSoldier(name, { rng, materials }) {
     name: 'knuckleL',
   });
 
-  const W = buildWeapon(nz, V.weapon, rng);
+  // UNARMED civilians (Oysters, Angela) get no weapon geometry and no sling at
+  // all. `buildWeapon`'s default only fires on `undefined`, so passing null
+  // would have quietly built them a carbine.
+  //
+  // Their hands stay in the rig's bind pose, which IS a rifle carry — see
+  // rig.js. That is knowingly wrong until the civilian clips land; the fix is a
+  // pose change, not a geometry one, so it belongs with civIdle/civWalk rather
+  // than here.
+  const W = V.weapon ? buildWeapon(nz, V.weapon, rng) : null;
+  if (W) {
   // Emitted before wpnSteel: a scope lens is this build's only source of
   // 'glass' for variants with no goggles/shades (e.g. Oysters), and MATERIAL_SLOTS
   // requires glass to precede steel — see the order assertion below.
@@ -764,6 +897,7 @@ export function buildSoldier(name, { rng, materials }) {
     wear: 0.22,
     name: 'sling',
   });
+  } // end: armed variants only
 
   const built = B.build();
   // Guard the prewarm contract: see MATERIAL_SLOTS.
@@ -831,6 +965,29 @@ export function resolveMaterials(name, slots, materials) {
   return slots.map((n) => {
     switch (n) {
       case 'cloth':
+        // CIVILIANS get plain fabric, not camouflage. There is no dedicated
+        // plain-weave bake in textures.js — the sets are camo_*, nylon, plate,
+        // skin, polymer, steel and rubber — so this borrows `nylon` and lets
+        // the per-variant `clothTint` carry the colour. Cordura's weave reads
+        // as ordinary cloth at street distance and it costs no extra bake,
+        // which matters: every new set is another texture baked at boot.
+        //
+        // INTERIM. A proper cotton/wool bake belongs in textures.js, authored
+        // to the same measured-albedo discipline as the camo sets (see the
+        // "a camo bake that is never measured drifts" note there). Until then
+        // a plain tint on nylon is honest and cheap; what it must not do is
+        // silently request `camo_undefined`, which is what a civilian variant
+        // with no `camo` field would have done here.
+        if (V.civilian) {
+          return materials.get('nylon', {
+            key: name,
+            tint: V.clothTint,
+            rough: ROUGH.cloth,
+            metal: 1,
+            normalScale: 1.0,
+            detail: detail('cloth', 'cloth', 0.45, 0.16),
+          });
+        }
         return materials.get(`camo_${V.camo}`, {
           key: name,
           tint: V.clothTint,

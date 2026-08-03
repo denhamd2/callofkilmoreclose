@@ -53,6 +53,17 @@ import { GroundShadows } from './grounding.js';
  */
 const PLAYER_ACTOR = { name: 'YOU' };
 
+/**
+ * The Kilmore Close cast, split by whether they fight.
+ *
+ * David Denham is deliberately in neither list — he is the player character.
+ * CIVILIANS are not garrisoned: they walk (Oysters) or cycle (Angela) the
+ * footpath continuously, so the street reads as inhabited rather than as an
+ * ambush corridor, and they are what the player sees most often.
+ */
+export const HOSTILES = ['Paddy Mason', 'MickMcCabe', 'Deco McCabe', 'Joan', 'Christopher Burgess'];
+export const CIVILIANS = ['Oysters', 'Angela Carpenter'];
+
 export class AiSystem {
   static id = 'ai';
   static deps = ['physics', 'world'];
@@ -503,9 +514,14 @@ export class AiSystem {
       .filter((e) => e.d > 18);
     if (!ranked.length) return 0;
 
-    // Each named character is their own variant now, so one roster slot is
-    // one identity — no separate variant/name cycles, no repeats.
-    const ROSTER = ['David', 'MickMcCabe', 'Deco McCabe', 'Paddy Mason', 'Oysters'];
+    // Each named character is their own variant, so one roster slot is one
+    // identity — no separate variant/name cycles, no repeats.
+    //
+    // David Denham is NOT here: he is the player. He used to occupy one of only
+    // five enemy slots, which meant the player was also shooting himself.
+    // Oysters and Angela Carpenter are not here either — they are civilians and
+    // are placed on their own footpath routes, not garrisoned.
+    const ROSTER = HOSTILES;
     const squads = opts.squads ?? 2;
     const total = Math.min(opts.count ?? ROSTER.length, ROSTER.length);
     // split `total` across `squads` as evenly as possible (e.g. 5 over 2 -> 3, 2)

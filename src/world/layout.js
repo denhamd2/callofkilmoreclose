@@ -432,35 +432,24 @@ export const SET_PIECES = {
     [6.4, 6.1, 108.5, 6.4, 5.9, 122.75, 0.7], // along street: 5.30 mid (was 4.80)
   ],
   /**
-   * Washing lines with hanging laundry: [x0, y0, z0, x1, y1, z1]
+   * Washing lines: REMOVED, deliberately and permanently.
    *
-   * HEIGHTS CORRECTED. These were at 3.6-3.8 m on four lines and 6.4-6.7 m on
-   * two. A washing line is about 1.8 m — you have to be able to reach it — and
-   * once the houses came down to their correct 5.36 m eaves the two high ones
-   * floated ABOVE the roofline and read as bunting strung over the street.
-   * They are the "hanging cloth" visible in every hero frame. Now 1.95-2.05 m,
-   * which nets ~1.6 m at mid-span once the 0.42 m catenary sag is taken off.
+   * These sat at x = +/-6.35, which is inside the FRONT garden (kerb 5.815 ->
+   * house face 14.515). Nobody hangs washing in the front garden facing the
+   * street. Their correct home is the rear garden, and there isn't one — the
+   * flat terrain band ends at |x| = 15.13 while a rear garden would start
+   * around |x| = 23.7, i.e. 8.6 m out onto undulating background terrain.
    *
-   * KNOWN WRONG, and deliberately left: x = +/-6.35 is inside the FRONT garden
-   * (kerb 5.815 -> house face 14.515), and nobody in Dublin hangs washing in
-   * the front garden. The right home is the rear garden — but there ISN'T one:
-   * the flat terrain band ends at |x| = 15.13 and a rear garden would start at
-   * |x| ~ 23.7, i.e. 8.6 m out onto undulating background terrain. Building
-   * rear gardens is its own pass; until then these are at least the right
-   * height and read as domestic laundry rather than street decoration.
+   * The array is kept, empty, rather than deleted: overheadLines() iterates it,
+   * and an empty run is the cheapest correct way to say "no washing lines"
+   * without a second code path. If rear gardens are ever built, this is where
+   * they go back — at ~1.8 m, behind the houses.
    *
-   * Entry COUNT must not change: overheadLines() draws from the shared
-   * placement rng per line and per garment, so adding or removing a line
-   * shifts every prop placed after it (see buildPerimeter's note).
+   * NOTE this emptied the shared placement rng of every per-line and
+   * per-garment draw the loop used to make, so all props placed after
+   * overheadLines() in dressStreet have moved. That is expected here.
    */
-  laundry: [
-    [6.35, 1.95, 125.12, 6.35, 2.05, 137.47],
-    [-6.35, 2.0, 106.12, -6.35, 1.95, 116.57],
-    [-6.35, 2.05, 55.06, -6.35, 1.95, 66.94],
-    [6.35, 1.95, 89.5, 6.35, 2.05, 101.38],
-    [-6.35, 1.95, 39.62, -6.35, 2.05, 51.5],
-    [6.4, 2.0, 153.62, 6.4, 1.95, 164.31],
-  ],
+  laundry: [],
   /** Doorstep planters / window boxes: [x, y, z, ry, w] */
   doorstepPlanters: [
     [-6.45, 0.02, 123.94, Math.PI / 2, 1.5],
