@@ -9,6 +9,7 @@ import { RIG, GRIP_R, GRIP_L, BORE_DIR } from './rig.js';
 import { CharacterBuilder, Noise, appendMesh, computeNormals, emptyMesh } from './geo.js';
 import * as P from './parts.js';
 import { buildWeapon } from './weapon.js';
+import { buildBicycle } from './bicycle.js';
 import { CLOTH_TILE } from './textures.js';
 
 /**
@@ -258,7 +259,10 @@ export const VARIANTS = {
     fullCarrier: false,
     weapon: 'carbine',
     bulk: 0.82,
-    scale: 0.78, // height only; `child` does the proportions
+    // 0.82, not 0.78: `child` shortens the leg chains by 10% in agent.js, which
+    // costs ~4.7% of standing height on its own. This nets the ~1.40 m a
+    // 10-year-old actually stands at.
+    scale: 0.82,
   },
 
   /**
@@ -344,7 +348,15 @@ const bp = (name) => {
 export function buildSoldier(name, { rng, materials }) {
   const V = VARIANTS[name] ?? VARIANTS.David;
   const nz = new Noise(rng.fork());
-  const B = new CharacterBuilder(RIG, { noise: nz, materials: MATERIALS });
+  // `materialOrder` makes the geometry's group order canonical instead of
+  // "whatever order parts happened to be added in". Without it, any variant
+  // that skips a part reorders every group after it — a civilian with no elbow
+  // pads moved 'gear' from second to fifth and tripped the guard below.
+  const B = new CharacterBuilder(RIG, {
+    noise: nz,
+    materials: MATERIALS,
+    materialOrder: MATERIAL_SLOTS,
+  });
 
   const shR = bp('UpperArmR'), elR = bp('ForearmR'), wrR = bp('HandR');
   const shL = bp('UpperArmL'), elL = bp('ForearmL'), wrL = bp('HandL');
@@ -437,13 +449,15 @@ export function buildSoldier(name, { rng, materials }) {
       wear: 0.06,
       name: `shoulder${suffix}`,
     });
+    // A vest has no sleeve. The bare arm that replaces it is emitted LATER,
+    // with the other skin parts — see the head section. It cannot go here:
+    // material groups come out in emission order, and introducing 'skin' at the
+    // sleeve would put it second instead of seventh, which breaks the order
+    // MATERIAL_SLOTS asserts and would have prewarmMaterials reorder the opaque
+    // draws. (The build guard caught exactly this.)
+    if (V.vest) continue;
     B.add(
-      // A vest has no sleeve, so the arm itself is the silhouette: skin, with
-      // anatomical radii instead of cloth ones and none of the fold/crease
-      // field, because skin doesn't bunch the way a sleeve does.
-      V.vest
-        ? P.bareArm(nz, sh, el, wr, side)
-        : P.limbTube(nz, [sh[0] + side * 0.012, sh[1] + 0.055, sh[2]], el, wr,
+      P.limbTube(nz, [sh[0] + side * 0.012, sh[1] + 0.055, sh[2]], el, wr,
         [0.050, 0.062, 0.056, 0.050, 0.046, 0.042, 0.038], {
         rings: 22,
         seg: 16,
@@ -454,7 +468,7 @@ export function buildSoldier(name, { rng, materials }) {
         bend: [0, 0, -1], // sleeve bunches inside the elbow
       }),
       {
-        material: V.vest ? 'skin' : 'cloth',
+        material: 'cloth',
         bones: [`Clavicle${suffix}`, `UpperArm${suffix}`, `Forearm${suffix}`, `Hand${suffix}`, 'Spine2'],
         bias: [0.5, 1, 1, 0.7, 0.25],
         colour: [1, 1, 1],
@@ -706,6 +720,28 @@ export function buildSoldier(name, { rng, materials }) {
     name: 'head',
   });
   B.add(P.nose(nz, head), { material: 'skin', bone: 'Head', grime: 0.25, name: 'nose' });
+  // ---- bare arms, for the sleeveless vest --------------------------------
+  // Emitted here rather than in the sleeve loop so 'skin' enters the material
+  // group order at its proper place (see MATERIAL_SLOTS). limbTube with
+  // anatomical radii and no fold/crease field: skin does not bunch the way a
+  // sleeve does.
+  if (V.vest) {
+    for (const [sh, el, wr, side, suffix] of [
+      [shR, elR, wrR, -1, 'R'],
+      [shL, elL, wrL, 1, 'L'],
+    ]) {
+      B.add(P.bareArm(nz, sh, el, wr, side), {
+        material: 'skin',
+        bones: [`Clavicle${suffix}`, `UpperArm${suffix}`, `Forearm${suffix}`, `Hand${suffix}`, 'Spine2'],
+        bias: [0.5, 1, 1, 0.7, 0.25],
+        colour: [1, 1, 1],
+        grime: 0.35,
+        dust: 0.15,
+        name: `bareArm${suffix}`,
+      });
+    }
+  }
+
   // ---- hair and moustache ------------------------------------------------
   // Bald is the ABSENCE of the hair part, not a separate flag: Paddy Mason and
   // Oysters simply have `hair: null`. Both parts ride the 'skin' material
@@ -904,6 +940,23 @@ export function buildSoldier(name, { rng, materials }) {
   // rig.js. That is knowingly wrong until the civilian clips land; the fix is a
   // pose change, not a geometry one, so it belongs with civIdle/civWalk rather
   // than here.
+  // ---- the bicycle ------------------------------------------------------
+  // Bound to Hips as one rigid piece: a bike does not deform, and the pelvis is
+  // the one part of the rider genuinely fixed relative to the frame. Emitted
+  // before the weapon block so the 'steel' material slot stays in the order
+  // MATERIAL_SLOTS asserts.
+  if (V.cyclist) {
+    B.add(buildBicycle(nz, { hipY: bp('Hips')[1] }), {
+      material: 'steel',
+      bone: 'Hips',
+      colour: [0.42, 0.44, 0.48],
+      grime: 0.7,
+      dirt: 0.25,
+      wear: 0.3,
+      name: 'bicycle',
+    });
+  }
+
   const W = V.weapon ? buildWeapon(nz, V.weapon, rng) : null;
   if (W) {
   // Emitted before wpnSteel: a scope lens is this build's only source of

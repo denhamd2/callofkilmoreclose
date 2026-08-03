@@ -111,6 +111,41 @@ export class Agent {
 
     /* ---------------- body ---------------- */
     const { bones, skeleton, root } = RIG.createSkeleton();
+    /**
+     * CHILD PROPORTIONS.
+     *
+     * A 10-year-old is about six heads tall; the rig is authored at eight
+     * (rig.js `H = 1.8`). Uniform `scale` alone therefore produces a small
+     * ADULT — same head-to-body ratio, just shrunk — which is the classic tell.
+     *
+     * The honest fix is a second set of authored bind positions, but every
+     * part in soldier.js is built against RIG's bind pose (see `bp()` and
+     * GRIP_R/GRIP_L), so a re-authored child rig means re-authoring the whole
+     * part library against it. That is a bigger job than this earns.
+     *
+     * Instead the bind pose is rescaled per bone at skeleton creation: the head
+     * grows relative to the body and the limb chains shorten. Bones are
+     * hierarchical, so scaling UpperArm/UpLeg carries the whole chain below
+     * them — shorter AND slighter, which is correct for a child. The animator
+     * only ever writes position and quaternion (see `_writePose`), so scale set
+     * here survives every frame.
+     *
+     * The variant's own `scale` compensates for the leg shortening: legs are
+     * roughly 47% of standing height, so taking 10% off them costs ~4.7% of
+     * total height, and 0.82 nets the ~1.40 m a 10-year-old actually is.
+     */
+    if (def.variant.child) {
+      const setScale = (name, s) => {
+        const i = RIG.index(name);
+        if (i >= 0 && bones[i]) {
+          bones[i].scale.setScalar(s);
+          bones[i].updateMatrix();
+        }
+      };
+      setScale('Head', 1.28);
+      for (const n of ['UpperArmR', 'UpperArmL', 'UpLegR', 'UpLegL']) setScale(n, 0.9);
+      bones[0].updateMatrixWorld(true);
+    }
     this.bones = bones;
     this.skeleton = skeleton;
     this.mesh = new THREE.SkinnedMesh(def.geometry, def.materials);
