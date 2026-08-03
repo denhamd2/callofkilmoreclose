@@ -90,7 +90,7 @@ const materials = new SoldierMaterials(rng.fork(), {
 });
 
 const view = q.get('view') ?? 'front';
-const variantName = q.get('variant') ?? 'David';
+const variantName = q.get('variant') ?? 'Paddy Mason';
 const names = view === 'line' ? Object.keys(VARIANTS) : [variantName];
 const actors = [];
 

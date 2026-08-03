@@ -22,6 +22,7 @@
 
 import * as THREE from 'three';
 import { RIG } from './rig.js';
+import { DEFAULT_VARIANT } from './soldier.js';
 import { Animator } from './animator.js';
 
 const STATE = {
@@ -95,7 +96,7 @@ export class Agent {
     this.ctx = ai.ctx;
     this.id = _nextId++;
     this.rng = ai.rng.fork();
-    this.variantName = opts.variant ?? 'David';
+    this.variantName = opts.variant ?? DEFAULT_VARIANT;
     this.name = opts.name ?? 'ENEMY';
     /**
      * Who last damaged this agent, for the killfeed's `actor:death` row.

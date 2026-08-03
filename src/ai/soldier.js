@@ -127,12 +127,25 @@ const GEAR = {
  * `beard` was previously declared on every variant and read by NOTHING — dead
  * data. It is gone; facial hair is `moustache`, which is actually built.
  */
+/**
+ * The variant an AI actor falls back to when none is named. MUST stay a member
+ * of HOSTILES (index.js) — never 'David Denham', who is the player.
+ */
+export const DEFAULT_VARIANT = 'Paddy Mason';
+
 export const VARIANTS = {
   /**
    * DAVID DENHAM — the player. 6'2", dark hair, brown eyes.
    * Kept as a buildable variant for the shot harness, the character preview and
    * any third-person/killcam use, but removed from the enemy roster in
    * ai/index.js: he was occupying one of only five hostile slots.
+   */
+  /**
+   * David Denham — the MAIN CHARACTER (the player). Deliberately absent from
+   * HOSTILES and CIVILIANS in index.js: he is who you play as, so nothing here
+   * should ever spawn him as an AI actor. Kept in VARIANTS because the shot and
+   * preview harnesses render him, and because a player model is wanted for any
+   * future killcam/cutscene work.
    */
   'David Denham': {
     civilian: true,
@@ -314,26 +327,6 @@ export const VARIANTS = {
     scale: 0.889,
   },
 
-  /** ---- legacy soldier variants, kept for the preview/shot harness ---- */
-  David: {
-    camo: 'arid',
-    clothTint: [1.03, 1.0, 0.94],
-    gearTint: [1.08, 0.98, 0.80], // coyote brown
-    plateTint: [1.02, 0.96, 0.84],
-    skinTint: [1.0, 0.94, 0.88],
-    helmet: true,
-    helmetCover: true,
-    helmetTint: [0.72, 0.72, 0.68],
-    goggles: true,
-    gogglesDown: true,
-    faceWrap: true,
-    beard: false,
-    kneePads: true,
-    fullCarrier: true,
-    weapon: 'carbine',
-    bulk: 1.0,
-    scale: 1.0,
-  },
 };
 
 const bp = (name) => {
@@ -346,7 +339,7 @@ const bp = (name) => {
  * @returns { geometry, materials: THREE.Material[], weapon, stats }
  */
 export function buildSoldier(name, { rng, materials }) {
-  const V = VARIANTS[name] ?? VARIANTS.David;
+  const V = VARIANTS[name] ?? VARIANTS[DEFAULT_VARIANT];
   const nz = new Noise(rng.fork());
   // `materialOrder` makes the geometry's group order canonical instead of
   // "whatever order parts happened to be added in". Without it, any variant
@@ -1005,7 +998,7 @@ export function buildSoldier(name, { rng, materials }) {
 /**
  * Every material slot a soldier's geometry is grouped by, IN THE ORDER
  * `CharacterBuilder.build()` emits them — which is the order the parts are added
- * above, deduplicated. All three variants use all nine.
+ * above, deduplicated. Every variant uses all nine.
  *
  * THE ORDER IS LOad-BEARING, and this is not a style preference. `THREE.Material`
  * hands out globally incrementing ids and three sorts the opaque render list by
@@ -1038,7 +1031,7 @@ export const MATERIAL_SLOTS = Object.freeze([
  * a boot without any per-part tuning.
  */
 export function resolveMaterials(name, slots, materials) {
-  const V = VARIANTS[name] ?? VARIANTS.David;
+  const V = VARIANTS[name] ?? VARIANTS[DEFAULT_VARIANT];
   const detail = (set, matName, normal, rough) => ({
     set,
     scale: MATERIALS[matName].tile / DETAIL_TILE,

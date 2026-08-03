@@ -1178,15 +1178,15 @@ export class AiSystem {
     /** [variant, ndcX, depth, crouch, speed, fire, reloadEvery] */
     const LAYOUT = [
       // hero: up and firing, left of frame, close enough to read the kit
-      ['David', -0.44, 8.0, false, 0, true, 0],
+      ['Paddy Mason', -0.44, 8.0, false, 0, true, 0],
       // second man crouched in cover, right of frame
       ['Deco McCabe', 0.30, 12.0, true, 0, true, 0],
       // one caught mid-stride between positions
       ['MickMcCabe', -0.14, 16.0, false, 4.1, false, 0],
       // one reloading behind cover on the far right
-      ['David', 0.60, 9.5, true, 0, true, 3.4],
+      ['Joan', 0.60, 9.5, true, 0, true, 3.4],
       // depth: a fifth man well down the street
-      ['MickMcCabe', -0.26, 22.0, false, 0, true, 0],
+      ['Christopher Burgess', -0.26, 22.0, false, 0, true, 0],
     ];
 
     const placedPositions = [];
@@ -1244,7 +1244,7 @@ export class AiSystem {
     const right = new THREE.Vector3(F.z, 0, -F.x);
     this.ctx.peek('sky')?.setTimeOfDay?.(11.5);
     const layout = [
-      ['David', 1.9, 0.35, 0.25],
+      ['Paddy Mason', 1.9, 0.35, 0.25],
       ['MickMcCabe', 2.7, -0.95, 3.0],
       ['Deco McCabe', 3.6, 1.15, -0.7],
     ];
