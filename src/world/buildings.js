@@ -152,8 +152,18 @@ function terrace(A, rng, spec, y, t) {
 export function buildBuilding(A, rng, spec) {
   const t = spec.t ?? 0.34;
   const floors = spec.floors ?? 3;
-  const groundH = spec.groundH ?? 3.45;
-  const upperH = spec.upperH ?? 3.05;
+  // Storey heights for a 1950s Dublin Corporation two-storey semi: roughly 2.4 m
+  // floor-to-ceiling plus joists. Were 3.45/3.05, which put the eaves at 6.56 m
+  // and the ridge at 10.05 m — three-storey proportions on a two-storey house,
+  // and the reason the street read as a row of blocks rather than semi-Ds.
+  // These now give eaves ~5.35 m and a ridge ~9.0 m.
+  //
+  // Anything keyed off these adapts on its own: stairs derive from the
+  // floor-to-floor climb (`steps = round(climb / 0.19)`), and interior ceilings
+  // are `groundH - 0.13`. Window heights do NOT adapt and were retuned to match
+  // — see the `window` bay case below.
+  const groundH = spec.groundH ?? 2.7;
+  const upperH = spec.upperH ?? 2.6;
   const wallKey = spec.wallKey ?? 'plaster_cream';
   const streetSide = spec.streetSide ?? 0;
   const info = {
@@ -382,7 +392,13 @@ function pitchedRoof(A, rng, ts, wallKey, y) {
   // them would put a church-spire-height ridge over the widest ones, so the
   // rise is capped and the pitch shallows out instead — real wide roofs do
   // exactly this (or break into multiple ridges), never just get taller.
-  const rise = Math.min(run * Math.tan(PITCH), 3.6);
+  // Cap was 3.6, which held every house at or above 30 degrees only while the
+  // footprints stayed narrow. The three merged-pair footprints (KW2 13.4 m,
+  // KW3 14.0 m, KW7 12.5 m) hit it and shallowed to 26-29 degrees — under the
+  // ~30 degree minimum concrete tiles are laid at, so they read as flat. 4.4
+  // clears all 26 street houses; the wide BG* background infill still shallows
+  // out, which is correct for distant generic massing.
+  const rise = Math.min(run * Math.tan(PITCH), 4.4);
   const pitch = Math.atan2(rise, run);
   const slopeLen = Math.hypot(run, rise);
   const deckThick = 0.1;
@@ -542,8 +558,13 @@ function buildFacade(A, rng, spec, info, ctx) {
       }
       case 'window': {
         const ww = Math.min(room, rng.range(1.05, 1.3));
-        const wh = f === 0 ? 1.62 : 1.48;
-        const o = { x: bx, y: (f === 0 ? 1.05 : 0.95) + wh / 2, w: ww, h: wh, kind };
+        // Retuned with the storey heights above. At the old 1.62/1.48 with sills
+        // at 1.05/0.95 the heads sat at 2.67 m and 2.43 m, which clears a 3.45 m
+        // storey but would leave 3 cm of wall under a 2.70 m one. These land the
+        // heads at 2.20 m and 2.05 m — the usual head height for the type, with
+        // a proper band of wall left under the ceiling.
+        const wh = f === 0 ? 1.3 : 1.2;
+        const o = { x: bx, y: (f === 0 ? 0.9 : 0.85) + wh / 2, w: ww, h: wh, kind };
         openings.push(o);
         // Kilmore Close's houses are occupied, not derelict: broken glass and
         // boarded panes are a war-zone/abandoned-building tell, and security
@@ -664,7 +685,7 @@ function buildFacade(A, rng, spec, info, ctx) {
   // the visible height without touching any opening.
   if (spec.bandKey && f === 0 && street) {
     const bandBottom = 0.1;
-    const bandTop = 1.05; // ground-floor window sill height — do not raise past this
+    const bandTop = 0.9; // ground-floor window sill height — do not raise past this
     const bandH = bandTop - bandBottom;
     // A touch more proud of the wall (was -0.017) so the band casts a hairline
     // shadow at its top edge instead of sitting perfectly flush — that edge
