@@ -207,6 +207,16 @@ function bucket(rng) {
   return g;
 }
 
+/** A small terracotta chimney pot: a flared cylinder with a lip and rim. */
+function chimneyPot(rng) {
+  const p = new PB();
+  p.cyl(0.085, 0.18, 0, 0, 0, { radial: 10, taper: 0.82, grime: 0.25 });
+  p.cyl(0.095, 0.025, 0, 0.09, 0, { radial: 10, wear: 1 });
+  const g = p.build();
+  g.translate(0, 0.09, 0);
+  return g;
+}
+
 function jerryCan(rng) {
   const p = new PB();
   p.box(0.34, 0.44, 0.17, 0, 0, 0, { bevel: 0.02, grime: 0.2 });
@@ -413,27 +423,6 @@ function table(rng, w = 1.5, h = 0.78, d = 0.8) {
         bevel: 0.005,
         grime: 0.25,
       });
-  return p.build();
-}
-
-function stall(rng, w = 2.3) {
-  // Market stall: trestle table, back board, cloth over the top, poles.
-  const p = new PB();
-  const h = 0.84;
-  const d = 1.05;
-  p.box(w, 0.05, d, 0, h, 0, { bevel: 0.008 });
-  p.box(w - 0.06, 0.09, d - 0.08, 0, h - 0.07, 0, { bevel: 0.006, grime: 0.35 });
-  for (const sx of [-1, 1]) {
-    p.box(0.08, h - 0.05, 0.08, sx * (w / 2 - 0.1), (h - 0.05) / 2, d / 2 - 0.1, { grime: 0.3 });
-    p.box(0.08, h - 0.05, 0.08, sx * (w / 2 - 0.1), (h - 0.05) / 2, -d / 2 + 0.1, { grime: 0.3 });
-    // corner posts carrying the canopy
-    p.box(0.06, 2.0, 0.06, sx * (w / 2 - 0.05), 1.0, -d / 2 + 0.06, { grime: 0.2 });
-    p.box(0.06, 2.0, 0.06, sx * (w / 2 - 0.05), 1.0, d / 2 - 0.06, { grime: 0.2 });
-  }
-  p.box(w, 0.06, 0.06, 0, 1.98, -d / 2 + 0.06, {});
-  p.box(w, 0.06, 0.06, 0, 1.98, d / 2 - 0.06, {});
-  // shelf under the table
-  p.box(w - 0.3, 0.03, d - 0.3, 0, 0.24, 0, { bevel: 0.004, grime: 0.45 });
   return p.build();
 }
 
@@ -720,67 +709,6 @@ function can(rng) {
 }
 
 // ============================================================== vegetation ==
-function palmTree(rng, h = 5.2) {
-  const p = new PB();
-  const segs = 9;
-  const lean = rng.range(-0.1, 0.1);
-  for (let i = 0; i < segs; i++) {
-    const t = i / segs;
-    const r = 0.19 * (1 - t * 0.42);
-    const y = t * h;
-    const x = Math.sin(t * 2.2 + lean * 4) * lean * h * 0.4;
-    p.cyl(r, h / segs + 0.02, x, y + h / segs / 2, 0, {
-      radial: 9,
-      taper: 0.92,
-      grime: 0.3 + t * 0.2,
-      wear: 1,
-    });
-    // ring scars where old fronds broke off
-    p.cyl(r * 1.13, 0.045, x, y + h / segs * 0.75, 0, { radial: 9, wear: 1, grime: 0.4 });
-  }
-  const topX = Math.sin(2.2 + lean * 4) * lean * h * 0.4;
-  const g = p.build();
-  g.userData = { topX, topY: h };
-  return g;
-}
-
-/** One palm frond: leaflets along a curved spine, foliage-textured quads. */
-function palmFrond(rng, len = 2.6) {
-  const list = [];
-  const n = 13;
-  for (let i = 0; i < n; i++) {
-    const t = (i + 1) / (n + 1);
-    const x = t * len;
-    const droop = -t * t * len * 0.42;
-    const lw = (0.42 + Math.sin(t * Math.PI) * 0.55) * (1 - t * 0.35);
-    for (const side of [-1, 1]) {
-      const q = new THREE.PlaneGeometry(lw, 0.16, 1, 1);
-      q.translate(lw / 2, 0, 0);
-      const m = mat(x, droop, 0, 0, 0, 0);
-      const rot = new THREE.Matrix4().makeRotationZ(-0.5 - t * 0.5);
-      const yaw = new THREE.Matrix4().makeRotationY(side * (1.15 - t * 0.35));
-      q.applyMatrix4(rot);
-      q.applyMatrix4(yaw);
-      q.applyMatrix4(m);
-      fillMasks(q, 0.2, 0.25, 0);
-      list.push(q);
-    }
-  }
-  // spine
-  const spine = new THREE.PlaneGeometry(len, 0.05, 6, 1);
-  const pa = spine.getAttribute('position');
-  for (let i = 0; i < pa.count; i++) {
-    const x = pa.getX(i) + len / 2;
-    pa.setXYZ(i, x, pa.getY(i) - ((x / len) ** 2) * len * 0.42, pa.getZ(i));
-  }
-  spine.computeVertexNormals();
-  fillMasks(spine, 0.2, 0.3, 0);
-  list.push(spine);
-  const g = mergeSimple(list);
-  for (const q of list) q.dispose();
-  return g;
-}
-
 function shrub(rng, s = 0.8) {
   const list = [];
   const n = 7;
@@ -844,6 +772,212 @@ function signHanging(rng, w = 0.9, h = 0.62) {
   p.cyl(0.014, 0.14, w / 2 - 0.08, -0.06, 0, { radial: 6, wear: 1 });
   p.cyl(0.018, w + 0.14, 0, 0, 0, { radial: 6, rz: Math.PI / 2, wear: 1, grime: 0.4 });
   return p.build();
+}
+
+// ============================================================= residential ==
+/**
+ * A kerbside wheelie bin. Body, hinged lid (slightly ajar on some so the
+ * silhouette isn't one clean box repeated forty times), two wheels and a tow
+ * bar handle at the back.
+ */
+function wheelieBin(rng) {
+  const p = new PB();
+  const w = 0.48;
+  const d = 0.55;
+  const h = 1.05;
+  p.box(w, h, d, 0, 0, 0, { bevel: 0.02, grime: 0.35 });
+  // the lid, hinged at the back, sitting proud of the body
+  const ajar = rng.float() < 0.2;
+  p.box(w + 0.03, 0.08, d + 0.03, 0, h / 2 + 0.03, ajar ? -0.06 : 0, {
+    bevel: 0.012,
+    rx: ajar ? -0.5 : 0,
+    wear: 1,
+  });
+  // wheels
+  for (const sx of [-1, 1]) {
+    p.cyl(0.09, 0.06, sx * (w / 2 - 0.02), -h / 2 + 0.09, -d / 2 - 0.02, { radial: 10, rz: Math.PI / 2, grime: 0.3 });
+  }
+  // tow handle
+  p.box(0.05, 0.05, 0.14, 0, -h / 2 + 0.55, -d / 2 - 0.06, { bevel: 0.01, wear: 1 });
+  const g = p.build();
+  g.translate(0, h / 2, 0);
+  return g;
+}
+
+/**
+ * An ordinary parked car. Not wrecked: intact roofline, four wheel arches, no
+ * soot. Just a family hatchback shape, given some real-world unevenness with
+ * a light warp so a street of identical instances doesn't read as one clone.
+ */
+function parkedCar(rng) {
+  const body = new PB();
+  const L = 4.1;
+  const W = 1.72;
+  body.box(W, 0.5, L, 0, 0.58, 0, { bevel: 0.05, grime: 0.15 });
+  body.box(W * 0.98, 0.36, L * 0.6, 0, 0.9, -0.1, { bevel: 0.07, grime: 0.15 });
+  body.box(W * 0.94, 0.12, L * 0.28, 0, 0.9, L * 0.34, { bevel: 0.03, rx: 0.05, wear: 1 });
+  body.box(W * 0.94, 0.12, L * 0.2, 0, 0.9, -L * 0.37, { bevel: 0.03, rx: -0.06, wear: 1 });
+  const rh = 1.32;
+  for (const sx of [-1, 1]) {
+    body.box(0.08, 0.5, 0.09, sx * (W / 2 - 0.06), 1.14, L * 0.12, { rx: 0.32, grime: 0.1 });
+    body.box(0.08, 0.44, 0.09, sx * (W / 2 - 0.06), 1.14, -L * 0.03, { grime: 0.1 });
+    body.box(0.09, 0.46, 0.1, sx * (W / 2 - 0.06), 1.13, -L * 0.19, { rx: -0.28, grime: 0.1 });
+    body.box(0.06, 0.38, L * 0.4, sx * (W / 2 - 0.02), 0.65, 0.03, { bevel: 0.02, wear: 1, grime: 0.15 });
+  }
+  body.box(W * 0.84, 0.06, L * 0.34, 0, rh - 0.03, -L * 0.03, { bevel: 0.04, wear: 1, grime: 0.15 });
+  // bumpers
+  body.box(W * 0.98, 0.22, 0.14, 0, 0.48, L / 2 - 0.05, { bevel: 0.04, wear: 1, grime: 0.1 });
+  body.box(W * 0.98, 0.22, 0.14, 0, 0.48, -L / 2 + 0.05, { bevel: 0.04, wear: 1, grime: 0.1 });
+  // wing mirrors
+  for (const sx of [-1, 1]) {
+    body.box(0.05, 0.09, 0.14, sx * (W / 2 + 0.03), 1.02, L * 0.16, { bevel: 0.01, wear: 1 });
+  }
+  const g = body.build();
+  warpGeometry(g, 0.006, 1.8, rng.float() * 10);
+  paintMasks(g, (x, y, z, nx, ny, nz, out) => {
+    // road grime along the sills and wheel arches, otherwise fairly clean
+    out[1] = Math.min(1, out[1] + Math.max(0, -ny) * 0.25);
+  });
+  return g;
+}
+
+/**
+ * A low front-garden boundary wall: coped, rendered blockwork, the standard
+ * Dublin close boundary. `w` runs along local X.
+ */
+function gardenWallSeg(rng, w = 2.4, h = 0.55) {
+  const p = new PB();
+  p.box(w, h, 0.2, 0, 0, 0, { bevel: 0.015, grime: 0.2 });
+  // coping course, proud on both faces
+  p.box(w + 0.06, 0.06, 0.26, 0, h / 2 + 0.03, 0, { bevel: 0.01, wear: 1 });
+  const g = p.build();
+  g.translate(0, h / 2, 0);
+  return g;
+}
+
+/** A pier at a gate opening — squarer, capped, a little taller than the wall run. */
+function gardenPier(rng, h = 0.85) {
+  const p = new PB();
+  p.box(0.32, h, 0.32, 0, 0, 0, { bevel: 0.015, grime: 0.2 });
+  p.box(0.42, 0.08, 0.42, 0, h / 2 + 0.04, 0, { bevel: 0.015, wear: 1 });
+  p.box(0.14, 0.16, 0.14, 0, h / 2 + 0.16, 0, { bevel: 0.02, wear: 1 });
+  const g = p.build();
+  g.translate(0, h / 2, 0);
+  return g;
+}
+
+/**
+ * A clipped privet/leylandii hedge block. Solid foliage core (so it collides
+ * and never shows a gap) plus a scatter of leaf cards over the surface for a
+ * broken, planted silhouette rather than a smooth green box.
+ */
+function hedgeGeometry(rng, w = 2.0, h = 1.0, d = 0.5) {
+  const list = [];
+  const core = chamferBox(w * 0.94, h * 0.96, d * 0.9, 0.05);
+  fillMasks(core, 0.15, 0.3, 0.15);
+  list.push(core);
+  const n = Math.round(w * h * 7);
+  for (let i = 0; i < n; i++) {
+    const q = new THREE.PlaneGeometry(rng.range(0.12, 0.22), rng.range(0.1, 0.18), 1, 1);
+    q.applyMatrix4(
+      mat(
+        rng.range(-w / 2, w / 2) * 0.96,
+        rng.range(0.02, h) - h / 2 + h / 2,
+        rng.range(-d / 2, d / 2) * 0.9,
+        rng.float() * Math.PI,
+        rng.range(-0.5, 0.5),
+        rng.range(-0.4, 0.4)
+      )
+    );
+    fillMasks(q, 0.2, 0.3, 0.15);
+    list.push(q);
+  }
+  const g = mergeSimple(list);
+  for (const q of list) q.dispose();
+  g.translate(0, h / 2, 0);
+  return g;
+}
+
+/** A deciduous street/garden tree trunk, tapered, with a couple of low limbs. */
+function treeTrunk(rng, h = 4.0) {
+  const p = new PB();
+  const lean = rng.range(-0.06, 0.06);
+  const segs = 6;
+  for (let i = 0; i < segs; i++) {
+    const t = i / segs;
+    const r = 0.16 * (1 - t * 0.55);
+    const y = t * h;
+    const x = Math.sin(t * 1.6) * lean * h * 0.5;
+    p.cyl(r, h / segs + 0.02, x, y + h / segs / 2, 0, { radial: 8, taper: 0.9, grime: 0.2, wear: 1 });
+  }
+  // a couple of limbs reaching toward the canopy split
+  for (let i = 0; i < 2; i++) {
+    const a = i * Math.PI + rng.range(-0.4, 0.4);
+    p.cyl(0.07, 1.1, Math.cos(a) * 0.3, h * 0.72, Math.sin(a) * 0.3, {
+      radial: 6,
+      rz: Math.cos(a) * 0.9,
+      rx: Math.sin(a) * 0.9,
+      grime: 0.2,
+      wear: 1,
+    });
+  }
+  const g = p.build();
+  return g;
+}
+
+/** The canopy: clustered foliage cards in a rough sphere, foliage-textured. */
+function treeCanopy(rng, r = 1.6) {
+  const list = [];
+  const n = 46;
+  for (let i = 0; i < n; i++) {
+    const a = rng.float() * Math.PI * 2;
+    const b = rng.range(-1, 1);
+    const rr = r * rng.range(0.35, 1.0);
+    const cx = Math.cos(a) * Math.sqrt(1 - b * b) * rr;
+    const cz = Math.sin(a) * Math.sqrt(1 - b * b) * rr;
+    const cy = b * r * 0.85;
+    const q = new THREE.PlaneGeometry(rng.range(0.5, 0.95), rng.range(0.4, 0.8), 1, 1);
+    q.applyMatrix4(mat(cx, cy, cz, rng.float() * Math.PI, rng.range(-0.6, 0.6), rng.range(-0.6, 0.6)));
+    fillMasks(q, 0.2, 0.25, 0.1);
+    list.push(q);
+  }
+  const g = mergeSimple(list);
+  for (const q of list) q.dispose();
+  return g;
+}
+
+/** A builder's skip: the one house getting a renovation. */
+function builderSkip(rng) {
+  const prof = [
+    [-0.95, 0],
+    [0.95, 0],
+    [0.95, 0.15],
+    [0.78, 0.85],
+    [-0.78, 0.85],
+    [-0.95, 0.15],
+  ];
+  const shape = new THREE.Shape();
+  shape.moveTo(prof[0][0], prof[0][1]);
+  for (let i = 1; i < prof.length; i++) shape.lineTo(prof[i][0], prof[i][1]);
+  shape.closePath();
+  const g = new THREE.ExtrudeGeometry(shape, {
+    depth: 1.9,
+    bevelEnabled: true,
+    bevelThickness: 0.02,
+    bevelSize: 0.02,
+    bevelSegments: 1,
+    steps: 1,
+  });
+  g.translate(0, 0, -0.95);
+  g.computeVertexNormals();
+  autoEdgeWear(g, 0.03, 1);
+  const p = new PB();
+  p.geo(g, 0, 0, 0, { autoWear: false, grime: 0.25 });
+  const out = p.build();
+  paintMasks(out, (x, y, z, nx, ny, nz, o) => {
+    o[1] = Math.min(1, o[1] + Math.max(0, 1 - y / 0.3) ** 2 * 0.5);
+  });
+  return out;
 }
 
 // ================================================================ vehicles ==
@@ -941,7 +1075,6 @@ export function registerProps(A, rngIn) {
   // furniture
   P('table', 'wood_prop_dark', table(rng, 1.5, 0.78, 0.8), { skirt: 0.57 });
   P('table_small', 'wood_prop', table(rng, 0.9, 0.72, 0.7));
-  P('stall', 'wood_prop_dark', stall(rng, 2.3), { skirt: 0.90, maxDist: 0 });
   P('shelf', 'wood_prop_dark', shelfUnit(rng), { skirt: 0.42 });
   P('mattress', 'fabric_cream', mattress(rng), LOOSE(0.06, 0.01));
   P('chair', 'wood_prop', chair(rng), LOOSE(0.05, 0.012));
@@ -975,9 +1108,6 @@ export function registerProps(A, rngIn) {
   P('can', 'steel', can(rng), { maxDist: 45, castShadow: false });
 
   // vegetation
-  const palm = palmTree(rng, 5.4);
-  P('palm_trunk', 'wood_dark', palm, { skirt: 0.57, chunk: false });
-  P('palm_frond', 'foliage', palmFrond(rng, 2.7), { chunk: false, receiveShadow: true });
   P('shrub', 'foliage', shrub(rng, 0.85));
   P('weeds', 'foliage', weedTuft(rng), { maxDist: 40 });
   P('planter', 'concrete_prop', planter(rng), { skirt: 0.33, ...LOOSE(0.07, 0.014) });
@@ -985,6 +1115,23 @@ export function registerProps(A, rngIn) {
   // signage
   P('sign_board', 'metal_blue', signBoard(rng, 1.6, 0.55), { skirt: 0.18 });
   P('sign_hang', 'metal_green', signHanging(rng));
+
+  // residential kerbside kit
+  P('bin_black', 'bin_black', wheelieBin(rng), { skirt: 0.28, ...LOOSE(0.05, 0.01) });
+  P('bin_green', 'bin_green', wheelieBin(rng), { skirt: 0.28, ...LOOSE(0.05, 0.01) });
+  P('bin_brown', 'bin_brown', wheelieBin(rng), { skirt: 0.28, ...LOOSE(0.05, 0.01) });
+  P('bin_blue', 'bin_blue', wheelieBin(rng), { skirt: 0.28, ...LOOSE(0.05, 0.01) });
+  P('car_red', 'car_red', parkedCar(rng), { chunk: false, skirt: 0.9 });
+  P('car_blue', 'car_blue', parkedCar(rng), { chunk: false, skirt: 0.9 });
+  P('car_silver', 'car_silver', parkedCar(rng), { chunk: false, skirt: 0.9 });
+  P('car_white', 'car_white', parkedCar(rng), { chunk: false, skirt: 0.9 });
+  P('garden_wall', 'wall_garden', gardenWallSeg(rng), { skirt: 0.5, maxDist: 0 });
+  P('garden_pier', 'wall_garden', gardenPier(rng), { skirt: 0.24, maxDist: 0 });
+  P('hedge', 'hedge', hedgeGeometry(rng), { maxDist: 0 });
+  P('tree_trunk', 'wood_dark', treeTrunk(rng, 4.2), { skirt: 0.42, chunk: false });
+  P('tree_canopy', 'hedge', treeCanopy(rng, 1.7), { chunk: false, receiveShadow: true });
+  P('skip', 'skip_yellow', builderSkip(rng), { skirt: 0.55, chunk: false });
+  P('chimney_pot', 'concrete_dark', chimneyPot(rng), { chunk: false });
 
   // damage
   // 3.2 cm base radius: the callers scale it 0.5-1.5x, so pocks land at 3-10 cm

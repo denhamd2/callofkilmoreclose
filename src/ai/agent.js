@@ -95,13 +95,57 @@ export class Agent {
     this.ctx = ai.ctx;
     this.id = _nextId++;
     this.rng = ai.rng.fork();
-    this.variantName = opts.variant ?? 'vanguard';
+    this.variantName = opts.variant ?? 'David';
+    this.name = opts.name ?? 'ENEMY';
+    /**
+     * Who last damaged this agent, for the killfeed's `actor:death` row.
+     * `ui` already reads `e.by.name` (see ui/index.js) but nothing was ever
+     * putting `by` in the payload, so any death not credited to the player
+     * inside the 0.3 s window — an explosion, a fall — printed
+     * "ENEMY killed <RosterName>". Set by AiSystem's damage handlers.
+     */
+    this.lastAttacker = null;
     const def = ai.variant(this.variantName);
     this.def = def;
     this.scale = def.variant.scale ?? 1;
 
     /* ---------------- body ---------------- */
     const { bones, skeleton, root } = RIG.createSkeleton();
+    /**
+     * CHILD PROPORTIONS.
+     *
+     * A 10-year-old is about six heads tall; the rig is authored at eight
+     * (rig.js `H = 1.8`). Uniform `scale` alone therefore produces a small
+     * ADULT — same head-to-body ratio, just shrunk — which is the classic tell.
+     *
+     * The honest fix is a second set of authored bind positions, but every
+     * part in soldier.js is built against RIG's bind pose (see `bp()` and
+     * GRIP_R/GRIP_L), so a re-authored child rig means re-authoring the whole
+     * part library against it. That is a bigger job than this earns.
+     *
+     * Instead the bind pose is rescaled per bone at skeleton creation: the head
+     * grows relative to the body and the limb chains shorten. Bones are
+     * hierarchical, so scaling UpperArm/UpLeg carries the whole chain below
+     * them — shorter AND slighter, which is correct for a child. The animator
+     * only ever writes position and quaternion (see `_writePose`), so scale set
+     * here survives every frame.
+     *
+     * The variant's own `scale` compensates for the leg shortening: legs are
+     * roughly 47% of standing height, so taking 10% off them costs ~4.7% of
+     * total height, and 0.82 nets the ~1.40 m a 10-year-old actually is.
+     */
+    if (def.variant.child) {
+      const setScale = (name, s) => {
+        const i = RIG.index(name);
+        if (i >= 0 && bones[i]) {
+          bones[i].scale.setScalar(s);
+          bones[i].updateMatrix();
+        }
+      };
+      setScale('Head', 1.28);
+      for (const n of ['UpperArmR', 'UpperArmL', 'UpLegR', 'UpLegL']) setScale(n, 0.9);
+      bones[0].updateMatrixWorld(true);
+    }
     this.bones = bones;
     this.skeleton = skeleton;
     this.mesh = new THREE.SkinnedMesh(def.geometry, def.materials);
@@ -198,7 +242,7 @@ export class Agent {
 
     /* ---------------- combat ---------------- */
     this.weaponRange = 60;
-    this.fireRate = this.variantName === 'irregular' ? 8.2 : 10.5;
+    this.fireRate = this.variantName === 'MickMcCabe' ? 8.2 : 10.5;
     this.burstLeft = 0;
     this.fireCooldown = 0;
     this.burstCooldown = this.rng.range(0.4, 1.4);
@@ -230,6 +274,17 @@ export class Agent {
     this.coverPos = new THREE.Vector3();
     this.patrolPoints = opts.patrol ?? null;
     this.patrolIndex = 0;
+    /**
+     * Does this character fight. Civilians (Oysters, Angela) never acquire a
+     * target and never enter a combat state: they walk their route, and gunfire
+     * makes them hurry rather than investigate.
+     *
+     * Defaults TRUE so nothing that spawns an agent without saying otherwise
+     * silently becomes a pacifist.
+     */
+    this.hostile = opts.hostile ?? true;
+    /** Seconds of "something just went off near me" left on a civilian. */
+    this.spooked = 0;
     this.stuckTimer = 0;
     this.vaultCooldown = 0;
     /** a path request the frame budget pushed to the next frame */
@@ -274,6 +329,7 @@ export class Agent {
     this.peekTimer -= dt;
     this.repathTimer -= dt;
     this.vaultCooldown -= dt;
+    if (this.spooked > 0) this.spooked = Math.max(0, this.spooked - dt);
     if (this.lastKnownAge < 1e6) this.lastKnownAge += dt;
 
     // a path the frame budget deferred: ask again before anything else does
@@ -291,6 +347,14 @@ export class Agent {
   /* ================================================================== */
 
   _sense(dt) {
+    // Position-gated squads (see index.js#populate) stay combat-deaf until
+    // the player crosses their activation threshold, so the far encounter
+    // doesn't merge into the near one via early sightlines.
+    if (this.squad && !this.squad.active) return;
+    // Civilians never acquire a target. Every combat transition in `_think` is
+    // guarded by `hasTarget`, so blocking acquisition here is what keeps them
+    // out of the state machine's combat half rather than a parallel branch.
+    if (!this.hostile) return;
     const player = this.ai.playerPosition(this._v3);
     if (!player) return;
     const eye = this.eye;
@@ -329,9 +393,17 @@ export class Agent {
   /** A gunshot or footstep heard from `pos` with a given loudness (metres). */
   hear(pos, loudness) {
     if (!this.alive) return;
+    if (this.squad && !this.squad.active) return;
     const d = this.position.distanceTo(pos);
     if (d > loudness) return;
     const strength = 1 - d / loudness;
+    // A civilian who ignores gunfire reads as scenery. They don't investigate
+    // — that would walk them into the firefight — they just get a fright and
+    // move quicker for a few seconds (see STATE.PATROL).
+    if (!this.hostile) {
+      this.spooked = Math.max(this.spooked, 2.5 + strength * 3.5);
+      return;
+    }
     this.alertness = Math.max(this.alertness, Math.min(1, 0.35 + strength));
     if (this.lastKnownAge > 1.2 || strength > 0.6) {
       this.lastKnown.copy(pos);
@@ -367,12 +439,19 @@ export class Agent {
         this.desiredSpeed = 0;
         this.crouch = false;
         if (this.hasTarget) this._enterCombat();
-        else if (this.patrolPoints && this.stateTime > 2.5) this._setState(STATE.PATROL);
+        // Civilians don't loiter — the whole point of them is that they are
+        // moving whenever the player looks up the street — so they leave IDLE
+        // immediately rather than after the 2.5 s a sentry waits.
+        else if (this.patrolPoints && (!this.hostile || this.stateTime > 2.5)) {
+          this._setState(STATE.PATROL);
+        }
         break;
 
       case STATE.PATROL: {
         this.crouch = false;
-        this.desiredSpeed = 1.35;
+        // A spooked civilian hurries. Not a sprint — someone walking home who
+        // heard a bang two streets over, not someone fleeing a battle.
+        this.desiredSpeed = !this.hostile && this.spooked > 0 ? 2.15 : 1.35;
         if (this.hasTarget) {
           this._enterCombat();
           break;
@@ -466,7 +545,7 @@ export class Agent {
         .sub(target)
         .setY(0)
         .normalize()
-        .multiplyScalar(9)
+        .multiplyScalar(5)
         .add(this.position);
       if (this._goTo(away)) {
         this._setState(STATE.RETREAT);
@@ -755,7 +834,7 @@ export class Agent {
 
     if (!this.wantFire || this.animator.reloading || this.animator.vaulting) return;
     if (this.ammo <= 0) {
-      this.animator.reload(this.variantName === 'irregular' ? 2.9 : 2.35);
+      this.animator.reload(this.variantName === 'MickMcCabe' ? 2.9 : 2.35);
       this.ai.emitReload(this);
       this.ammo = this.magSize;
       return;
@@ -875,6 +954,7 @@ export class Agent {
     }
     this.ctx.events.emit('actor:death', {
       actor: this,
+      by: this.lastAttacker,
       point: hitPoint,
       impulse,
       headshot: false,

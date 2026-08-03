@@ -229,11 +229,17 @@ export class Animator {
     const P = this.P;
 
     /* --- phase advance: stride length keeps the feet stuck to the ground --- */
-    const clip = st.clip;
+    // Unarmed characters swap the two locomotion clips they can actually be in
+    // for their civilian equivalents. Done here rather than at every call site
+    // that sets `state.clip`, so nothing new has to know about it — and the
+    // stride timing below still keys off the ORIGINAL name, because a civilian
+    // walk is the same stride, just with different arms.
+    const armed = !!this.weapon;
+    const clip = armed ? st.clip : st.clip === 'walk' ? 'civWalk' : st.clip === 'idle' ? 'civIdle' : st.clip;
     const strideHz =
-      clip === 'run' ? Math.max(1.1, st.speed / 2.05)
-        : clip === 'walk' ? Math.max(0.55, st.speed / 1.42)
-          : clip === 'crouchWalk' ? Math.max(0.4, st.speed / 0.95)
+      st.clip === 'run' ? Math.max(1.1, st.speed / 2.05)
+        : st.clip === 'walk' ? Math.max(0.55, st.speed / 1.42)
+          : st.clip === 'crouchWalk' ? Math.max(0.4, st.speed / 0.95)
             : 0.19; // idle breathing rate
     this.phase = (this.phase + dt * strideHz) % 1;
     if (this.blend < 1) this.blend = Math.min(1, this.blend + dt / 0.18);
@@ -241,7 +247,13 @@ export class Animator {
     /* --- layer 1: locomotion, crossfaded --- */
     P.reset();
     const fn = C.CLIPS[clip] ?? C.idle;
-    const prev = C.CLIPS[this.prevClip] ?? C.idle;
+    // The outgoing clip needs the same civilian swap, or a walk->idle crossfade
+    // would blend an armed pose against an unarmed one and the arms would swing
+    // up into a carry for the length of the fade.
+    const prevName = armed
+      ? this.prevClip
+      : this.prevClip === 'walk' ? 'civWalk' : this.prevClip === 'idle' ? 'civIdle' : this.prevClip;
+    const prev = C.CLIPS[prevName] ?? C.idle;
     if (this.blend < 1) {
       P.w = 1 - this.blend;
       prev(P, this.phase);
@@ -254,7 +266,12 @@ export class Animator {
 
     /* --- layer 2: additives --- */
     P.w = 1;
-    if (st.aimWeight > 0 && !this.vaulting) C.aimAdd(P, st.aimWeight * (1 - (this.reloadT >= 0 ? 0.6 : 0)));
+    // `armed` gate: aimAdd is what puts the stock in the shoulder and the head
+    // over the sights. Applied to someone with no weapon it would undo the
+    // civilian arms entirely.
+    if (armed && st.aimWeight > 0 && !this.vaulting) {
+      C.aimAdd(P, st.aimWeight * (1 - (this.reloadT >= 0 ? 0.6 : 0)));
+    }
     if (st.suppress > 0) C.suppressAdd(P, Math.min(1, st.suppress));
     if (this.recoilT >= 0) {
       C.recoilAdd(P, this.recoilT, this.recoilK);
@@ -294,7 +311,11 @@ export class Animator {
     if (this.footIk && !this.vaulting) this._footIk();
     if (st.aimTarget && st.aimWeight > 0.01 && !this.vaulting) this._aimIk(st.aimTarget, st.aimWeight);
     if (st.lookTarget) this._lookAt(st.lookTarget, Math.max(0.35, st.aimWeight));
-    this._supportHandIk();
+    // Only solve the support hand onto a weapon that exists. Unarmed civilians
+    // reach `foregripLocal`, which falls back to a point 20 cm in front of the
+    // right hand when there is no weapon — so this solver was the thing pulling
+    // their left hand into a rifle grip on empty air.
+    if (this.weapon) this._supportHandIk();
     this._updateMuzzle();
   }
 

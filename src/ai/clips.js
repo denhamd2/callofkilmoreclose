@@ -351,4 +351,103 @@ export function reloadAdd(P, t) {
   P.d('ForearmR', -6 * w, 0, 0);
 }
 
-export const CLIPS = { idle, walk, run, crouchWalk, crouchIdle, hurtIdle };
+/**
+ * ---------------------------------------------------------------------------
+ * CIVILIAN LOCOMOTION
+ * ---------------------------------------------------------------------------
+ * The rig's bind pose is a patrol carry — stock in the right shoulder pocket,
+ * support hand on the handguard (see rig.js) — and every clip above is authored
+ * as a delta from it. So an unarmed character is not "a soldier minus the
+ * weapon": left alone they walk down the street holding a rifle that is not
+ * there.
+ *
+ * These two clips undo that. `ARMS_DOWN` is the correction that takes the arms
+ * out of the carry and hangs them at the sides; both clips apply it, then add
+ * their own swing on top. Civilians must also never receive `aimAdd()`, which
+ * would put the stock straight back in the shoulder.
+ */
+const ARMS_DOWN = {
+  // Shoulders drop and relax out of the squared-up carry.
+  clavR: [6, 0, -3],
+  clavL: [6, 0, 3],
+  // The big one: rotate the upper arms down and slightly out. The bind has them
+  // raised and inboard to meet the grips.
+  upperR: [58, -6, -9],
+  upperL: [56, 6, 9],
+  // Elbows out of the firing bend; a hanging arm is nearly straight with a few
+  // degrees of carrying angle.
+  foreR: [-46, 0, 0],
+  foreL: [-44, 0, 0],
+  handR: [-8, 0, 0],
+  handL: [-8, 0, 0],
+};
+
+function armsDown(P, w = 1) {
+  const A = ARMS_DOWN;
+  P.d('ClavicleR', A.clavR[0] * w, A.clavR[1] * w, A.clavR[2] * w);
+  P.d('ClavicleL', A.clavL[0] * w, A.clavL[1] * w, A.clavL[2] * w);
+  P.d('UpperArmR', A.upperR[0] * w, A.upperR[1] * w, A.upperR[2] * w);
+  P.d('UpperArmL', A.upperL[0] * w, A.upperL[1] * w, A.upperL[2] * w);
+  P.d('ForearmR', A.foreR[0] * w, A.foreR[1] * w, A.foreR[2] * w);
+  P.d('ForearmL', A.foreL[0] * w, A.foreL[1] * w, A.foreL[2] * w);
+  P.d('HandR', A.handR[0] * w, A.handR[1] * w, A.handR[2] * w);
+  P.d('HandL', A.handL[0] * w, A.handL[1] * w, A.handL[2] * w);
+}
+
+/** Standing about, hands by the sides. Weight shifts, no weapon to ride. */
+export function civIdle(P, ph) {
+  const t = ph * TAU;
+  const breath = sin(t * 0.5);
+  const sway = sin(t * 0.27 + 0.7);
+  const micro = sin(t * 1.4 + 0.9) * 0.4;
+
+  P.hip(0.016 * sway, -0.006 + 0.004 * breath, 0);
+  P.d('Hips', -1.0, 2.6 * sway, 1.8);
+  P.d('Spine', 1.2 + 0.6 * breath, -1.6 * sway, -0.9);
+  P.d('Spine1', 0.9 + 0.8 * breath, -1.2 * sway, -0.6);
+  P.d('Spine2', -0.4 + 1.0 * breath, 1.8 * sway, 0.4);
+  P.d('Neck', 0.8 - 0.4 * breath, 1.4 * sway + micro, 0);
+  P.d('Head', -0.8, 1.2 * micro, 0.7 * sway);
+
+  P.d('UpLegR', -2, 1.5, -1.5);
+  P.d('LegR', -5.0, 0, 0);
+  P.d('FootR', 4.0, -1.5, 0);
+  P.d('UpLegL', 4, -4.0, 2.5);
+  P.d('LegL', -8, 0, 0);
+  P.d('FootL', 5.0, 3.0, 0);
+
+  armsDown(P);
+  // a little life in the hanging arms
+  P.d('UpperArmR', 1.5 * sway, 0, 0);
+  P.d('UpperArmL', -1.5 * sway, 0, 0);
+}
+
+/**
+ * Walking with the arms swinging freely. Reuses the shared `gait` so the feet,
+ * pelvis and spine behave exactly as everyone else's — only the arms differ,
+ * and they differ a lot: a free arm swings several times further than one
+ * clamped to a rifle.
+ */
+const CIV_WALK = {
+  thigh: 22, thighBias: -2, thighTwist: 1.5, splay: 1.5,
+  kneeBase: 7, knee: 47, kneeStance: 8,
+  ankle: 12, ankleBias: 2, toe: 16,
+  sway: 0.015, bob: 0.014, bobBias: -0.014,
+  pelvisTilt: -1, pelvisYaw: 5.0, pelvisRoll: 3.4,
+  lean: 2, spineYaw: 4.0, armSwing: 0,
+};
+
+export function civWalk(P, ph) {
+  gait(P, ph, CIV_WALK);
+  armsDown(P);
+  // Free arm swing, opposed to the legs. 18 degrees at the shoulder is an
+  // ordinary walking swing; the forearm trails it slightly.
+  const t = ph * TAU;
+  const s = sin(t);
+  P.d('UpperArmR', -18 * s, 0, 0);
+  P.d('UpperArmL', 18 * s, 0, 0);
+  P.d('ForearmR', -6 - 5 * Math.max(0, -s), 0, 0);
+  P.d('ForearmL', -6 - 5 * Math.max(0, s), 0, 0);
+}
+
+export const CLIPS = { idle, walk, run, crouchWalk, crouchIdle, hurtIdle, civIdle, civWalk };

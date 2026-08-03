@@ -474,6 +474,15 @@ export class CharacterBuilder {
     this.parts = [];
     /** material name -> { tile } */
     this.materials = opts.materials;
+    /**
+     * Optional canonical material order. Without it, geometry groups come out
+     * in the order parts happened to be ADDED, so a variant that legitimately
+     * skips a part — a civilian with no elbow pads, say — silently reorders
+     * every group after it, and whatever downstream assumed a fixed draw order
+     * is now wrong. Supplying the order decouples group layout from emission
+     * order entirely.
+     */
+    this.materialOrder = opts.materialOrder ?? null;
     this.occluders = []; // AO proxies: {a:[x,y,z], b:[x,y,z], r, k}
   }
 
@@ -501,6 +510,15 @@ export class CharacterBuilder {
     const rig = this.rig;
     const matNames = [];
     for (const p of this.parts) if (!matNames.includes(p.material)) matNames.push(p.material);
+    // Canonical order when one was supplied: anything named in it first, in its
+    // order, then anything else in encounter order so an unlisted material is
+    // still emitted rather than dropped.
+    if (this.materialOrder) {
+      const ranked = this.materialOrder.filter((m) => matNames.includes(m));
+      for (const m of matNames) if (!ranked.includes(m)) ranked.push(m);
+      matNames.length = 0;
+      matNames.push(...ranked);
+    }
     // sort parts by material so each group is contiguous
     const order = [];
     for (const m of matNames) for (const p of this.parts) if (p.material === m) order.push(p);

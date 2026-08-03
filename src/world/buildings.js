@@ -17,9 +17,10 @@ import {
   BOX_SOFT,
   IDENT,
   LL,
+  slab,
   worldOf,
 } from './kit.js';
-import { chamferBox, clothGeometry, fbm3, patchGeometry, runoffStreak } from './util.js';
+import { chamferBox, clothGeometry, fbm3, patchGeometry, polyPrism, runoffStreak } from './util.js';
 import { furnishRoom } from './interiors.js';
 
 /**
@@ -151,8 +152,18 @@ function terrace(A, rng, spec, y, t) {
 export function buildBuilding(A, rng, spec) {
   const t = spec.t ?? 0.34;
   const floors = spec.floors ?? 3;
-  const groundH = spec.groundH ?? 3.45;
-  const upperH = spec.upperH ?? 3.05;
+  // Storey heights for a 1950s Dublin Corporation two-storey semi: roughly 2.4 m
+  // floor-to-ceiling plus joists. Were 3.45/3.05, which put the eaves at 6.56 m
+  // and the ridge at 10.05 m — three-storey proportions on a two-storey house,
+  // and the reason the street read as a row of blocks rather than semi-Ds.
+  // These now give eaves ~5.35 m and a ridge ~9.0 m.
+  //
+  // Anything keyed off these adapts on its own: stairs derive from the
+  // floor-to-floor climb (`steps = round(climb / 0.19)`), and interior ceilings
+  // are `groundH - 0.13`. Window heights do NOT adapt and were retuned to match
+  // — see the `window` bay case below.
+  const groundH = spec.groundH ?? 2.7;
+  const upperH = spec.upperH ?? 2.6;
   const wallKey = spec.wallKey ?? 'plaster_cream';
   const streetSide = spec.streetSide ?? 0;
   const info = {
@@ -204,13 +215,32 @@ export function buildBuilding(A, rng, spec) {
   // ------------------------------------------------------------------ roof --
   const ts = floorSpec(spec, floors - 1);
   interiorSlab(A, rng, ts, y, t, floors, true);
-  if (spec.parapet !== false) {
+  // Roofs are playable ground ONLY where `roofAccess` opens a stair onto them
+  // (one house on this street). Every other house keeps its flat slab as an
+  // invisible ceiling and gets a real pitched, tiled roof over it — the flat
+  // parapet-topped look is a fine finale vantage point but reads as a flat
+  // industrial rooftop everywhere else, next to nothing like the pitched
+  // suburban roofs in the Street View references.
+  if (spec.roofAccess) {
+    if (spec.parapet !== false) {
+      parapet(A, spec.parapetKey ?? wallKey, ts.x, ts.z, ts.w + 0.1, ts.d + 0.1, y, rng, {
+        h: spec.parapetH ?? 0.78,
+        t: 0.22,
+      });
+    }
+  } else if (!spec.setback && !spec.ruin) {
+    // Setback/ruin buildings keep the old flat-roof treatment: a pitched cap
+    // over a roof terrace or a collapsed top floor doesn't make sense, and
+    // neither shape is used anywhere on Kilmore Close today.
+    pitchedRoof(A, rng, ts, wallKey, y);
+  } else if (spec.parapet !== false) {
     parapet(A, spec.parapetKey ?? wallKey, ts.x, ts.z, ts.w + 0.1, ts.d + 0.1, y, rng, {
       h: spec.parapetH ?? 0.78,
       t: 0.22,
     });
   }
   info.roofSpec = ts;
+  info.pitchedRoof = !spec.roofAccess && !spec.setback && !spec.ruin;
 
   // ----------------------------------------------------------- interiors ---
   if (spec.enterable) {
@@ -268,7 +298,225 @@ export function buildBuilding(A, rng, spec) {
     drainpipe(A, pmD.clone(), rng.range(len / 2 - 1.0, len / 2 - 0.4), dpTop, dpTop, rng);
   }
 
+  // ---------------------------------------------------------- frontage add-ons --
+  buildAttachments(A, rng, spec, wallKey, streetSide);
+
   return info;
+}
+
+// ============================================================ attachments ====
+/**
+ * One-storey porch/garage additions tucked against the street face, opt-in
+ * via `spec.attachments`. Every paired semi-D in the Street View references
+ * has one of these at the shared boundary with its neighbour — a garage on
+ * one half, a porch on the other — which is what actually breaks the
+ * repeated two-storey block up before the eye reaches the roofline; the
+ * pitched roof and wall banding above are untouched by this function.
+ *
+ * Positioned directly in level space (no panel matrix): `along` is an offset
+ * along the wall's own run from the building's centreline (world x for a
+ * north/south-facing wall, world z for an east/west-facing one — whichever
+ * axis `streetSide` doesn't point down), `depth` is how far the box
+ * protrudes outward from the wall face along `streetSide`'s normal. Kept
+ * shallow (<=2.6m) to stay inside the fixed 3.0m front-garden gap
+ * (layout.js) rather than reaching real driveway depth.
+ */
+function buildAttachments(A, rng, spec, wallKey, streetSide) {
+  const list = spec.attachments;
+  if (!list || !list.length) return;
+  const n = SIDE[streetSide].n;
+  const alongX = streetSide === 0 || streetSide === 2 ? 1 : 0;
+  const alongZ = 1 - alongX;
+  const faceX = spec.x + n[0] * (spec.w / 2);
+  const faceZ = spec.z + n[2] * (spec.d / 2);
+
+  for (const at of list) {
+    const isGarage = at.kind === 'garage';
+    const h = at.h ?? (isGarage ? 2.3 : 2.5);
+    const depth = Math.min(at.depth ?? (isGarage ? 2.6 : 1.3), 2.6);
+    const w = at.w ?? (isGarage ? 2.6 : 1.6);
+    const along = at.along ?? 0;
+    const cx = faceX + alongX * along + n[0] * (depth / 2);
+    const cz = faceZ + alongZ * along + n[2] * (depth / 2);
+    const boxW = alongX ? w : depth;
+    const boxD = alongX ? depth : w;
+    const key = at.wallKey ?? wallKey;
+
+    A.add(key, BOX(A), LL(IDENT, cx, h / 2, cz, 0, boxW, h, boxD), { masks: [0.5, 0.5, 0.2] });
+    A.box('concrete', cx, h / 2, cz, boxW, h, boxD);
+    // flat capped roof, thin fascia overhang
+    const capW = alongX ? w + 0.16 : depth + 0.16;
+    const capD = alongX ? depth + 0.16 : w + 0.16;
+    A.add('concrete', BOX_SOFT(A), LL(IDENT, cx, h + 0.05, cz, 0, capW, 0.1, capD), {
+      masks: [0.6, 0.4, 0.15],
+    });
+
+    // door/garage leaf set into the outward face
+    const leafW = isGarage ? w * 0.8 : 0.95;
+    const leafH = isGarage ? h * 0.78 : 2.05;
+    const leafKey = at.doorKey ?? 'wood_dark';
+    const faceOff = depth / 2 + 0.03;
+    const lx = cx + n[0] * faceOff;
+    const lz = cz + n[2] * faceOff;
+    const leafX = alongX ? leafW : 0.06;
+    const leafZ = alongX ? 0.06 : leafW;
+    A.add(leafKey, BOX(A), LL(IDENT, lx, leafH / 2 + 0.03, lz, 0, leafX, leafH, leafZ), {
+      masks: [0.3, 0.3, 0.1],
+    });
+
+    // ---- a porch is GLAZED, a garage is not ------------------------------
+    // The Street View reference calls for a small glazed porch, and this was
+    // building it as a solid box with one opaque leaf — a windowless cupboard
+    // bolted to the front of the house. Garages stay solid, which is correct.
+    //
+    // Glazing goes either side of the door leaf on the outward face, plus a
+    // return panel down the exposed flank, which is what makes a porch read as
+    // an add-on rather than as part of the wall.
+    if (!isGarage) {
+      const glazeH = leafH - 0.45;
+      const glazeY = 0.42 + glazeH / 2;
+      const sideW = Math.max(0.28, (w - leafW) / 2 - 0.09);
+      // front glazing, one panel each side of the door
+      for (const s of [-1, 1]) {
+        const off = (leafW / 2 + 0.06 + sideW / 2) * s;
+        A.add(
+          'window_glass',
+          BOX(A),
+          LL(
+            IDENT,
+            lx + (alongX ? off : 0),
+            glazeY,
+            lz + (alongX ? 0 : off),
+            0,
+            alongX ? sideW : 0.05,
+            glazeH,
+            alongX ? 0.05 : sideW
+          ),
+          { masks: [0.15, 0.2, 0.05] }
+        );
+      }
+      // return panel down the flank facing away from the party wall
+      const flank = at.along >= 0 ? 1 : -1;
+      const retOff = (w / 2 - 0.05) * flank;
+      A.add(
+        'window_glass',
+        BOX(A),
+        LL(
+          IDENT,
+          cx + (alongX ? retOff : n[0] * 0.02),
+          glazeY,
+          cz + (alongX ? n[2] * 0.02 : retOff),
+          0,
+          alongX ? 0.05 : depth - 0.3,
+          glazeH,
+          alongX ? depth - 0.3 : 0.05
+        ),
+        { masks: [0.15, 0.2, 0.05] }
+      );
+    }
+  }
+}
+
+// =================================================================== roof ====
+/**
+ * A pitched, tiled gable roof over the top floor's flat slab (which stays in
+ * place underneath as an invisible ceiling — no other code path needs to know
+ * the roof isn't walkable, which is what makes this a roof-only change).
+ *
+ * Ridge runs along Z (`ts.d`, the frontage-width axis, since Kilmore Close's
+ * buildings are wired at right angles to the street) with two tile slopes
+ * pitched down along X to eaves overhanging the walls, gable-end infill
+ * closing the two triangular ends in the facade's own wall colour, a ridge
+ * cap, fascia boards under both eaves, and one chimney stack — the single
+ * most identifying silhouette feature in every Street View reference, not
+ * "roof clutter" in the industrial sense the earlier dressing pass removed.
+ */
+function pitchedRoof(A, rng, ts, wallKey, y) {
+  const w = ts.w;
+  const d = ts.d;
+  const PITCH = 0.64; // ~37 degrees — a typical concrete-tile Irish suburban pitch
+  const overhangX = 0.34; // eave overhang beyond the wall face
+  const overhangZ = 0.16; // verge overhang beyond the gable wall
+  const run = w / 2 + overhangX;
+  // A few footprints on this street are wide (merged semi-D pairs, background
+  // infill blocks up to 22 m). Holding one fixed pitch angle across all of
+  // them would put a church-spire-height ridge over the widest ones, so the
+  // rise is capped and the pitch shallows out instead — real wide roofs do
+  // exactly this (or break into multiple ridges), never just get taller.
+  // Cap was 3.6, which held every house at or above 30 degrees only while the
+  // footprints stayed narrow. The three merged-pair footprints (KW2 13.4 m,
+  // KW3 14.0 m, KW7 12.5 m) hit it and shallowed to 26-29 degrees — under the
+  // ~30 degree minimum concrete tiles are laid at, so they read as flat. 4.4
+  // clears all 26 street houses; the wide BG* background infill still shallows
+  // out, which is correct for distant generic massing.
+  const rise = Math.min(run * Math.tan(PITCH), 4.4);
+  const pitch = Math.atan2(rise, run);
+  const slopeLen = Math.hypot(run, rise);
+  const deckThick = 0.1;
+  const deckLen = d + overhangZ * 2;
+  const eaveY = y + 0.06;
+  const ridgeY = eaveY + rise;
+
+  // ---- two tile slopes, tilted about Z so the ridge runs along Z ----
+  for (const side of [-1, 1]) {
+    const cx = ts.x + side * (run / 2);
+    const cy = eaveY + rise / 2;
+    A.add(
+      'roof_tile',
+      BOX(A),
+      LL(IDENT, cx, cy, ts.z, 0, slopeLen, deckThick, deckLen, 0, side > 0 ? -pitch : pitch),
+      { masks: [0.4, 0.3, 0.18] }
+    );
+    // fascia board under the eave edge
+    const fx = ts.x + side * (run + 0.02);
+    A.add('wood_dark', BOX(A), LL(IDENT, fx, eaveY - 0.06, ts.z, 0, 0.1, 0.22, deckLen), {
+      masks: [0.5, 0.4, 0.3],
+    });
+  }
+  // one rough AABB for the whole roof volume — not walkable, so a tilt-accurate
+  // collision mesh buys nothing; this just stops shots and the eye passing
+  // straight through an empty rooftop.
+  A.box('concrete', ts.x, (eaveY + ridgeY) / 2, ts.z, w + overhangX * 2, ridgeY - eaveY, deckLen);
+
+  // ---- ridge cap ----
+  A.add('roof_tile', BOX(A), LL(IDENT, ts.x, ridgeY - 0.02, ts.z, 0, 0.26, 0.14, deckLen + 0.06), {
+    masks: [0.35, 0.35, 0.2],
+  });
+
+  // ---- gable-end infill, closing the triangle under the roof at each Z end ----
+  const halfSpan = w / 2 + overhangX * 0.5;
+  const pts = [
+    [-halfSpan, 0],
+    [halfSpan, 0],
+    [0, rise + 0.05],
+  ];
+  for (const side of [0, 2]) {
+    const g = polyPrism(pts, 0.22);
+    g.rotateX(Math.PI / 2);
+    const pm = panelMatrix(ts, side, eaveY);
+    A.addOnce(wallKey, g, LL(pm, 0, 0, 0), { masks: [0.5, 0.45, 0.2] });
+  }
+
+  // ---- chimney stack: brick, capped, with a couple of pots ----
+  // Offset toward one gable end and off the ridge centreline, the way a real
+  // flue serving a fireplace below actually lands, not dead-centre.
+  const cz = ts.z + (d / 2 - 0.9) * (rng.float() < 0.5 ? 1 : -1);
+  const cx = ts.x + rng.range(-0.3, 0.3);
+  const stackH = 0.85;
+  const stackW = 0.55;
+  const stackD = 0.34;
+  A.add('brick_fine', BOX(A), LL(IDENT, cx, ridgeY + stackH / 2, cz, 0, stackW, stackH, stackD), {
+    masks: [0.4, 0.35, 0.15],
+  });
+  A.box('concrete', cx, ridgeY + stackH / 2, cz, stackW, stackH, stackD);
+  A.add('concrete', BOX_SOFT(A), LL(IDENT, cx, ridgeY + stackH + 0.04, cz, 0, stackW + 0.14, 0.09, stackD + 0.14), {
+    masks: [0.6, 0.35, 0.15],
+  });
+  const pots = rng.int(1, 2);
+  for (let i = 0; i < pots; i++) {
+    const px = cx + (pots > 1 ? (i - 0.5) * stackW * 0.45 : 0);
+    A.put('chimney_pot', px, ridgeY + stackH + 0.09, cz, rng.float() * 6.28, 1, null);
+  }
 }
 
 // =============================================================== facades ====
@@ -294,7 +542,14 @@ function buildFacade(A, rng, spec, info, ctx) {
     let kind = 'blank';
     if (f === 0) {
       if (openFace) {
-        const shopHere = spec.shops !== false && room > 2.0 && rng.float() < (street ? 0.5 : 0.25);
+        // Opt-IN, not opt-out: this was `spec.shops !== false`, which meant every
+        // building on Kilmore Close (an ordinary residential close with no
+        // BUILDINGS entry setting `shops: false`) had a 50%/25% chance per
+        // ground-floor bay of getting a shopfront() roller shutter plus a
+        // striped red/teal/cream market awning — the "hazard-striped facade"
+        // that read industrial instead of residential. No house on this street
+        // should ever roll a shop bay unless a future BUILDINGS entry opts in.
+        const shopHere = spec.shops === true && room > 2.0 && rng.float() < (street ? 0.5 : 0.25);
         if (spec.doorBays?.[side] === b) kind = 'door';
         else if (shopHere) kind = 'shop';
         else if (rng.float() < 0.72) kind = 'window';
@@ -354,23 +609,35 @@ function buildFacade(A, rng, spec, info, ctx) {
       }
       case 'window': {
         const ww = Math.min(room, rng.range(1.05, 1.3));
-        const wh = f === 0 ? 1.62 : 1.48;
-        const o = { x: bx, y: (f === 0 ? 1.05 : 0.95) + wh / 2, w: ww, h: wh, kind };
+        // Retuned with the storey heights above. At the old 1.62/1.48 with sills
+        // at 1.05/0.95 the heads sat at 2.67 m and 2.43 m, which clears a 3.45 m
+        // storey but would leave 3 cm of wall under a 2.70 m one. These land the
+        // heads at 2.20 m and 2.05 m — the usual head height for the type, with
+        // a proper band of wall left under the ceiling.
+        const wh = f === 0 ? 1.3 : 1.2;
+        const o = { x: bx, y: (f === 0 ? 0.9 : 0.85) + wh / 2, w: ww, h: wh, kind };
         openings.push(o);
-        const broken = rng.float() < (spec.damage ?? 0.15) * 1.6;
+        // Kilmore Close's houses are occupied, not derelict: broken glass and
+        // boarded panes are a war-zone/abandoned-building tell, and security
+        // grilles + metal roller shutters read as a shopfront or a squat, not
+        // a semi-D. Damage still scales a much rarer cracked pane; boarded is
+        // switched off outright (see windowState's `allowBoarded`), and
+        // grille/shutters are dropped for this map rather than rolled.
+        const broken = rng.float() < (spec.damage ?? 0.15) * 0.35;
         // One window per bay is not the same window per bay: pick a state so the
-        // facade carries open casements, boarded holes, shut louvres, curtains and
-        // the occasional lit room instead of one repeated glazed panel.
-        const st = broken ? 'open' : windowState(rng, f, spec.damage ?? 0.15, { allowLit: !openFace || f > 0 });
+        // facade carries open casements, curtains and the occasional lit room
+        // instead of one repeated glazed panel.
+        const st = broken
+          ? 'open'
+          : windowState(rng, f, spec.damage ?? 0.15, { allowLit: !openFace || f > 0, allowBoarded: false });
         deco.push(() =>
           windowUnit(A, pm, o, rng, {
             t,
             broken,
             state: st,
             back: !spec.enterable,
-            grille: f === 0 && st !== 'boarded' && rng.float() < 0.55,
-            shutters: f > 0 && (st === 'shuttered' || rng.float() < 0.4),
-            shutterKey: spec.shutterKey ?? rng.pick(['metal_blue', 'metal_green', 'wood_dark']),
+            grille: false,
+            shutters: false,
             curtain: st === 'curtain' || (st === 'glazed' && rng.float() < 0.25),
           })
         );
@@ -381,11 +648,11 @@ function buildFacade(A, rng, spec, info, ctx) {
         const ww = Math.min(room, 1.35);
         const o = { x: bx, y: 1.05 + 0.9, w: ww, h: 1.9, arch: 0.62, kind };
         openings.push(o);
-        const st = windowState(rng, f, spec.damage ?? 0.15);
+        const st = windowState(rng, f, spec.damage ?? 0.15, { allowBoarded: false });
         deco.push(() =>
           windowUnit(A, pm, o, rng, {
             t,
-            broken: rng.float() < 0.2,
+            broken: rng.float() < 0.04,
             state: st,
             back: !spec.enterable,
             shutters: false,
@@ -454,6 +721,31 @@ function buildFacade(A, rng, spec, info, ctx) {
   });
 
   for (const fn of deco) fn();
+
+  // ---- painted ground-floor spandrel band ----------------------------------
+  // A wine/coral accent strip under the front windows, the way the paired
+  // semis in the Street View references read as two-tone paint rather than
+  // one flat render colour. Street-facing ground floor only — the gable ends
+  // and rear elevation in every reference stay a single colour.
+  //
+  // Iteration 2: the top edge stays pinned at the window sill (1.05) — raising
+  // it further would push the band up into the glass opening itself. Instead
+  // the band grows DOWN, over the plinth course, to 0.1 off the ground: at the
+  // iteration-1 height (plinth-top to sill, 0.63 m) it read as a thin trim
+  // line from street distance; starting it near ground level nearly doubles
+  // the visible height without touching any opening.
+  if (spec.bandKey && f === 0 && street) {
+    const bandBottom = 0.1;
+    const bandTop = 0.9; // ground-floor window sill height — do not raise past this
+    const bandH = bandTop - bandBottom;
+    // A touch more proud of the wall (was -0.017) so the band casts a hairline
+    // shadow at its top edge instead of sitting perfectly flush — that edge
+    // shadow is what reads as "painted strip" rather than "tinted patch" at
+    // range.
+    slab(A, spec.bandKey, pm, 0, bandBottom + bandH / 2, -0.022, len + 0.04, bandH, 0.035, {
+      masks: [0.5, 0.4, 0.2],
+    });
+  }
 
   // ---- rain runoff below every opening and ledge --------------------------
   // The world knows where the water comes off: sills, shopfront heads, awning
@@ -540,7 +832,13 @@ function buildFacade(A, rng, spec, info, ctx) {
   }
 
   // ---- bullet pocks, clustered where somebody took cover ----
-  if (A.has('pock')) {
+  // Combat damage, not weathering — every occupied Kilmore Close house has
+  // `damage` in the 0.05-0.15 range, but this used to add a flat +2 bursts to
+  // EVERY street-facing wall regardless of damage, so every house on the
+  // close had bullet-hole clusters on its front. Gated on real damage now
+  // (0.2+, above anything on this map) so nothing here rolls a burst; the
+  // mechanic stays in place for any higher-damage set piece later.
+  if (A.has('pock') && dmg >= 0.2) {
     const bursts = Math.round(dmg * 6) + (openFace ? 2 : 0);
     for (let i = 0; i < bursts; i++) {
       const cx = rng.range(-len / 2 + 0.4, len / 2 - 0.4);

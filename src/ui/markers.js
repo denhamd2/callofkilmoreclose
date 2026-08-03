@@ -2,6 +2,8 @@ import * as THREE from 'three';
 import { el, svg, setText, setStyle, setClass, Pool, ease, clamp, clamp01, metres } from './util.js';
 
 const _v = new THREE.Vector3();
+/** Scratch for the nameplate anchor — head height, not feet. Never held. */
+const _np = new THREE.Vector3();
 
 /**
  * Projects a world point into HUD pixels.
@@ -132,6 +134,73 @@ export class WorldMarkers {
       },
       this.objRoot
     );
+
+    /**
+     * Character nameplates. Pooled at 12 — the cast is eight and only the ones
+     * in front of you are ever shown, so this never grows.
+     */
+    this.npPool = new Pool(
+      12,
+      () => {
+        const node = el('div', 'ow-np');
+        const name = el('div', 'ow-np-name', node, '');
+        node._name = name;
+        node._pos = new THREE.Vector3();
+        return node;
+      },
+      this.objRoot
+    );
+  }
+
+  /**
+   * Floating name labels above the cast.
+   *
+   * Anchored at `position.y + height` so the plate sits above the head rather
+   * than in the chest, and never drawn for anyone behind the camera or off the
+   * edge — a nameplate has no business becoming an edge chevron the way an
+   * objective does, because it would claim the player's attention for someone
+   * they cannot see.
+   *
+   * @param {Array} list [{ position:Vector3, name:string, hostile:boolean, height:number }]
+   */
+  updateNameplates(list, camera, w, h, k) {
+    const items = this.npPool.items;
+    let n = 0;
+    if (list) {
+      for (let i = 0; i < list.length && n < items.length; i++) {
+        const o = list[i];
+        if (!o?.position || !o.name) continue;
+        _np.copy(o.position);
+        _np.y += o.height ?? 1.85;
+        const p = project(_np, camera, w, h, 0);
+        // Behind or off the edge: skip entirely rather than pin to the border.
+        if (p.behind || p.offscreen) continue;
+        // Past this there is nothing readable left, and a street 253 m long
+        // would otherwise stack the whole cast into a smear at the vanishing
+        // point.
+        if (p.dist > 70) continue;
+        const it = items[n++];
+        if (!it.alive) {
+          it.alive = true;
+          setStyle(it.node, 'display', '');
+        }
+        const node = it.node;
+        setStyle(node, 'transform', `translate(${(p.x - 60 * k).toFixed(1)}px,${(p.y - 10 * k).toFixed(1)}px)`);
+        setStyle(node, 'width', `${(120 * k).toFixed(1)}px`);
+        setText(node._name, o.name);
+        setClass(node, 'ow-np-foe', !!o.hostile);
+        // Fade the last 25 m rather than popping out at 70.
+        const fade = clamp01((70 - p.dist) / 25);
+        setStyle(node, 'opacity', fade.toFixed(2));
+      }
+    }
+    for (let i = n; i < items.length; i++) {
+      const it = items[i];
+      if (it.alive) {
+        it.alive = false;
+        setStyle(it.node, 'display', 'none');
+      }
+    }
   }
 
   /** @param {Array} list [{ position:Vector3, label:'A', name:'CAPTURE', color }] */

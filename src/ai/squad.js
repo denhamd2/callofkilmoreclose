@@ -26,6 +26,14 @@ export class Squad {
     this.hasContact = false;
     this.contactAge = Infinity;
     this._pending = [];
+
+    // Position-gated activation: a squad placed beyond a mid-street threshold
+    // stays combat-deaf (see agent.js `_sense`/`hear`) until the player
+    // crosses `activationPoint` along `activationNormal`. Left null, a squad
+    // is always active — this is opt-in via `index.js#populate`.
+    this.active = true;
+    this.activationPoint = null;
+    this.activationNormal = null;
   }
 
   add(agent) {
@@ -42,7 +50,13 @@ export class Squad {
   }
 
   /** Called once per frame by the AI system. */
-  update(dt) {
+  update(dt, playerPos) {
+    if (!this.active && this.activationPoint && playerPos) {
+      const dx = playerPos.x - this.activationPoint.x;
+      const dz = playerPos.z - this.activationPoint.z;
+      if (dx * this.activationNormal.x + dz * this.activationNormal.z > 0) this.active = true;
+    }
+
     this.grenadeCooldown -= dt;
     this.contactAge += dt;
     if (this.flanker && (!this.flanker.alive || this.flanker.state !== 'flank')) this.flanker = null;

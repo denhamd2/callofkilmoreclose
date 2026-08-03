@@ -13,11 +13,12 @@ import { STREET, ALLEYS } from './layout.js';
  * visual triangles, which keeps the BVH tiny and the character controller smooth.
  */
 export function buildGround(A, rng) {
-  const { halfWidth: HW, kerb: KB, walkH: WH, zMin, zMax } = STREET;
+  const { halfWidth: HW, kerb: KB, setback: SB, walkH: WH, zMin, zMax } = STREET;
 
   // ------------------------------------------------------------- terrain --
-  // Sandy ground under everything, gently undulating so the horizon isn't a
-  // ruler-straight line where it meets the buildings.
+  // Damp earth/verge under everything, gently undulating so the horizon isn't
+  // a ruler-straight line where it meets the buildings. Dublin ground, not
+  // desert sand: brown, not warm ochre.
   const S = 168;
   const N = 42;
   const terrain = new THREE.PlaneGeometry(S, S, N, N);
@@ -26,7 +27,12 @@ export function buildGround(A, rng) {
   for (let i = 0; i < pa.count; i++) {
     const x = pa.getX(i);
     const z = pa.getZ(i);
-    const inStreet = Math.abs(x) < KB + 1 && z > zMin && z < zMax;
+    // KB + SB + 0.6, not KB + 1: every house sits at STREET.setback from the
+    // kerb (see layout.js's front-garden decision), so the flat band has to
+    // reach the house face or the front-garden lawn/driveway dressing
+    // (buildStreet's frontGardens) floats/embeds in undulating background
+    // terrain instead of sitting flush.
+    const inStreet = Math.abs(x) < KB + SB + 0.6 && z > zMin && z < zMax;
     const h = inStreet ? 0 : (fbm3(x * 0.045, 7.3, z * 0.045, 3) - 0.5) * 1.1 + 0.02;
     pa.setY(i, h - 0.03);
   }
@@ -35,8 +41,8 @@ export function buildGround(A, rng) {
     out[1] = 0.25 + fbm3(x * 0.3, 1.1, z * 0.3, 2) * 0.4;
     out[0] = 0.2;
   });
-  A.add('sand', terrain, null);
-  A.collideGeo('sand', terrain);
+  A.add('dirt', terrain, null);
+  A.collideGeo('dirt', terrain);
   terrain.dispose();
 
   // ---------------------------------------------------------------- road --
@@ -60,12 +66,12 @@ export function buildGround(A, rng) {
     out[0] = 0.2 + n * 0.3;
   });
   road.translate(0, 0, (zMin + zMax) / 2);
-  A.add('road_dust', road, null);
+  A.add('asphalt', road, null);
   road.dispose();
   A.box('dirt', 0, -0.2, (zMin + zMax) / 2, HW * 2, 0.42, roadLen);
 
-  // Old tarmac showing through the dust where wheels have polished it: long
-  // patches in the ruts, and a scatter of intact pavement elsewhere.
+  // The driving line, polished dark and oil-stained by decades of tyres: long
+  // patches in the ruts, and a scatter elsewhere.
   for (let i = 0; i < 30; i++) {
     const rut = rng.float() < 0.62;
     const x = rut ? (rng.float() < 0.5 ? -1 : 1) * rng.range(1.2, 2.1) : rng.range(-HW + 0.5, HW - 0.5);
@@ -74,11 +80,53 @@ export function buildGround(A, rng) {
     const camber = (1 - (x / HW) ** 2) * 0.055 + 0.042;
     const g = patchGeometry(rng, rng.range(0.45, 1.1), { lobes: 11, wobble: 0.5 });
     A.addOnce(
-      'asphalt',
+      'road_rut',
       g,
       LL(IDENT, x, camber, z, rng.float() * 0.4, 1, 1, rut ? rng.range(2.0, 4.5) : rng.range(0.7, 1.4)),
       { masks: [0.35, 0.25, 0.1] }
     );
+  }
+
+  // ---------------------------------------------------- speed ramp / bump --
+  // A single tarmac speed ramp crossing the full road width, with three
+  // white painted chevrons pointing up-street — the traffic-calming ramp
+  // visible in the Kilmore Close reference photos, not part of the old
+  // market-street set. Placed clear of parked cars/hedges/trees in
+  // layout.js's SET_PIECES.
+  {
+    const rampZ = 90;
+    const rampLen = 0.85;
+    const rampH = 0.055;
+    const rampCamber = (1 - (0 / HW) ** 2) * 0.055; // road crown at the ramp's centre
+    A.add(
+      'asphalt',
+      BOX_SOFT(A),
+      LL(IDENT, 0, rampCamber + rampH / 2, rampZ, 0, HW * 2 - 0.1, rampH, rampLen),
+      { masks: [0.2, 0.35, 0.15] }
+    );
+    A.box('dirt', 0, rampCamber + rampH / 2, rampZ, HW * 2, rampH + 0.02, rampLen);
+    const chevron = A.cache('speed_chevron', () => {
+      const g = new THREE.BufferGeometry();
+      g.setAttribute(
+        'position',
+        new THREE.BufferAttribute(new Float32Array([0, 0, 0.5, -0.42, 0, -0.5, 0.42, 0, -0.5]), 3)
+      );
+      g.setIndex([0, 1, 2]);
+      g.computeVertexNormals();
+      paintMasks(g, (px, py, pz, nx, ny, nz, out) => {
+        out[0] = 0.05;
+        out[1] = 0.15;
+        out[2] = 0.05;
+      });
+      return g;
+    });
+    for (const cx of [-2.4, 0, 2.4]) {
+      A.add(
+        'road_paint_white',
+        chevron,
+        LL(IDENT, cx, rampCamber + rampH + 0.006, rampZ, 0, 1.0, 1, 1.05)
+      );
+    }
   }
 
   // ------------------------------------------------------- pavement slabs --
@@ -99,10 +147,35 @@ export function buildGround(A, rng) {
       const wSlab = KB - HW;
       if (!mouth) {
         const h = WH + rng.range(-0.012, 0.012);
+        // GRASS VERGE + FOOTPATH, not one continuous slab.
+        //
+        // A 1950s Corporation estate puts a grass verge against the kerb with
+        // the path behind it, and the verge is what the street trees and lamp
+        // columns actually stand in. The band is fixed at KB - HW = 2.0 m and
+        // CANNOT grow: STREET.kerb is what the measured 8.71 m front-garden
+        // setback and every house's calibrated `x` are pinned to, so widening
+        // the street here would silently move all 26 houses.
+        //
+        // So the 2.0 m is split rather than extended: 0.9 m of verge on the
+        // kerb side, 1.1 m of path on the garden side. Both are narrower than
+        // a real estate's ~1.2 m + ~1.8 m. That is an honest consequence of
+        // the fixed total, recorded here rather than hidden by moving the kerb.
+        //
+        // Driveways cross the verge: frontGardens() lays a paved crossing over
+        // this strip at each plot's drive span, so the verge reads as a run
+        // with gaps rather than an unbroken ribbon.
+        const vergeW = 0.9;
+        const pathW = wSlab - vergeW; // 1.1
+        A.add(
+          'lawn',
+          BOX_SOFT(A),
+          LL(IDENT, side * (HW + vergeW / 2), h / 2, cz, 0, vergeW - 0.04, h, segLen - gap),
+          { masks: [0.15, 0.6, 0.35] }
+        );
         A.add(
           'concrete',
           BOX_SOFT(A),
-          LL(IDENT, cx, h / 2, cz, 0, wSlab - 0.05, h, segLen - gap),
+          LL(IDENT, side * (HW + vergeW + pathW / 2), h / 2, cz, 0, pathW - 0.05, h, segLen - gap),
           { masks: [0.6, 0.45, 0.2] }
         );
         // kerb stone, a touch taller and more worn
@@ -118,8 +191,12 @@ export function buildGround(A, rng) {
         // A grime stain, not a different material: a dark patch in a contrasting
         // key reads as a decal lying on top of the pavement.
         if (rng.float() < 0.5) {
+          // Centred on the PATH now, not the old full-band centre — a grime
+          // stain belongs on paving, not on the grass verge. Same three rng
+          // draws either way, so the shared placement stream is unchanged.
           const g = patchGeometry(rng, rng.range(0.25, 0.7), { lobes: 9, wobble: 0.6 });
-          A.addOnce('concrete', g, LL(IDENT, cx + rng.range(-0.5, 0.5), h + 0.006, cz + rng.range(-1, 1), rng.float() * 6.28), {
+          const pathCx = side * (HW + 0.9 + (wSlab - 0.9) / 2);
+          A.addOnce('concrete', g, LL(IDENT, pathCx + rng.range(-0.38, 0.38), h + 0.006, cz + rng.range(-1, 1), rng.float() * 6.28), {
             masks: [0.1, 1.0, 0.55],
           });
         }
@@ -190,12 +267,15 @@ export function buildGround(A, rng) {
           { masks: [0.15, sr.range(0.3, 0.8), sr.range(0.2, 0.5)] }
         );
       }
-      // loose stones lying across the join
-      if (A.has('rock_b')) {
+      // Was loose stones lying across the join — masonry scattered the length
+      // of both footpaths. Litter and weeds through the joint instead; the
+      // `A.has` guard and the draw count are unchanged so the placement stream
+      // is untouched.
+      if (A.has('litter')) {
         for (let k = 0; k < sr.int(1, 3); k++) {
           const off = sr.range(-0.55, 0.55);
           A.put(
-            sr.float() < 0.68 ? 'rock_b' : 'rock_a',
+            sr.float() < 0.68 ? 'litter' : 'weeds',
             px + nxs * off + sr.range(-0.2, 0.2),
             y + 0.01,
             pz + nzs * off + sr.range(-0.2, 0.2),
@@ -211,24 +291,24 @@ export function buildGround(A, rng) {
   // which is what actually hides the value step where the road surface meets the
   // pavement in a low camera. This is the seam the eye lands on first in any
   // street-level frame.
-  seam(-HW + 0.08, zMin + 2, -HW + 0.08, zMax - 2, 'sand', 'road_dust', 0.012);
-  seam(HW - 0.08, zMin + 2, HW - 0.08, zMax - 2, 'sand', 'road_dust', 0.012);
+  seam(-HW + 0.08, zMin + 2, -HW + 0.08, zMax - 2, 'moss_verge', 'asphalt', 0.012);
+  seam(HW - 0.08, zMin + 2, HW - 0.08, zMax - 2, 'moss_verge', 'asphalt', 0.012);
   // the pavement / open-ground line down both sides of the street, and the
-  // perimeter of every alley and courtyard where its floor meets the sand
-  seam(-KB, zMin + 2, -KB, zMax - 2, 'concrete', 'sand', WH + 0.004);
-  seam(KB, zMin + 2, KB, zMax - 2, 'concrete', 'sand', WH + 0.004);
+  // perimeter of every alley and courtyard where its floor meets open ground
+  seam(-KB, zMin + 2, -KB, zMax - 2, 'concrete', 'dirt', WH + 0.004);
+  seam(KB, zMin + 2, KB, zMax - 2, 'concrete', 'dirt', WH + 0.004);
   for (const a of ALLEYS) {
     const [ax0, az0, ax1, az1] = a.rect;
     const ay = 0.062;
-    seam(ax0, az0, ax1, az0, a.surface, 'sand', ay);
-    seam(ax0, az1, ax1, az1, a.surface, 'sand', ay);
-    seam(ax0, az0, ax0, az1, a.surface, 'sand', ay);
-    seam(ax1, az0, ax1, az1, a.surface, 'sand', ay);
+    seam(ax0, az0, ax1, az0, a.surface, 'dirt', ay);
+    seam(ax0, az1, ax1, az1, a.surface, 'dirt', ay);
+    seam(ax0, az0, ax0, az1, a.surface, 'dirt', ay);
+    seam(ax1, az0, ax1, az1, a.surface, 'dirt', ay);
   }
 
   // ------------------------------------------- drifts, stains and covers --
-  // Sand blown against the kerbs and building lines: the single cheapest thing
-  // that stops a street reading as a clean box of geometry.
+  // Damp moss and grit against the kerbs and building lines: the single
+  // cheapest thing that stops a street reading as a clean box of geometry.
   for (let i = 0; i < 130; i++) {
     const side = rng.float() < 0.5 ? -1 : 1;
     const againstWall = rng.float() < 0.55;
@@ -244,7 +324,7 @@ export function buildGround(A, rng) {
         ? (1 - (x / HW) ** 2) * 0.055 + 0.05
         : WH + 0.01;
     const g = patchGeometry(rng, rng.range(0.35, 1.5), { lobes: 9, wobble: 0.5 });
-    A.addOnce('sand', g, LL(IDENT, x, y, z, rng.float() * 6.28, 1, 1, rng.range(0.5, 1.0)), {
+    A.addOnce('moss_verge', g, LL(IDENT, x, y, z, rng.float() * 6.28, 1, 1, rng.range(0.5, 1.0)), {
       masks: [0.15, 0.5, 0.3],
     });
   }

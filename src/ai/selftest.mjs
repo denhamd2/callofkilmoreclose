@@ -185,7 +185,11 @@ console.log('\nalbedo budget — map avg x vertex tint, per part (linear)');
   for (const vname in VARIANTS) {
     const V = VARIANTS[vname];
     let s = 0;
-    const sample = makeCamoSampler(nz, CAMO[V.camo]);
+    // Civilians have no camo pattern — their cloth is a plain tint over the
+    // nylon set (see resolveMaterials). Sampling CAMO[undefined] threw here.
+    // `arid` stands in purely as a luminance reference for the albedo budget
+    // below; it is not what they are rendered with.
+    const sample = makeCamoSampler(nz, CAMO[V.camo] ?? CAMO.arid);
     for (let y = 0; y < N; y++) {
       for (let x = 0; x < N; x++) {
         sample(x / N, y / N, out);
@@ -203,13 +207,17 @@ console.log('\nalbedo budget — map avg x vertex tint, per part (linear)');
       }
       const vc = lum([r / p.count, g / p.count, b / p.count]);
       const map = MAP_AVG[p.material] ?? 0.1;
+      // Civilian variants carry no plateTint (no plate carrier) and may carry
+      // no gearTint, so every lookup falls back to neutral rather than
+      // dereferencing undefined.
+      const WHITE = [1, 1, 1];
       const tintL =
         p.material === 'cloth'
-          ? lum(V.clothTint)
+          ? lum(V.clothTint ?? WHITE)
           : p.material === 'plate'
-            ? lum(V.plateTint)
+            ? lum(V.plateTint ?? WHITE)
             : p.material === 'gear' || p.material === 'boot'
-              ? lum(V.gearTint)
+              ? lum(V.gearTint ?? WHITE)
               : 1;
       rows.push({ name: p.name, mat: p.material, v: map * vc * tintL });
     }

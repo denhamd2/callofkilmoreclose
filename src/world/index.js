@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { Assembler } from './builder.js';
-import { BUILDINGS, STREET, SET_PIECES, GATE } from './layout.js';
+import { BUILDINGS, STREET, SET_PIECES } from './layout.js';
 import { buildGround } from './ground.js';
 import { buildBuilding, collapseRoof } from './buildings.js';
 import { registerProps } from './props.js';
@@ -9,7 +9,6 @@ import {
   dressStreet,
   dressBuildings,
   scatterDebris,
-  buildGate,
   buildPerimeter,
   groundY,
   isOpen,
@@ -19,10 +18,12 @@ import {
  * WORLD — level geometry, the modular building kit, props, set dressing and
  * static collision.
  *
- * A ~120 x 120 m Middle-Eastern market street: one main street with a plaza,
- * flanking alleys, eighteen buildings (three of them enterable and furnished
- * across multiple floors), an arched gate closing the vista, and several
- * thousand props. Nothing is loaded from disk — every vertex is generated here.
+ * Kilmore Close, a real Dublin residential street (OSM way 37211091):
+ * a single-sided lane forking into a two-sided loop, ~209 m of real building
+ * frontage, three enterable houses furnished across multiple floors, both
+ * ends left open toward the real connecting roads (see ROAD_ENDS in
+ * layout.js), and several thousand props. Nothing is loaded from disk —
+ * every vertex is generated here.
  *
  * HOW IT FITS TOGETHER
  *   layout.js     the map: footprints, facade programmes, set-piece positions
@@ -54,8 +55,7 @@ import {
 
 /**
  * LEVEL -> WORLD. The street is authored down -Z; this yaw puts it on the axis
- * the canonical hero/sunset cameras look along, with the market in the near
- * third of the frame and the gate closing the far end.
+ * the canonical hero/sunset cameras look along.
  */
 const LEVEL_YAW = 0.5877;
 const LEVEL_TX = 0.9;
@@ -127,7 +127,6 @@ export class WorldSystem {
     }
     this.buildings = infos;
 
-    buildGate(A, rng);
     buildPerimeter(A, rng);
     dressStreet(A, rng);
     dressBuildings(A, rng, infos);
@@ -146,6 +145,14 @@ export class WorldSystem {
       yaw: yaw + LEVEL_YAW,
       tag,
     }));
+    /**
+     * The street's own section, published on the instance so other systems can
+     * duck-type it off `ctx.get('world')`. It was module-exported only, which
+     * meant anyone wanting the carriageway or kerb line had to either import
+     * across a subsystem boundary (forbidden) or hardcode the numbers — `ai`
+     * needs them to walk its civilians down the footpath rather than the road.
+     */
+    this.STREET = STREET;
     this.bounds = new THREE.Box3(
       new THREE.Vector3(-62, -2, -62),
       new THREE.Vector3(62, 26, 62)
@@ -442,4 +449,4 @@ export class WorldSystem {
   }
 }
 
-export { BUILDINGS, STREET, SET_PIECES, GATE };
+export { BUILDINGS, STREET, SET_PIECES };

@@ -4,7 +4,7 @@
  * Mirrors tools/capture.mjs so the soldier model and its animation can be
  * iterated on while the rest of the game is mid-edit.
  *
- *   node src/ai/shoot.mjs --view=front --variant=vanguard --out=/tmp/ai-front.png
+ *   node src/ai/shoot.mjs --view=front --variant=David --out=/tmp/ai-front.png
  */
 import { chromium } from 'playwright';
 import { spawn } from 'node:child_process';

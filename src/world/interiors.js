@@ -235,16 +235,17 @@ function dressWalls(A, rng, r) {
       const bt = rng.range(-half, half);
       const [bx, bz] = at(s, bt, rng.range(0.18, 0.42));
       A.put(
+        // What actually stands against a skirting board in a lived-in house:
+        // boxes, a bucket, a crate. Sandbags, a jerry can and a tyre were the
+        // market-street/militia vocabulary and read wrong in a Dublin semi.
         rng.pick([
-          'sandbag_a',
-          'sandbag_b',
           'crate_b',
           'box_card_a',
           'box_card_b',
+          'box_card_a',
           'bucket',
-          'jerry_can',
-          'tyre_small',
-          'barrel_wood',
+          'crate_c',
+          'planter',
         ]),
         bx,
         y + 0.01,
@@ -534,7 +535,7 @@ function furnishStorage(A, rng, r, cx, cz, w, d, m) {
       A.put('pallet', sx, y + 0.01, sz, rng.float() * 6.28, 1, [1, 1.3, 1]);
       for (let k = 0; k < rng.int(1, 4); k++) {
         A.put(
-          rng.pick(['sandbag_a', 'sandbag_b', 'box_card_a']),
+          rng.pick(['box_card_a', 'box_card_b', 'crate_c']),
           sx + rng.range(-0.3, 0.3),
           y + 0.11 + k * 0.2,
           sz + rng.range(-0.25, 0.25),
@@ -545,15 +546,19 @@ function furnishStorage(A, rng, r, cx, cz, w, d, m) {
       }
       A.box('wood', sx, y + 0.1, sz, 1.2, 0.2, 1.0);
     } else if (pick < 0.72) {
-      A.put(rng.pick(['barrel_rust', 'barrel_blue', 'barrel_wood']), sx, y, sz, rng.float() * 6.28, 1, [
+      // barrel_rust (a rusted oil drum) read as militia dressing; a blue water
+      // butt or a wooden barrel is ordinary in a box room or garage.
+      A.put(rng.pick(['barrel_blue', 'barrel_wood']), sx, y, sz, rng.float() * 6.28, 1, [
         1, 1.2, 1,
       ]);
       A.box('metal', sx, y + 0.45, sz, 0.62, 0.9, 0.62);
     } else if (pick < 0.85) {
-      A.put('tyre', sx, y, sz, rng.float() * 6.28, 1, [1, 1.3, 1]);
+      // Was a stack of tyres. Buckets stack the same way at the same scale and
+      // belong in a box room; the tyre pile read as a yard, not a house.
+      A.put('bucket', sx, y, sz, rng.float() * 6.28, 1, [1, 1.3, 1]);
       if (rng.float() < 0.6) {
         A.skirts = false;
-        A.put('tyre', sx + 0.03, y + 0.19, sz + 0.02, rng.float() * 6.28, 1, [1, 1.3, 1]);
+        A.put('bucket', sx + 0.03, y + 0.19, sz + 0.02, rng.float() * 6.28, 1, [1, 1.3, 1]);
         A.skirts = true;
       }
     } else {
