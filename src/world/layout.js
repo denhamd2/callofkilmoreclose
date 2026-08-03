@@ -188,8 +188,15 @@ export const STREET = {
  * rect would have laid bare dirt under KW3-KW5.
  */
 export const ALLEYS = [
-  { rect: [6.5, 120, 29, 160], surface: 'dirt' }, // provisional rear-access lane, empty (east) side of the lane stretch
-  { rect: [6.5, 40, 29, 70], surface: 'dirt' }, // provisional rear-access lane, empty (east) side of the lane stretch
+  // The two `dirt` "rear-access lane" rects that used to sit at [6.5, 120, 29,
+  // 160] and [6.5, 40, 29, 70] are gone. They covered the open (+X) side of the
+  // lane stretch, where Kilmore Close genuinely has no houses — the re-survey
+  // puts a neighbouring street's rear about 40 m across there — and laying bare
+  // dirt over it is what made that side read as unfinished ground next to a
+  // long row of houses. They were also the densest junk source in the level:
+  // scatterDebris ran a per-alley crate/barrel/pallet/rubble pass over every
+  // ALLEYS rect. `rearBoundary()` in dressing.js now closes that side properly
+  // with a garden wall and hedge run.
   { rect: [-30, -36, 30, -30], surface: 'gravel' }, // provisional far cross street south end, reads as Beechlawn Avenue (ROAD_ENDS.south) crossing beyond the loop
   { rect: [-30, 203, 30, 209], surface: 'gravel' }, // provisional far cross street north end, reads as Kilmore Avenue (ROAD_ENDS.north) crossing beyond the lane — mirrors the south entry's offset from its street edge (zMin+4..zMin+10), so both real OSM road connections read the same way
 ];

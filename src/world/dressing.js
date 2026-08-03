@@ -119,7 +119,7 @@ export function groundSkirt(A, rng, x, y, z, radius, opts = {}) {
       // banked against everything the player walks past. It was rubble —
       // rock, brick, cinder — which is why the close still read as a bomb site
       // after the scatter pass was cleaned. Gutter litter and weeds only.
-      rng.pick(['litter', 'weeds', 'litter', 'weeds', 'can', 'litter']),
+      'weeds',
       px,
       groundY(px, pz) + 0.012,
       pz,
@@ -348,8 +348,58 @@ export function dressStreet(A, rng) {
   frontGardenClutter(A, rng);
   binClusters(A, rng);
   coverClusters(A, rng);
+  rearBoundary(A, rng);
   streetFloor(A, rng);
   A.jitter = null;
+}
+
+/**
+ * The open side of the lane.
+ *
+ * Kilmore Close is single-sided for its first ~154 m — the re-survey in
+ * layout.js confirms it, and the six-house arm that the previous table welded
+ * onto the end of the long row actually belongs across the road at the loop.
+ * So the +X side of the lane has no Kilmore Close houses on it, and it never
+ * will without inventing geometry OSM does not support.
+ *
+ * What it should NOT be is bare dirt, which is what the removed `dirt` ALLEYS
+ * rects made it, and which is the real substance of the "one long row, one
+ * short row" complaint: the eye reads an unfinished edge, not a boundary.
+ * About 40 m across there is the rear of a neighbouring street, so the honest
+ * treatment is the back boundary of those gardens — a rendered blockwork wall
+ * with a hedge grown up behind it, which is what every Dublin estate presents
+ * to the road it backs onto.
+ *
+ * Runs only where the far side is genuinely empty: from the north end of the
+ * loop's far arm up to the top of the lane. Below that the KE row faces the
+ * street and dresses itself.
+ */
+function rearBoundary(A, rng) {
+  // Where the far-side houses stop. Everything north of this is open ground.
+  let zStart = -Infinity;
+  for (const b of BUILDINGS) {
+    if (b.streetSide === 3) zStart = Math.max(zStart, b.z + b.d / 2);
+  }
+  zStart += 6.0;
+  const zEnd = STREET.zMax - 4;
+  // Same line the far-side house fronts stand on, so both sides of the street
+  // present an edge at the same distance from the kerb.
+  const x = STREET.kerb + STREET.setback;
+  const RY = -Math.PI / 2; // hedgeRow's run axis for a span along +Z
+
+  let z = zStart;
+  while (z < zEnd) {
+    const len = Math.min(rng.range(5.5, 9.0), zEnd - z);
+    if (len < 2.0) break;
+    const cz = z + len / 2;
+    const y = groundY(x, cz);
+    // Wall first, hedge behind it and a little taller — the hedge is what the
+    // player reads at distance, the wall is what they read up close.
+    A.putS('garden_wall', x, y, cz, RY, len / 2.4, rng.range(0.95, 1.1), 1);
+    A.box('concrete', x, y + 0.42, cz, 0.24, 0.84, len);
+    hedgeRow(A, rng, x + 0.55, cz, RY, len * 0.99, rng.range(1.5, 1.9), y);
+    z += len + rng.range(0.05, 0.35);
+  }
 }
 
 /**
@@ -462,12 +512,12 @@ function streetFloor(A, rng) {
           LL(IDENT, x, WH - 0.02, cz, side > 0 ? Math.PI / 2 : -Math.PI / 2, 1, 1, 1),
           { masks: [0.15, 0.55, 0.45] }
         );
-        // litter and windblown leaves sitting IN the drift, half buried
+        // weeds rooted IN the drift, half buried
         for (let i = 0; i < rng.int(1, 4); i++) {
           const px = x - side * rng.range(0.05, w * 0.8);
           const pz = cz + rng.range(-len / 2 + 0.2, len / 2 - 0.2);
           A.put(
-            rng.pick(['litter', 'can', 'weeds']),
+            'weeds',
             px,
             WH + h * rng.range(0.1, 0.55),
             pz,
@@ -544,7 +594,8 @@ function streetFloor(A, rng) {
     );
   }
 
-  // ---- 4. everyday kerbside litter — no bombed-masonry rubble on a lived-in close ----
+  // ---- 4. weeds along the kerb line. This was a 90-item litter pass; a
+  //         lived-in close is swept, so only the vegetation stays. ----
   for (let i = 0; i < 90; i++) {
     const side = rng.float() < 0.5 ? -1 : 1;
     const z = rng.range(zMin + 1, zMax - 1);
@@ -552,7 +603,7 @@ function streetFloor(A, rng) {
     if (!isOpen(x, z, 0.05)) continue;
     const y = groundY(x, z);
     A.put(
-      rng.pick(['litter', 'can', 'weeds', 'litter']),
+      'weeds',
       x,
       y + 0.02,
       z,
@@ -591,7 +642,7 @@ function streetFloor(A, rng) {
       const pz = car2[1] + rng.range(-3.0, 3.0);
       if (!isOpen(px, pz, 0.1)) continue;
       A.put(
-        rng.pick(['litter', 'can', 'weeds']),
+        'weeds',
         px,
         groundY(px, pz) + 0.015,
         pz,
@@ -630,25 +681,10 @@ function streetFloor(A, rng) {
     groundSkirt(A, rng, dx, groundY(dx, dz), dz, 0.5, { pebbles: rng.int(1, 3), key: 'moss_verge' });
   }
 
-  // a bike-shed-style pallet/timber stack, on the pavement so it never blocks the road
-  for (const [px, pz] of [
-    [-5.5, 6.2],
-    [5.55, -1.2],
-  ]) {
-    if (!camClear(px, pz, 1.2)) continue;
-    const y = groundY(px, pz);
-    const n = rng.int(4, 7);
-    for (let i = 0; i < n; i++) {
-      A.put('pallet', px + rng.range(-0.07, 0.07), y + i * 0.135, pz + rng.range(-0.07, 0.07), rng.range(-0.12, 0.12), 1, [
-        1,
-        rng.range(1.0, 1.4),
-        1,
-      ]);
-    }
-    A.box('wood', px, y + (n * 0.135) / 2, pz, 1.2, n * 0.135, 0.9);
-    A.put('crate_b', px + 0.75, y, pz + 0.5, rng.float() * 6.28, 1, [1, 1.3, 1]);
-    groundSkirt(A, rng, px, y, pz, 0.72, { pebbles: rng.int(3, 6), key: 'moss_verge' });
-  }
+  // The bike-shed-style pallet/timber stack that used to stand here is gone:
+  // stacked pallets and a crate on the footpath are exactly the "random ground
+  // props" this pass exists to remove. The parked cars and bin stores above
+  // already provide the mid-ground silhouette mass it was added for.
 }
 
 // --- parked cars -------------------------------------------------------------
@@ -921,21 +957,9 @@ function builderSkips(A, rng) {
     A.put('skip', x, y, z, ry, 1, null, 0, 0);
     A.box('metal', x, y + 0.45, z, 1.9, 0.9, 2.4, ry);
     groundSkirt(A, rng, x, y, z, 0.9, { pebbles: rng.int(2, 4), key: 'moss_verge' });
-    // a few offcuts and a bag of rubble beside it
-    for (let i = 0; i < rng.int(3, 6); i++) {
-      const px = x + rng.range(-1.6, 1.6);
-      const pz = z + rng.range(-1.6, 1.6);
-      if (!isOpen(px, pz, 0.2)) continue;
-      A.put(
-        rng.pick(['plank_a', 'plank_b', 'box_card_a', 'brick_a', 'brick_b']),
-        px,
-        groundY(px, pz) + 0.015,
-        pz,
-        rng.float() * 6.28,
-        rng.range(0.7, 1.1),
-        [1, 1.2, 1]
-      );
-    }
+    // The loose offcuts and brick rubble that used to spill out beside the
+    // skip are gone — the skip itself reads as "one house mid-renovation"
+    // without strewing masonry across the footpath.
     A.put(rng.pick(['bin_black', 'bin_green']), x + Math.cos(ry) * 1.4, y, z - Math.sin(ry) * 1.4, rng.float() * 6.28, 1, null);
   }
 }
@@ -1011,7 +1035,7 @@ function streetLamps(A, rng) {
         // the same set the dressing pass took off the rest of the street.
         // brick_b dropped — masonry at a lamp base is demolition vocabulary,
         // the same set the dressing pass took off the rest of the street.
-        rng.pick(['litter', 'weeds', 'can', 'weeds']),
+        'weeds',
         px,
         groundY(px, pz) + 0.02,
         pz,
@@ -1167,7 +1191,7 @@ function coverClusters(A, rng) {
       const pz = z + rng.range(-2, 2);
       if (!isOpen(px, pz, 0.2)) continue;
       A.put(
-        rng.pick(['litter', 'can', 'weeds']),
+        'weeds',
         px,
         groundY(px, pz) + 0.02,
         pz,
@@ -1314,8 +1338,10 @@ function dressBuilding(A, rng, info) {
       const oz = wp[2] + rng.range(-1.0, 1.0);
       if (!isOpen(ox, oz, 0.15)) continue;
       A.put(
-        // Doorstep junk, minus the sandbag and jerry can that read as militia.
-        rng.pick(['bucket', 'crate_b', 'stool', 'planter', 'litter', 'bin_black', 'planter']),
+        // A planter or a wheelie bin is what actually stands at a front door.
+        // The crate/stool/bucket/litter mix here was doorstep junk carried over
+        // from the market street and read as clutter in every garden.
+        rng.pick(['planter', 'bin_black', 'planter']),
         ox,
         groundY(ox, oz),
         oz,
@@ -1403,7 +1429,7 @@ function dressBuilding(A, rng, info) {
     const px = rng.range(rx0 + 0.7, rx1 - 0.7);
     const pz = rng.range(rz0 + 0.7, rz1 - 0.7);
     A.put(
-      rng.pick(['litter', 'weeds', 'litter', 'litter', 'weeds', 'can', 'litter']),
+      'weeds',
       px,
       roofY + 0.02,
       pz,
@@ -1519,146 +1545,39 @@ function alleyLines(A, rng, infos) {
  * bases and kerbs, because that is where wind, water and people put things.
  * Empty ground is what makes a level read as a WebGL demo.
  */
+/**
+ * Ground vegetation in the kerb joints. This used to be `scatterDebris` and it
+ * was the single biggest source of the "random debris and clutter" on the
+ * street: 120 items dumped along the building line, 70 more across the
+ * carriageway, a per-alley junk pass (crates, pallets, barrels, planks, rocks)
+ * topped with a rubble mound at each alley end, and 60 litter drifts. That
+ * vocabulary was inherited from the war-damaged market street. Kilmore Close is
+ * an occupied residential close: nothing is dumped on the road, and nothing
+ * collects against the front walls.
+ *
+ * All of it is gone at the source rather than instance by instance, so no later
+ * pass can reintroduce it by nudging a count. What remains is the one thing a
+ * real kerb genuinely carries — weeds in the joint between the kerb face and
+ * the carriageway — kept sparse and confined to that joint.
+ *
+ * None of the removed props were gameplay-critical. The only scatter that
+ * carried collision was the alley barrels/crates (`A.box`), which sat inside
+ * the rear-access rects that are themselves gone; AI cover comes from
+ * `coverClusters`, which is untouched.
+ */
 export function scatterDebris(A, rng) {
-  const { zMin, zMax, kerb } = STREET;
+  const { zMin, zMax } = STREET;
   A.jitter = jitterRig();
-
-  // --- against the building line, both sides of the street ---
-  // 340 was a war-damaged market street's worth of masonry. A lived-in close
-  // collects litter, weeds and the odd bottle against a wall — not bricks,
-  // cinder blocks, broken slabs and planks — so both the count and the
-  // vocabulary come down. The gaussian falloff below is unchanged: where things
-  // collect is right, it was only ever what collects that was wrong.
-  for (let i = 0; i < 120; i++) {
+  for (let i = 0; i < 90; i++) {
     const side = rng.float() < 0.5 ? -1 : 1;
     const z = rng.range(zMin + 1, zMax - 1);
-    // exponential falloff away from the wall
-    const off = 0.12 + Math.abs(rng.gauss()) * 0.75;
-    const x = side * (kerb - off);
-    if (!isOpen(x, z, 0.05)) continue;
-    const y = groundY(x, z);
-    const pick = rng.float();
-    let id;
-    if (pick < 0.34) id = 'litter';
-    else if (pick < 0.62) id = 'weeds';
-    else if (pick < 0.78) id = rng.pick(['can', 'bottle']);
-    else if (pick < 0.9) id = rng.pick(['box_card_a', 'box_card_b']);
-    else id = rng.pick(['bucket', 'crate_b']);
-    A.put(id, x, y + 0.015, z, rng.float() * 6.28, rng.range(0.65, 1.25), [
+    const x = side * (STREET.halfWidth + rng.range(0.02, 0.16));
+    if (!isOpen(x, z, 0.02)) continue;
+    A.put('weeds', x, groundY(x, z) + 0.01, z, rng.float() * 6.28, rng.range(0.55, 0.95), [
       1,
-      rng.range(1.0, 1.5),
+      rng.range(1.0, 1.3),
       1,
     ]);
-  }
-
-  // --- the road surface: sparser, and pushed to the gutters ---
-  for (let i = 0; i < 70; i++) {
-    const x = rng.range(-STREET.halfWidth + 0.1, STREET.halfWidth - 0.1) * (0.45 + 0.55 * Math.abs(rng.signed()));
-    const z = rng.range(zMin + 1, zMax - 1);
-    if (!isOpen(x, z, 0.05)) continue;
-    A.put(
-      // rock/brick on the carriageway read as shelling debris; gutter litter,
-      // a can and weeds through the joints are what a real road carries.
-      rng.pick(['litter', 'can', 'litter', 'weeds', 'litter', 'bottle', 'weeds']),
-      x,
-      groundY(x, z) + 0.012,
-      z,
-      rng.float() * 6.28,
-      rng.range(0.6, 1.15),
-      [1, rng.range(1.0, 1.5), 1]
-    );
-  }
-
-  // --- alleys: denser, junkier ---
-  for (const a of ALLEYS) {
-    const [x0, z0, x1, z1] = a.rect;
-    const area = (x1 - x0) * (z1 - z0);
-    const n = Math.round(area * 0.85);
-    for (let i = 0; i < n; i++) {
-      const x = rng.range(x0 + 0.3, x1 - 0.3);
-      const z = rng.range(z0 + 0.3, z1 - 0.3);
-      if (inBuilding(x, z, 0.25)) continue;
-      const near = nearestWall(x, z);
-      const wallBias = near.d < 1.2 ? 1 : 0.45;
-      if (rng.float() > wallBias) continue;
-      const pick = rng.float();
-      let id;
-      // Alleys and rear lanes legitimately stay the junkiest ground in the
-      // level — a back lane really does collect crates, a pallet, an old
-      // barrel. What goes is the demolition vocabulary (cinder, slab_shard,
-      // rebar) and the militia one (jerry_can, gas_bottle, rusted drums);
-      // weeds and shrub take the freed weight, since an unswept lane greens up.
-      if (pick < 0.2) id = 'litter';
-      else if (pick < 0.34) id = rng.pick(['weeds', 'shrub']);
-      else if (pick < 0.46) id = rng.pick(['rock_a', 'rock_b']);
-      else if (pick < 0.56) id = 'weeds';
-      else if (pick < 0.64) id = 'shrub';
-      else if (pick < 0.72) id = rng.pick(['plank_a', 'plank_b']);
-      else if (pick < 0.8) id = rng.pick(['crate_a', 'crate_b', 'crate_flat', 'pallet']);
-      else if (pick < 0.86) id = rng.pick(['barrel_blue', 'barrel_wood']);
-      else if (pick < 0.9) id = rng.pick(['bin_black', 'bin_green']);
-      else if (pick < 0.95) id = rng.pick(['box_card_a', 'box_card_b', 'bucket', 'planter']);
-      else id = rng.pick(['weeds', 'litter', 'bottle']);
-      const y = groundY(x, z);
-      A.put(id, x, y + 0.015, z, rng.float() * 6.28, rng.range(0.7, 1.2), [
-        1,
-        rng.range(1.0, 1.5),
-        1,
-      ]);
-      // big items get a collision box; scatter does not
-      if (id.startsWith('barrel')) A.box('metal', x, y + 0.45, z, 0.62, 0.9, 0.62);
-      else if (id.startsWith('crate')) A.box('wood', x, y + 0.3, z, 0.62, 0.6, 0.62);
-    }
-    // a skip-load of rubble at one end of each alley
-    if (rng.float() < 0.7) {
-      const bx = rng.float() < 0.5 ? x0 + 1.6 : x1 - 1.6;
-      const bz = rng.range(z0 + 1.2, z1 - 1.2);
-      if (!inBuilding(bx, bz, 0.4)) rubbleMound(A, rng, bx, groundY(bx, bz), bz, rng.range(0.9, 1.8), rng.int(12, 24));
-    }
-  }
-
-  // --- vegetation in the cracks: kerb line, wall bases, alley corners ---
-  for (let i = 0; i < 220; i++) {
-    const side = rng.float() < 0.5 ? -1 : 1;
-    const z = rng.range(zMin + 1, zMax - 1);
-    const atKerb = rng.float() < 0.55;
-    const x = atKerb
-      ? side * (STREET.halfWidth + rng.range(0.02, 0.3))
-      : side * (kerb - rng.range(0.05, 0.35));
-    if (!isOpen(x, z, 0.02)) continue;
-    A.put(
-      rng.float() < 0.78 ? 'weeds' : 'shrub',
-      x,
-      groundY(x, z) + 0.01,
-      z,
-      rng.float() * 6.28,
-      rng.range(0.6, 1.25),
-      [1, rng.range(1.0, 1.4), 1]
-    );
-  }
-
-  // --- glass under every blown-out window is handled per-building; here we
-  //     add the sun-bleached litter drifts that collect in corners ---
-  for (let i = 0; i < 60; i++) {
-    const side = rng.float() < 0.5 ? -1 : 1;
-    const z = rng.range(zMin + 2, zMax - 2);
-    const x = side * (kerb - rng.range(0.1, 0.5));
-    if (!isOpen(x, z, 0.05)) continue;
-    const g = patchGeometry(rng, rng.range(0.3, 0.8), { lobes: 8, wobble: 0.6 });
-    A.addOnce('dirt', g, LL(IDENT, x, groundY(x, z) + 0.01, z, rng.float() * 6.28, 1, 1, 0.6), {
-      masks: [0.1, 0.95, 0.7],
-    });
-    for (let k = 0; k < rng.int(2, 6); k++) {
-      A.put(
-        'litter',
-        x + rng.range(-0.5, 0.5),
-        groundY(x, z) + 0.02,
-        z + rng.range(-0.6, 0.6),
-        rng.float() * 6.28,
-        rng.range(0.7, 1.2),
-        [1, 1.5, 1]
-      );
-    }
   }
   A.jitter = null;
 }
