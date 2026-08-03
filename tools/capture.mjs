@@ -123,7 +123,10 @@ try {
     );
 
     mkdirSync(dirname(OUT), { recursive: true });
-    await page.screenshot({ path: OUT, type: 'png' });
+    // Playwright's own 30s default: readback of a settled frame is quick on a
+    // GPU but not under a software rasteriser, where it is the one step that
+    // fails after the scene has already rendered. Rides on --timeout.
+    await page.screenshot({ path: OUT, type: 'png', timeout: TIMEOUT });
 
     const info = await page.evaluate('window.__RENDER_INFO__ ?? null');
     console.log(JSON.stringify({ ok: true, out: OUT, shot: SHOT, w: W, h: H, info }, null, 2));
