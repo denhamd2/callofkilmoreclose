@@ -14,8 +14,12 @@
  * --------------------------------------------------------------------------
  * OSM-GROUNDED (from three Overpass queries anchored on way 37211091):
  *  - The 26 building footprints tagged `addr:street=Kilmore Close` — their
- *    real positions, real footprint dimensions (from polygon geometry) and
- *    real along-street order/spacing. (A 27th–32nd match at addr:street=
+ *    real footprint dimensions (from polygon geometry) and their real
+ *    along-street ORDER. Their real along-street SPACING was OSM-grounded up
+ *    to the uniform-row pass, which replaced it with a constant 3.0 m
+ *    wall-to-wall gap (see BUILDINGS). The gap chosen is the mean of the real
+ *    spacing, so the row still spans the same stretch of z — but individual
+ *    house-to-house distances are no longer OSM facts. (A 27th–32nd match at addr:street=
  *    "Kilmore Close" belonged to an unrelated street of the same name
  *    ~190 km away and was excluded.)
  *  - Both-street-ends connectivity: three real highways (Beechlawn Avenue,
@@ -46,13 +50,15 @@
  *  - Front garden lawn/driveway/boundary-wall dressing is procedural (see
  *    dressing.js's `frontGardens`) — the "garden" reads as a bounded plot,
  *    not open ground.
- *  - floors (2), wallKey materials (dash_cream / dash_white / dash_sand /
- *    dash_butter — pebbledash, cycled for variety and paired so neighbours
- *    contrast), doorBays, roofProps, damage — ordinary set-dressing choices,
- *    not claimed as OSM facts. The BG* background infill is dashed too: it
- *    stands for the rears of the neighbouring streets, which are the same
- *    estate. bandKey stays plaster_*, because the painted ground-floor band is
- *    a smooth render strip over the dash, not more aggregate.
+ *  - floors (2), wall material, doorBays, roofProps, damage, and the window
+ *    pattern — ordinary set-dressing choices, not claimed as OSM facts. These
+ *    are no longer per-house: every building is one archetype (white
+ *    pebbledash `dash_white` over a `plaster_coral` band, porch, garage, fixed
+ *    window pattern), declared once above BUILDINGS. bandKey stays plaster_*,
+ *    because the painted ground-floor band is a smooth render strip over the
+ *    dash, not more aggregate. The earlier scheme cycled four dash colours for
+ *    variety; the BG* background infill that stood for the neighbouring
+ *    streets' rears has been removed outright — there is one building type.
  *  - The engine's road is a straight, constant-width ribbon (see
  *    ground.js:16-65) with no curve/fork support, so the real curving,
  *    forking street is flattened: real along-axis position/order/spacing is
@@ -71,18 +77,21 @@
  *    pass closed the loop end with a fictional GATE arch and the lane end
  *    with a barricade; both were removed once this connectivity was pinned
  *    down to specific roads.)
- *  - SET_PIECES POSITIONS below are proportionally rescaled from the old
- *    market street by a measured factor of 2.375 (old z span 104 m -> 247 m),
- *    so nothing sits off the map. Note 247 m is that arithmetic product and
- *    nothing more — it is NOT a street length. Four different figures describe
- *    this street and they mean different things:
+ *  - SET_PIECES POSITIONS below are anchored to the houses. Each entry was
+ *    placed against a particular frontage, and when the uniform-row pass
+ *    re-spaced the street every entry moved with the house it sat outside,
+ *    keeping its offset from that house's centre. They are therefore no longer
+ *    a proportional rescale of the old market street (a factor of 2.375, which
+ *    is where the retired "247 m" figure came from — it was an arithmetic
+ *    product, never a street length). Three figures describe this street and
+ *    they mean different things:
  *      ~209 m  real OSM along-axis extent of the 26 footprints (PCA fit)
- *       218.2 m modelled building span, KW22's near z to KW1's far z
- *       247 m   the SET_PIECES rescale product (104 x 2.375) — an intermediate
+ *       218.5 m modelled building span, KW22's near z to KW1's far z, at the
+ *               uniform 3.0 m spacing
  *       253 m   STREET.zMin..zMax, the drawn road ribbon, which runs past the
  *               end houses at both ends so the street does not stop dead
- *    The 6 m gap between the 247 m rescale target and the 253 m ribbon is why
- *    set pieces sit slightly inside both street ends rather than reaching them.
+ *    Anything added to SET_PIECES from here should be placed relative to a
+ *    house, not typed as a bare z, or the next spacing change will strand it.
  *  - SET_PIECES CONTENT is rethemed for the residential setting — see the
  *    comment on the table itself. (This note previously claimed the content was
  *    still the old market-street set. That was stale from the moment the
@@ -120,14 +129,14 @@ export const STREET = {
 };
 
 /**
- * Alleys and open ground, as rects [x0, z0, x1, z1].
- * kilmoreGap is the one OSM-grounded entry: a real ~20 m clear gap in the
- * Kilmore Close building row between KW2 and KW3 (the reason for the gap —
- * side lane, wider plot, mapping gap — is not confirmed by the data, only
- * the gap itself). The rest are fully provisional/fictional.
+ * Alleys and open ground, as rects [x0, z0, x1, z1]. All provisional/fictional.
+ *
+ * The `kilmoreGap` entry that used to head this list — a real ~20 m clear gap
+ * in the OSM building row between KW2 and KW3 — is gone with the move to a
+ * uniform row: at a constant 3 m spacing that gap no longer exists, and the
+ * rect would have laid bare dirt under KW3-KW5.
  */
 export const ALLEYS = [
-  { rect: [-27, 164.5, -6.5, 184.5], surface: 'dirt' }, // kilmoreGap — OSM-grounded gap, provisional surface/use
   { rect: [6.5, 120, 29, 160], surface: 'dirt' }, // provisional rear-access lane, empty (east) side of the lane stretch
   { rect: [6.5, 40, 29, 70], surface: 'dirt' }, // provisional rear-access lane, empty (east) side of the lane stretch
   { rect: [-30, -36, 30, -30], surface: 'gravel' }, // provisional far cross street south end, reads as Beechlawn Avenue (ROAD_ENDS.south) crossing beyond the loop
@@ -135,221 +144,125 @@ export const ALLEYS = [
 ];
 
 /**
- * Buildings. `w` is the X extent, `d` the Z extent.
- * KW* = the single-sided lane + the west arm of the loop (22 houses, all
- * streetSide 1). KE* = the loop's east arm (4 houses, streetSide 3) — the
- * only stretch of Kilmore Close with buildings on both sides. BG* = fully
- * provisional background infill (neighbouring streets' rears / far
- * skyline), per the "loose background/context only" decision — not
- * individually OSM-placed.
+ * THE KILMORE CLOSE HOUSE ARCHETYPE.
+ *
+ * Every building on the map is one of these — there is no second building
+ * type. The archetype is stated once, here, so it cannot drift house by
+ * house: white pebbledash over a painted band, a front garden (STREET.setback),
+ * a porch over the front door, a garage at the far end of the frontage, and a
+ * fixed window pattern.
+ *
+ * `w` is the X extent (plot depth, perpendicular to the street) and `d` the Z
+ * extent (the frontage the street actually sees) — `sideLen()` in
+ * buildings.js reads `d` for streetSide 1/3, which is every house here. Real
+ * OSM footprints are kept; only the spacing between them is regularised.
  */
+const ARCHETYPE = {
+  floors: 2,
+  wallKey: 'dash_white',
+  bandKey: 'plaster_coral',
+  damage: 0.05,
+  balconies: 0,
+  roofProps: 2,
+};
+
+/** Frontage bay count, matching buildings.js's own `round(len / 3.05)`. */
+const bays = (d) => Math.max(1, Math.round(d / 3.05));
+
+/** Bay centre offset along the street face, in the wall's local coords. */
+const bayCentre = (d, b) => -d / 2 + (b + 0.5) * (d / bays(d));
+
 /**
- * Painted-band scale-out (houses agent, approved sample KW19/KW20 -> wider
- * street): every 2-storey house with no roofAccess/setback/ruin and a single
- * main wallKey gets a bandKey per this fixed pairing rule, carrying forward
- * the judge's contrast note (plaster_wine read too flat against plaster_white
- * in the sample) —
- *   plaster_white  -> plaster_coral (kept off plaster_wine specifically)
- *   plaster_cream  -> plaster_wine
- *   plaster_sand   -> plaster_wine
- * KW22 is excluded (roofAccess, the one house whose roof is playable ground).
- * BG* background infill is excluded — it's loose distant massing, not part of
- * the individually-read house frontage set this pattern targets.
+ * The fixed window pattern: ground floor is the front door in bay 0 and
+ * windows across the rest, upper floor is windows all the way. Authored as
+ * `bayKinds` so it overrides the per-bay dice roll in buildings.js (which gave
+ * each bay a 72%/88% chance of a window and blank wall otherwise, and was why
+ * no two frontages matched). Applies to whichever side faces the street, so a
+ * 2-bay and a 3-bay frontage still read as the same house.
+ */
+function windows(streetSide, d) {
+  const n = bays(d);
+  const ground = [];
+  const upper = [];
+  for (let b = 0; b < n; b++) {
+    ground.push(b === 0 ? 'door' : 'window');
+    upper.push('window');
+  }
+  return { [streetSide]: [ground, upper] };
+}
+
+/**
+ * Porch over the front door, garage at the opposite end of the frontage. Both
+ * are clamped inside the wall run so neither overhangs a corner on the
+ * narrowest (4.83 m) frontage; the generator asserts they never overlap.
+ */
+function attachments(d) {
+  const half = d / 2;
+  return [
+    { kind: 'porch', along: +Math.max(bayCentre(d, 0), -(half - 0.95)).toFixed(3), w: 1.9, depth: 1.5, h: 2.5 },
+    { kind: 'garage', along: +Math.min(bayCentre(d, bays(d) - 1), half - 1.3).toFixed(3), w: 2.6, depth: 2.5, h: 2.3, doorKey: 'wood_prop' },
+  ];
+}
+
+/** One house. `extra` carries only the playable-interior fields (3 houses). */
+function house(id, x, z, w, d, streetSide, extra) {
+  return {
+    id,
+    x,
+    z,
+    w,
+    d,
+    streetSide,
+    ...ARCHETYPE,
+    doorBays: { [streetSide]: 0 },
+    bayKinds: windows(streetSide, d),
+    attachments: attachments(d),
+    ...extra,
+  };
+}
+
+/**
+ * Buildings. KW* = the single-sided lane + the west arm of the loop (22
+ * houses, streetSide 1). KE* = the loop's east arm (4 houses, streetSide 3),
+ * the only stretch of Kilmore Close with buildings on both sides.
+ *
+ * Real OSM footprints (w/d) and the real house order are preserved; the row is
+ * re-spaced to a constant 3.0 m wall-to-wall gap. That gap is the mean of the
+ * street's own original spacing, so the row still occupies the same stretch of
+ * z and STREET.zMin/zMax, ROAD_ENDS and the cross-street ALLEYS all stay valid.
+ * The provisional BG* background infill has been removed — one building type
+ * only.
  */
 export const BUILDINGS = [
   // --------------------------------------------- KW row (single lane + loop west arm) --
-  { id: 'KW1', x: -18.585, z: 197.35, w: 8.1, d: 9.73, floors: 2, wallKey: 'dash_sand', bandKey: 'plaster_wine', streetSide: 1, damage: 0.05, balconies: 0, doorBays: { 1: 0 }, roofProps: 2, attachments: [{ kind: 'porch', along: -3.615, w: 1.9, depth: 1.5, h: 2.5, wallKey: 'plaster_wine' }] }, // osm way/644614598
-  { id: 'KW2', x: -21.245, z: 188.42, w: 13.4, d: 7.53, floors: 2, wallKey: 'dash_cream', bandKey: 'plaster_wine', streetSide: 1, damage: 0.05, balconies: 0, doorBays: { 1: 0 }, roofProps: 2, attachments: [{ kind: 'garage', along: 2.165, w: 2.6, depth: 2.5, h: 2.3, doorKey: 'wood_prop' }] }, // osm way/960176181 — irregular/larger footprint, kept as mapped
-  { id: 'KW3', x: -21.505, z: 159.25, w: 14.0, d: 10.1, floors: 2, wallKey: 'dash_cream', bandKey: 'plaster_wine', streetSide: 1, damage: 0.1, balconies: 0, doorBays: { 1: 0 }, roofProps: 2, attachments: [{ kind: 'porch', along: -3.8, w: 1.9, depth: 1.5, h: 2.5, wallKey: 'plaster_wine' }] }, // osm way/644614600 — irregular/larger footprint (likely a mapped semi-D pair), kept as mapped
-  { id: 'KW4', x: -19.035, z: 151.2, w: 9.0, d: 5.4, floors: 2, wallKey: 'dash_white', bandKey: 'plaster_coral', streetSide: 1, damage: 0.05, balconies: 0, doorBays: { 1: 0 }, roofProps: 1, attachments: [{ kind: 'garage', along: 1.1, w: 2.6, depth: 2.5, h: 2.3, doorKey: 'wood_prop' }] }, // osm way/960176180
-  {
-    id: 'KW5',
-    x: -18.835,
-    z: 140.34,
-    w: 8.6,
-    d: 6.63,
-    floors: 2,
-    wallKey: 'dash_sand',
-    bandKey: 'plaster_wine',
-    streetSide: 1,
-    damage: 0.05,
-    balconies: 0,
-    doorBays: { 1: 0 },
-    enterable: true,
-    roofAccess: false,
-    roofProps: 2,
-    attachments: [{ kind: 'porch', along: -2.065, w: 1.9, depth: 1.5, h: 2.5, wallKey: 'plaster_wine' }],
-    stairFlights: [{ floor: 0, x: 0.18, z: 0.3, ry: 0, w: 0.9, railing: 'right' }],
-    stairHoles: { 1: { x0: -19.625, x1: -18.425, z0: 138.6, z1: 141.4 } },
-    rooms: [
-      {
-        // ground floor: hall, living room, kitchen — an ordinary small semi
-        walls: [[0.4, 0.0, 0.4, 0.55, 0.28]],
-        furnish: [
-          { kind: 'living', x0: 0.4, z0: 0.0, x1: 1.0, z1: 1.0 },
-          { kind: 'storage', x0: 0.0, z0: 0.0, x1: 0.4, z1: 0.55 },
-          { kind: 'living', x0: 0.0, z0: 0.55, x1: 0.4, z1: 1.0 },
-        ],
-      },
-      {
-        // first floor: two bedrooms
-        walls: [[0.5, 0.0, 0.5, 1.0, 0.3]],
-        furnish: [
-          { kind: 'living', x0: 0.0, z0: 0.0, x1: 0.5, z1: 1.0 },
-          { kind: 'living', x0: 0.5, z0: 0.0, x1: 1.0, z1: 1.0 },
-        ],
-      },
-    ],
-  },
-  { id: 'KW6', x: -18.965, z: 134.31, w: 8.9, d: 4.83, floors: 2, wallKey: 'dash_cream', bandKey: 'plaster_wine', streetSide: 1, damage: 0.05, balconies: 0, doorBays: { 1: 0 }, roofProps: 1, attachments: [{ kind: 'garage', along: 0.815, w: 2.6, depth: 2.5, h: 2.3, doorKey: 'wood_prop' }] }, // osm way/960176179
-  { id: 'KW7', x: -20.795, z: 123.95, w: 12.5, d: 6.84, floors: 2, wallKey: 'dash_cream', bandKey: 'plaster_wine', streetSide: 1, damage: 0.1, balconies: 0, doorBays: { 1: 0 }, roofProps: 2, attachments: [{ kind: 'porch', along: -2.17, w: 1.9, depth: 1.5, h: 2.5, wallKey: 'plaster_wine' }] }, // osm way/644614616 — irregular footprint, kept as mapped
-  { id: 'KW8', x: -19.105, z: 117.11, w: 9.2, d: 6.24, floors: 2, wallKey: 'dash_white', bandKey: 'plaster_coral', streetSide: 1, damage: 0.05, balconies: 0, doorBays: { 1: 0 }, roofProps: 2, attachments: [{ kind: 'garage', along: 1.52, w: 2.6, depth: 2.5, h: 2.3, doorKey: 'wood_prop' }] }, // osm way/960176178
-  { id: 'KW9', x: -19.305, z: 104.9, w: 9.6, d: 6.52, floors: 2, wallKey: 'dash_sand', bandKey: 'plaster_wine', streetSide: 1, damage: 0.05, balconies: 0, doorBays: { 1: 0 }, roofProps: 2, attachments: [{ kind: 'porch', along: -2.01, w: 1.9, depth: 1.5, h: 2.5, wallKey: 'plaster_wine' }] }, // osm way/644614617
-  { id: 'KW10', x: -19.305, z: 98.08, w: 9.6, d: 6.52, floors: 2, wallKey: 'dash_cream', bandKey: 'plaster_wine', streetSide: 1, damage: 0.05, balconies: 0, doorBays: { 1: 0 }, roofProps: 2, attachments: [{ kind: 'garage', along: 1.66, w: 2.6, depth: 2.5, h: 2.3, doorKey: 'wood_prop' }] }, // osm way/960176177
-  { id: 'KW11', x: -18.975, z: 86.19, w: 8.9, d: 6.32, floors: 2, wallKey: 'dash_cream', bandKey: 'plaster_wine', streetSide: 1, damage: 0.05, balconies: 0, doorBays: { 1: 0 }, roofProps: 1, attachments: [{ kind: 'porch', along: -1.91, w: 1.9, depth: 1.5, h: 2.5, wallKey: 'plaster_wine' }] }, // osm way/644614618
-  { id: 'KW12', x: -18.975, z: 79.57, w: 8.9, d: 6.32, floors: 2, wallKey: 'dash_white', bandKey: 'plaster_coral', streetSide: 1, damage: 0.05, balconies: 0, doorBays: { 1: 0 }, roofProps: 1, attachments: [{ kind: 'garage', along: 1.56, w: 2.6, depth: 2.5, h: 2.3, doorKey: 'wood_prop' }] }, // osm way/960176176
-  {
-    id: 'KW13',
-    x: -19.145,
-    z: 66.83,
-    w: 9.2,
-    d: 7.72,
-    floors: 2,
-    wallKey: 'dash_sand',
-    bandKey: 'plaster_wine',
-    streetSide: 1,
-    damage: 0.05,
-    balconies: 0,
-    doorBays: { 1: 0 },
-    enterable: true,
-    roofAccess: false,
-    roofProps: 2,
-    attachments: [{ kind: 'porch', along: -2.61, w: 1.9, depth: 1.5, h: 2.5, wallKey: 'plaster_wine' }],
-    stairFlights: [{ floor: 0, x: 0.18, z: 0.3, ry: 0, w: 0.9, railing: 'right' }],
-    stairHoles: { 1: { x0: -19.725, x1: -18.525, z0: 65.0, z1: 68.7 } },
-    rooms: [
-      {
-        walls: [[0.4, 0.0, 0.4, 0.55, 0.28]],
-        furnish: [
-          { kind: 'living', x0: 0.4, z0: 0.0, x1: 1.0, z1: 1.0 },
-          { kind: 'storage', x0: 0.0, z0: 0.0, x1: 0.4, z1: 0.55 },
-          { kind: 'living', x0: 0.0, z0: 0.55, x1: 0.4, z1: 1.0 },
-        ],
-      },
-      {
-        walls: [[0.5, 0.0, 0.5, 1.0, 0.3]],
-        furnish: [
-          { kind: 'living', x0: 0.0, z0: 0.0, x1: 0.5, z1: 1.0 },
-          { kind: 'living', x0: 0.5, z0: 0.0, x1: 1.0, z1: 1.0 },
-        ],
-      },
-    ],
-  },
-  { id: 'KW14', x: -19.145, z: 58.81, w: 9.2, d: 6.92, floors: 2, wallKey: 'dash_cream', bandKey: 'plaster_wine', streetSide: 1, damage: 0.05, balconies: 0, doorBays: { 1: 0 }, roofProps: 2, attachments: [{ kind: 'garage', along: 1.86, w: 2.6, depth: 2.5, h: 2.3, doorKey: 'wood_prop' }] }, // osm way/960176175
-  { id: 'KW15', x: -19.145, z: 50.8, w: 9.2, d: 7.32, floors: 2, wallKey: 'dash_cream', bandKey: 'plaster_wine', streetSide: 1, damage: 0.05, balconies: 0, doorBays: { 1: 0 }, roofProps: 1, attachments: [{ kind: 'porch', along: -2.41, w: 1.9, depth: 1.5, h: 2.5, wallKey: 'plaster_wine' }] }, // osm way/644614614
-  { id: 'KW16', x: -19.145, z: 42.78, w: 9.2, d: 7.82, floors: 2, wallKey: 'dash_white', bandKey: 'plaster_coral', streetSide: 1, damage: 0.05, balconies: 0, doorBays: { 1: 0 }, roofProps: 2, attachments: [{ kind: 'garage', along: 2.31, w: 2.6, depth: 2.5, h: 2.3, doorKey: 'wood_prop' }] }, // osm way/960176174
-  { id: 'KW17', x: -19.155, z: 34.62, w: 9.3, d: 6.36, floors: 2, wallKey: 'dash_sand', bandKey: 'plaster_wine', streetSide: 1, damage: 0.05, balconies: 0, doorBays: { 1: 0 }, roofProps: 1, attachments: [{ kind: 'porch', along: -1.93, w: 1.9, depth: 1.5, h: 2.5, wallKey: 'plaster_wine' }] }, // osm way/644614624 — loop's west arm begins here
-  { id: 'KW18', x: -19.155, z: 27.81, w: 9.3, d: 6.66, floors: 2, wallKey: 'dash_cream', bandKey: 'plaster_wine', streetSide: 1, damage: 0.05, balconies: 0, doorBays: { 1: 0 }, roofProps: 2, attachments: [{ kind: 'garage', along: 1.73, w: 2.6, depth: 2.5, h: 2.3, doorKey: 'wood_prop' }] }, // osm way/960176171
-  // SAMPLE PASS (houses agent) — mirrored-footprint pair used as the
-  // representative paired frontage against screenshots 1 & 4, visible via the
-  // `housesSample` capture shot (src/dev/shots.js). bandKey paints a ground-
-  // floor spandrel band (see buildings.js buildFacade) so each half of the
-  // pair reads as its own two-tone paint job instead of one flat wallKey.
-  // Iteration 2: swapped KW20's wallKey/bandKey from plaster_sand/plaster_pink
-  // (too close in value to each other and to KW19's plaster_white) to
-  // plaster_butter/plaster_coral for real separation between the two houses.
-  // PORCH/GARAGE SAMPLE PASS (porches agent) — same mirrored pair used for the
-  // two-tone band sample, now carrying the paired attachment cluster from the
-  // Street View references: a small glazed porch at KW19's boundary with
-  // KW20, a flat-roofed garage at KW20's matching boundary — the two sit
-  // ~0.3m apart, echoing the party-wall gap already trimmed in the OSM data.
-  { id: 'KW19', x: -18.865, z: 15.95, w: 8.7, d: 6.97, floors: 2, wallKey: 'dash_white', bandKey: 'plaster_wine', streetSide: 1, damage: 0.05, balconies: 0, doorBays: { 1: 0 }, roofProps: 1, attachments: [{ kind: 'porch', along: -1.74, w: 1.9, depth: 1.5, h: 2.5, wallKey: 'plaster_wine' }] }, // osm way/644614623 — porch centred on the doorBays{1:0} entrance (bay0 sits at along ~ -1.74)
-  { id: 'KW20', x: -18.865, z: 8.68, w: 8.7, d: 6.97, floors: 2, wallKey: 'dash_butter', bandKey: 'plaster_coral', streetSide: 1, damage: 0.05, balconies: 0, doorBays: { 1: 0 }, roofProps: 2, attachments: [{ kind: 'garage', along: 1.9, w: 2.6, depth: 2.5, h: 2.3, doorKey: 'wood_prop' }] }, // osm way/960176170
-  { id: 'KW21', x: -19.335, z: -3.83, w: 9.6, d: 7.87, floors: 2, wallKey: 'dash_sand', bandKey: 'plaster_wine', streetSide: 1, damage: 0.1, balconies: 0, doorBays: { 1: 0 }, roofProps: 2, attachments: [{ kind: 'porch', along: -2.685, w: 1.9, depth: 1.5, h: 2.5, wallKey: 'plaster_wine' }] }, // osm way/644614622 — KW22 (roofAccess finale) excluded from this pattern, so KW21 gets a porch with no paired garage neighbour
-  {
-    id: 'KW22',
-    x: -19.335,
-    z: -12.0,
-    w: 9.6,
-    d: 7.87,
-    floors: 2,
-    wallKey: 'dash_cream',
-    streetSide: 1,
-    damage: 0.15,
-    balconies: 0,
-    doorBays: { 1: 0 },
-    enterable: true,
-    roofAccess: true,
-    roofProps: 2,
-    stairFlights: [{ floor: 0, x: 0.18, z: 0.3, ry: 0, w: 0.9, railing: 'right' }],
-    stairHoles: { 1: { x0: -19.925, x1: -18.725, z0: -13.8, z1: -10.2 } },
-    rooms: [
-      {
-        walls: [[0.4, 0.0, 0.4, 0.55, 0.28]],
-        furnish: [
-          { kind: 'living', x0: 0.4, z0: 0.0, x1: 1.0, z1: 1.0 },
-          { kind: 'storage', x0: 0.0, z0: 0.0, x1: 0.4, z1: 0.55 },
-          { kind: 'living', x0: 0.0, z0: 0.55, x1: 0.4, z1: 1.0 },
-        ],
-      },
-      {
-        // last house before the gate — roofAccess makes its roof the level's finale vantage point
-        walls: [[0.5, 0.0, 0.5, 1.0, 0.3]],
-        furnish: [
-          { kind: 'living', x0: 0.0, z0: 0.0, x1: 0.5, z1: 1.0 },
-          { kind: 'living', x0: 0.5, z0: 0.0, x1: 1.0, z1: 1.0 },
-        ],
-      },
-    ],
-  },
+  house('KW1', -18.585, 197.505, 8.1, 9.73, 1), // osm way/644614598
+  house('KW2', -21.245, 185.875, 13.4, 7.53, 1), // osm way/960176181 — irregular/larger footprint, kept as mapped
+  house('KW3', -21.505, 174.06, 14, 10.1, 1), // osm way/644614600 — irregular/larger footprint (likely a mapped semi-D pair), kept as mapped
+  house('KW4', -19.035, 163.31, 9, 5.4, 1), // osm way/960176180
+  house('KW5', -18.835, 154.295, 8.6, 6.63, 1, { enterable: true, roofAccess: false, stairFlights: [{ floor: 0, x: 0.18, z: 0.3, ry: 0, w: 0.9, railing: 'right' }], stairHoles: { '1': { x0: -19.625, x1: -18.425, z0: 152.555, z1: 155.355 } }, rooms: [{ walls: [[0.4, 0, 0.4, 0.55, 0.28]], furnish: [{ kind: 'living', x0: 0.4, z0: 0, x1: 1, z1: 1 }, { kind: 'storage', x0: 0, z0: 0, x1: 0.4, z1: 0.55 }, { kind: 'living', x0: 0, z0: 0.55, x1: 0.4, z1: 1 }] }, { walls: [[0.5, 0, 0.5, 1, 0.3]], furnish: [{ kind: 'living', x0: 0, z0: 0, x1: 0.5, z1: 1 }, { kind: 'living', x0: 0.5, z0: 0, x1: 1, z1: 1 }] }] }),
+  house('KW6', -18.965, 145.565, 8.9, 4.83, 1), // osm way/960176179
+  house('KW7', -20.795, 136.73, 12.5, 6.84, 1), // osm way/644614616 — irregular footprint, kept as mapped
+  house('KW8', -19.105, 127.19, 9.2, 6.24, 1), // osm way/960176178
+  house('KW9', -19.305, 117.81, 9.6, 6.52, 1), // osm way/644614617
+  house('KW10', -19.305, 108.29, 9.6, 6.52, 1), // osm way/960176177
+  house('KW11', -18.975, 98.87, 8.9, 6.32, 1), // osm way/644614618
+  house('KW12', -18.975, 89.55, 8.9, 6.32, 1), // osm way/960176176
+  house('KW13', -19.145, 79.53, 9.2, 7.72, 1, { enterable: true, roofAccess: false, stairFlights: [{ floor: 0, x: 0.18, z: 0.3, ry: 0, w: 0.9, railing: 'right' }], stairHoles: { '1': { x0: -19.725, x1: -18.525, z0: 77.7, z1: 81.4 } }, rooms: [{ walls: [[0.4, 0, 0.4, 0.55, 0.28]], furnish: [{ kind: 'living', x0: 0.4, z0: 0, x1: 1, z1: 1 }, { kind: 'storage', x0: 0, z0: 0, x1: 0.4, z1: 0.55 }, { kind: 'living', x0: 0, z0: 0.55, x1: 0.4, z1: 1 }] }, { walls: [[0.5, 0, 0.5, 1, 0.3]], furnish: [{ kind: 'living', x0: 0, z0: 0, x1: 0.5, z1: 1 }, { kind: 'living', x0: 0.5, z0: 0, x1: 1, z1: 1 }] }] }),
+  house('KW14', -19.145, 69.21, 9.2, 6.92, 1), // osm way/960176175
+  house('KW15', -19.145, 59.09, 9.2, 7.32, 1), // osm way/644614614
+  house('KW16', -19.145, 48.52, 9.2, 7.82, 1), // osm way/960176174
+  house('KW17', -19.155, 38.43, 9.3, 6.36, 1), // osm way/644614624 — loop's west arm begins here
+  house('KW18', -19.155, 28.92, 9.3, 6.66, 1), // osm way/960176171
+  house('KW19', -18.865, 19.105, 8.7, 6.97, 1), // osm way/644614623 — porch centred on the doorBays{1:0} entrance (bay0 sits at along ~ -1.74)
+  house('KW20', -18.865, 9.135, 8.7, 6.97, 1), // osm way/960176170
+  house('KW21', -19.335, -1.285, 9.6, 7.87, 1), // osm way/644614622 — KW22 (roofAccess finale) excluded from this pattern, so KW21 gets a porch with no paired garage neighbour
+  house('KW22', -19.335, -12.155, 9.6, 7.87, 1, { enterable: true, roofAccess: true, stairFlights: [{ floor: 0, x: 0.18, z: 0.3, ry: 0, w: 0.9, railing: 'right' }], stairHoles: { '1': { x0: -19.925, x1: -18.725, z0: -13.955, z1: -10.355 } }, rooms: [{ walls: [[0.4, 0, 0.4, 0.55, 0.28]], furnish: [{ kind: 'living', x0: 0.4, z0: 0, x1: 1, z1: 1 }, { kind: 'storage', x0: 0, z0: 0, x1: 0.4, z1: 0.55 }, { kind: 'living', x0: 0, z0: 0.55, x1: 0.4, z1: 1 }] }, { walls: [[0.5, 0, 0.5, 1, 0.3]], furnish: [{ kind: 'living', x0: 0, z0: 0, x1: 0.5, z1: 1 }, { kind: 'living', x0: 0.5, z0: 0, x1: 1, z1: 1 }] }] }),
 
   // --------------------------------------------- KE row (loop's east arm — the only two-sided stretch) --
-  { id: 'KE1', x: 18.825, z: 32.24, w: 8.6, d: 7.76, floors: 2, wallKey: 'dash_sand', bandKey: 'plaster_wine', streetSide: 3, damage: 0.05, balconies: 0, doorBays: { 3: 0 }, roofProps: 2, attachments: [{ kind: 'porch', along: -2.63, w: 1.9, depth: 1.5, h: 2.5, wallKey: 'plaster_wine' }] }, // osm way/644614620
-  { id: 'KE2', x: 18.825, z: 24.18, w: 8.6, d: 7.76, floors: 2, wallKey: 'dash_cream', bandKey: 'plaster_wine', streetSide: 3, damage: 0.05, balconies: 0, doorBays: { 3: 0 }, roofProps: 1, attachments: [{ kind: 'garage', along: 2.28, w: 2.6, depth: 2.5, h: 2.3, doorKey: 'wood_prop' }] }, // osm way/960176173
-  { id: 'KE3', x: 19.405, z: 12.69, w: 9.8, d: 7.04, floors: 2, wallKey: 'dash_cream', bandKey: 'plaster_wine', streetSide: 3, damage: 0.05, balconies: 0, doorBays: { 3: 0 }, roofProps: 2, attachments: [{ kind: 'porch', along: -2.27, w: 1.9, depth: 1.5, h: 2.5, wallKey: 'plaster_wine' }] }, // osm way/644614621
-  { id: 'KE4', x: 19.405, z: 5.35, w: 9.8, d: 7.04, floors: 2, wallKey: 'dash_white', bandKey: 'plaster_coral', streetSide: 3, damage: 0.1, balconies: 0, doorBays: { 3: 0 }, roofProps: 1, attachments: [{ kind: 'garage', along: 1.92, w: 2.6, depth: 2.5, h: 2.3, doorKey: 'wood_prop' }] }, // osm way/960176172
-
-  // --------------------------------------------- background / infill (fully provisional) --
-  /**
-   * The KW row is single-sided for its whole ~154 m lane stretch (an OSM
-   * fact), so the east side of the lane is genuinely open in reality —
-   * almost certainly the rear boundaries of Beechlawn Avenue/Close, per the
-   * decision to keep neighbouring streets as loose background only. These
-   * are generic distant masses, not individually OSM-placed.
-   */
-  // BACKGROUND INFILL — the rears of the neighbouring streets.
-  //
-  // These were 16-22 m single blocks, which was fine while they were anonymous
-  // distant massing in a different material. They stopped being fine for two
-  // reasons: the pebbledash pass gave them the SAME wall material as the real
-  // houses, so they read as Kilmore Close houses rather than as background;
-  // and the roof rise cap (buildings.js) puts a 21-25 degree roof on anything
-  // that wide, against 36.7 on a real house — a 22 m block with a 21 degree
-  // roof is an agricultural shed, and that is exactly what it looked like.
-  //
-  // Subdivided into archetype-sized units instead: w 9.2 / d 7.0, the median
-  // of the 26 real footprints, which lands them at the same 36.7 degree pitch
-  // and the same eaves as the street. They are still cheap — no `rooms`, so no
-  // interiors are generated — and they now read as more of the same estate,
-  // which is what the far side of Kilmore Close actually is.
-  { id: 'BGE1a', x: 26, z: 165, w: 9.2, d: 7.0, floors: 2, wallKey: 'dash_cream', bandKey: 'plaster_wine', streetSide: 3, damage: 0.05, skipSides: [3], roofProps: 1 },
-  { id: 'BGE1b', x: 26, z: 172, w: 9.2, d: 7.0, floors: 2, wallKey: 'dash_white', bandKey: 'plaster_coral', streetSide: 3, damage: 0.05, skipSides: [3], roofProps: 1 },
-  { id: 'BGE1c', x: 26, z: 179.3, w: 9.2, d: 7.0, floors: 2, wallKey: 'dash_sand', bandKey: 'plaster_wine', streetSide: 3, damage: 0.05, skipSides: [3], roofProps: 1 },
-  { id: 'BGE2a', x: 27, z: 101, w: 9.2, d: 7.0, floors: 2, wallKey: 'dash_cream', bandKey: 'plaster_wine', streetSide: 3, damage: 0.05, skipSides: [3], roofProps: 1 },
-  { id: 'BGE2b', x: 27, z: 108, w: 9.2, d: 7.0, floors: 2, wallKey: 'dash_butter', bandKey: 'plaster_coral', streetSide: 3, damage: 0.05, skipSides: [3], roofProps: 1 },
-  { id: 'BGE2c', x: 27, z: 115.3, w: 9.2, d: 7.0, floors: 2, wallKey: 'dash_cream', bandKey: 'plaster_wine', streetSide: 3, damage: 0.05, skipSides: [3], roofProps: 1 },
-  { id: 'BGE3a', x: 26, z: 48, w: 9.2, d: 7.0, floors: 2, wallKey: 'dash_sand', bandKey: 'plaster_wine', streetSide: 3, damage: 0.05, skipSides: [3], roofProps: 1 },
-  { id: 'BGE3b', x: 26, z: 55.3, w: 9.2, d: 7.0, floors: 2, wallKey: 'dash_white', bandKey: 'plaster_coral', streetSide: 3, damage: 0.05, skipSides: [3], roofProps: 1 },
-  // Far skyline beyond the lane's open (north) end, toward Kilmore Avenue — "the street continues off-map", not a dead end.
-  { id: 'BGN1a', x: -22, z: 222, w: 9.2, d: 7.0, floors: 2, wallKey: 'dash_cream', bandKey: 'plaster_wine', streetSide: 0, damage: 0.05, roofProps: 1 },
-  { id: 'BGN1b', x: -13.5, z: 222, w: 9.2, d: 7.0, floors: 2, wallKey: 'dash_white', bandKey: 'plaster_coral', streetSide: 0, damage: 0.05, roofProps: 1 },
-  { id: 'BGN2a', x: 12, z: 226, w: 9.2, d: 7.0, floors: 2, wallKey: 'dash_sand', bandKey: 'plaster_wine', streetSide: 0, damage: 0.05, roofProps: 1 },
-  { id: 'BGN2b', x: 20.5, z: 226, w: 9.2, d: 7.0, floors: 2, wallKey: 'dash_cream', bandKey: 'plaster_coral', streetSide: 0, damage: 0.05, roofProps: 1 },
-  // Far skyline beyond the loop's open (south) end, toward Beechlawn Avenue — mirrors BGN1/BGN2, replaces the removed GATE backdrop (BGS1).
-  { id: 'BGS1a', x: -22, z: -52, w: 9.2, d: 7.0, floors: 2, wallKey: 'dash_cream', bandKey: 'plaster_wine', streetSide: 2, damage: 0.05, roofProps: 1 },
-  { id: 'BGS1b', x: -13.5, z: -52, w: 9.2, d: 7.0, floors: 2, wallKey: 'dash_sand', bandKey: 'plaster_coral', streetSide: 2, damage: 0.05, roofProps: 1 },
-  { id: 'BGS2a', x: 12, z: -56, w: 9.2, d: 7.0, floors: 2, wallKey: 'dash_white', bandKey: 'plaster_wine', streetSide: 2, damage: 0.05, roofProps: 1 },
-  { id: 'BGS2b', x: 20.5, z: -56, w: 9.2, d: 7.0, floors: 2, wallKey: 'dash_cream', bandKey: 'plaster_coral', streetSide: 2, damage: 0.05, roofProps: 1 },
+  house('KE1', 18.825, 34.395, 8.6, 7.76, 3), // osm way/644614620
+  house('KE2', 18.825, 23.635, 8.6, 7.76, 3), // osm way/960176173
+  house('KE3', 19.405, 13.235, 9.8, 7.04, 3), // osm way/644614621
+  house('KE4', 19.405, 3.195, 9.8, 7.04, 3), // osm way/960176172
 ];
 
 /**
@@ -407,37 +320,37 @@ export const ROAD_ENDS = {
 export const SET_PIECES = {
   /** Parked cars along the kerb: [x, z, ry, length] */
   cars: [
-    [5.7, 118.95, 0.0, 4.3],
-    [-5.7, 108.97, 0.0, 4.0],
-    [5.7, 126.31, 0.0, 4.3],
-    [-5.7, 113.25, 0.0, 4.1],
-    [5.7, 109.93, 0.0, 4.0],
-    [-5.7, 82.38, 0.0, 4.2],
-    [5.7, 69.31, 0.0, 4.3],
-    [-5.7, 56.25, 0.0, 4.0],
+    [5.7, 129.03, 0.0, 4.3],
+    [-5.7, 121.88, 0.0, 4.0],
+    [5.7, 139.09, 0.0, 4.3],
+    [-5.7, 123.33, 0.0, 4.1],
+    [5.7, 122.84, 0.0, 4.0],
+    [-5.7, 92.36, 0.0, 4.2],
+    [5.7, 71.47, 0.0, 4.3],
+    [-5.7, 66.65, 0.0, 4.0],
   ],
   /** A builder's skip outside the one house mid-renovation: [x, z, ry] */
   skips: [
-    [5.7, 104.94, 0.42],
-    [-5.7, 36.06, -0.3],
+    [5.7, 117.85, 0.42],
+    [-5.7, 39.87, -0.3],
   ],
   /** Street/garden trees: [x, z, scale] */
   trees: [
-    [-5.4, 151.25, 1.0],
-    [5.5, 119.19, 1.1],
-    [-5.5, 93.06, 0.92],
-    [5.6, 55.06, 1.05],
-    [-5.5, 27.75, 1.0],
-    [8.5, 115.62, 0.85],
-    [-9.0, 79.52, 0.9],
+    [-5.4, 163.36, 1.0],
+    [5.5, 129.27, 1.1],
+    [-5.5, 103.27, 0.92],
+    [5.6, 57.22, 1.05],
+    [-5.5, 28.86, 1.0],
+    [8.5, 125.7, 0.85],
+    [-9.0, 89.5, 0.9],
   ],
   /** Street lamps: [x, z, ry] — ry points the arm across the street. */
   lamps: [
-    [-5.9, 139.38, -Math.PI / 2],
-    [5.9, 110.88, Math.PI / 2],
-    [-5.9, 77.62, -Math.PI / 2],
-    [5.9, 46.75, Math.PI / 2],
-    [-5.9, 18.25, -Math.PI / 2],
+    [-5.9, 153.33, -Math.PI / 2],
+    [5.9, 123.79, Math.PI / 2],
+    [-5.9, 87.6, -Math.PI / 2],
+    [5.9, 48.91, Math.PI / 2],
+    [-5.9, 21.41, -Math.PI / 2],
   ],
   /**
    * Overhead utility cable spans: [x0, y0, z0, x1, y1, z1, sag]
@@ -452,12 +365,12 @@ export const SET_PIECES = {
    * Endpoints raised so every span now clears its own minimum with margin.
    */
   cables: [
-    [-6.4, 7.6, 127.5, 6.4, 7.0, 133.44, 1.1], // crossing: 6.20 mid
-    [-6.4, 8.4, 99.0, 6.4, 7.9, 102.56, 1.4], // crossing: 6.75 mid — unchanged
-    [-6.4, 7.0, 65.75, 6.4, 7.4, 69.31, 1.0], // crossing: 6.20 mid (was 5.40)
-    [-6.4, 7.6, 32.5, 6.4, 7.2, 37.25, 1.2], // crossing: 6.20 mid — unchanged
-    [-6.4, 5.9, 148.88, -6.4, 6.1, 161.94, 0.6], // along street: 5.40 mid (was 4.90)
-    [6.4, 6.1, 108.5, 6.4, 5.9, 122.75, 0.7], // along street: 5.30 mid (was 4.80)
+    [-6.4, 7.6, 138.75, 6.4, 7.0, 144.69, 1.1], // crossing: 6.20 mid
+    [-6.4, 8.4, 109.21, 6.4, 7.9, 112.77, 1.4], // crossing: 6.75 mid — unchanged
+    [-6.4, 7.0, 78.45, 6.4, 7.4, 82.01, 1.0], // crossing: 6.20 mid (was 5.40)
+    [-6.4, 7.6, 36.31, 6.4, 7.2, 41.06, 1.2], // crossing: 6.20 mid — unchanged
+    [-6.4, 5.9, 163.69, -6.4, 6.1, 176.75, 0.6], // along street: 5.40 mid (was 4.90)
+    [6.4, 6.1, 118.58, 6.4, 5.9, 132.83, 0.7], // along street: 5.30 mid (was 4.80)
   ],
   /**
    * Washing lines: REMOVED, deliberately and permanently.
@@ -480,18 +393,18 @@ export const SET_PIECES = {
   laundry: [],
   /** Doorstep planters / window boxes: [x, y, z, ry, w] */
   doorstepPlanters: [
-    [-6.45, 0.02, 123.94, Math.PI / 2, 1.5],
-    [-6.45, 0.02, 114.44, Math.PI / 2, 1.2],
-    [6.45, 0.02, 118.0, -Math.PI / 2, 1.6],
-    [6.45, 0.02, 83.56, -Math.PI / 2, 1.3],
-    [-6.45, 0.02, 65.75, Math.PI / 2, 1.4],
+    [-6.45, 0.02, 136.72, Math.PI / 2, 1.5],
+    [-6.45, 0.02, 124.52, Math.PI / 2, 1.2],
+    [6.45, 0.02, 128.08, -Math.PI / 2, 1.6],
+    [6.45, 0.02, 96.24, -Math.PI / 2, 1.3],
+    [-6.45, 0.02, 78.45, Math.PI / 2, 1.4],
   ],
   /** Kerbside bin stores: [x, z, radius, count] */
   binStores: [
-    [-4.2, 55.06, 2.4, 34],
-    [5.0, 69.31, 2.8, 40],
-    [-1.5, 8.75, 2.0, 26],
-    [7.6, 31.31, 2.2, 28],
-    [-5.0, 165.5, 1.6, 18],
+    [-4.2, 65.46, 2.4, 34],
+    [5.0, 71.47, 2.8, 40],
+    [-1.5, 9.21, 2.0, 26],
+    [7.6, 33.47, 2.2, 28],
+    [-5.0, 180.31, 1.6, 18],
   ],
 };
