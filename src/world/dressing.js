@@ -348,59 +348,17 @@ export function dressStreet(A, rng) {
   frontGardenClutter(A, rng);
   binClusters(A, rng);
   coverClusters(A, rng);
-  rearBoundary(A, rng);
   streetFloor(A, rng);
   A.jitter = null;
 }
 
-/**
- * The open side of the lane.
- *
- * Kilmore Close is single-sided for its first ~154 m — the re-survey in
- * layout.js confirms it, and the six-house arm that the previous table welded
- * onto the end of the long row actually belongs across the road at the loop.
- * So the +X side of the lane has no Kilmore Close houses on it, and it never
- * will without inventing geometry OSM does not support.
- *
- * What it should NOT be is bare dirt, which is what the removed `dirt` ALLEYS
- * rects made it, and which is the real substance of the "one long row, one
- * short row" complaint: the eye reads an unfinished edge, not a boundary.
- * About 40 m across there is the rear of a neighbouring street, so the honest
- * treatment is the back boundary of those gardens — a rendered blockwork wall
- * with a hedge grown up behind it, which is what every Dublin estate presents
- * to the road it backs onto.
- *
- * Runs only where the far side is genuinely empty: from the north end of the
- * loop's far arm up to the top of the lane. Below that the KE row faces the
- * street and dresses itself.
+/*
+ * `rearBoundary()` lived here. It closed the open (+X) side of the old
+ * single-sided lane with a wall and hedge run so it did not read as bare
+ * ground. The street is now 13 semi-detached pairs on BOTH sides for its whole
+ * length, so there is no open side left to close — and leaving it in would have
+ * built a wall straight through the far row.
  */
-function rearBoundary(A, rng) {
-  // Where the far-side houses stop. Everything north of this is open ground.
-  let zStart = -Infinity;
-  for (const b of BUILDINGS) {
-    if (b.streetSide === 3) zStart = Math.max(zStart, b.z + b.d / 2);
-  }
-  zStart += 6.0;
-  const zEnd = STREET.zMax - 4;
-  // Same line the far-side house fronts stand on, so both sides of the street
-  // present an edge at the same distance from the kerb.
-  const x = STREET.kerb + STREET.setback;
-  const RY = -Math.PI / 2; // hedgeRow's run axis for a span along +Z
-
-  let z = zStart;
-  while (z < zEnd) {
-    const len = Math.min(rng.range(5.5, 9.0), zEnd - z);
-    if (len < 2.0) break;
-    const cz = z + len / 2;
-    const y = groundY(x, cz);
-    // Wall first, hedge behind it and a little taller — the hedge is what the
-    // player reads at distance, the wall is what they read up close.
-    A.putS('garden_wall', x, y, cz, RY, len / 2.4, rng.range(0.95, 1.1), 1);
-    A.box('concrete', x, y + 0.42, cz, 0.24, 0.84, len);
-    hedgeRow(A, rng, x + 0.55, cz, RY, len * 0.99, rng.range(1.5, 1.9), y);
-    z += len + rng.range(0.05, 0.35);
-  }
-}
 
 /**
  * Where the named shot cameras stand, in LEVEL space (see src/dev/shots.js and

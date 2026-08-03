@@ -70,17 +70,39 @@ const LEVEL_TZ = 1.34;
  */
 const LIGHT_SLOTS = 20;
 
-/** Spawn points in LEVEL space: [x, z, yaw, tag]. */
-const SPAWNS = [
-  [0.4, 22.5, Math.PI, 'north street'],
-  [-2.4, 30.0, Math.PI, 'north plaza'],
-  [3.6, 5.0, Math.PI, 'market'],
-  [-3.4, -12.0, 0, 'mid street'],
-  [2.6, -32.0, 0, 'south street'],
-  [-1.0, -39.0, 0, 'gate'],
-  [10.5, 4.6, -Math.PI / 2, 'east alley'],
-  [-9.0, -10.2, Math.PI / 2, 'west alley'],
-];
+/**
+ * Spawn points in LEVEL space: [x, z, yaw, tag].
+ *
+ * Index 0 is the player start, and it is DAVID'S OWN GARDEN PATH AT 18 — the
+ * brief has him stepping out of his own front door, and the whole encounter is
+ * staged around that position. It is derived from the house rather than typed,
+ * so it follows number 18 if the street is ever rebuilt underneath it.
+ *
+ * The rest are ordinary street positions for the shot harness and for
+ * `world.spawn(i)`. The previous list ("market", "gate", "north plaza") was
+ * left over from the fictional market street and every entry sat outside the
+ * current housing run.
+ */
+const SPAWNS = (() => {
+  /** Garden-path point outside a house, and the yaw that faces the road. */
+  const outside = (no, tag) => {
+    const b = BUILDINGS.find((h) => h.no === no);
+    if (!b) return null;
+    const out = b.streetSide === 1 ? 1 : -1;
+    return [b.x + out * (b.w / 2 + 3.4), b.z, out > 0 ? Math.PI / 2 : -Math.PI / 2, tag];
+  };
+  const mid = (STREET.zMin + STREET.zMax) / 2;
+  return [
+    outside(18, 'outside 18'),
+    outside(14, 'outside 14'),
+    outside(27, 'outside 27'),
+    outside(26, 'outside 26'),
+    outside(31, 'outside 31'),
+    [0.4, mid, Math.PI, 'mid street'],
+    [-2.4, STREET.zMin + 30, 0, 'south end'],
+    [2.6, STREET.zMax - 30, Math.PI, 'north end'],
+  ].filter(Boolean);
+})();
 
 export class WorldSystem {
   static id = 'world';
