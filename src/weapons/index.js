@@ -4,6 +4,9 @@ import { WeaponMaterials, ENV_OCCLUSION } from './materials.js';
 import { Viewmodel } from './viewmodel.js';
 import { ProjectileSim } from './ballistics.js';
 import { WEAPON_DEFS, buildRecoilPattern, SPREAD_MODS } from './defs.js';
+
+/** Seconds Tab must be held before it opens the wheel rather than cycling. */
+const WHEEL_HOLD = 0.18;
 import { buildRifle } from './models/rifle.js';
 import { buildSmg } from './models/smg.js';
 import { buildPistol } from './models/pistol.js';
@@ -78,6 +81,11 @@ export class WeaponSystem {
     this._sinceShot = 10;
     this._switchTimer = 0;
     this._switchTo = null;
+
+    /** Weapon wheel state, read by `ui` every frame — so it is preallocated. */
+    this.wheel = { open: false, index: 0, items: [] };
+    this._wheelHold = 0;
+    this._ids = null;
     this._reloadPhase = null;
 
     this._muzzle = new THREE.Vector3();
@@ -303,6 +311,71 @@ export class WeaponSystem {
     this._switchTo = id;
     this._switchTimer = this.viewmodel.play('holster');
     return true;
+  }
+
+  /**
+   * Quick-select. Tab still TAPS through to the next weapon exactly as it did;
+   * holding it past WHEEL_HOLD opens the wheel instead, and releasing equips
+   * whatever is highlighted. Held rather than toggled, so it can never become a
+   * mode you get stuck in, and the tap keeps working for anyone who never finds
+   * the wheel.
+   *
+   * With the wheel open the scroll wheel moves the highlight and the number
+   * keys jump straight to a slot; with it closed those number keys equip
+   * directly, which is what they already did.
+   */
+  _updateWheel(dt, input) {
+    // NOT `this.weaponIds`: that getter spreads the Map into a fresh array on
+    // every call and this runs every frame. The loadout is fixed at init.
+    const ids = this._ids ?? (this._ids = this.weaponIds);
+    const n = ids.length;
+    const w = this.wheel;
+
+    if (input.pressed('Tab')) this._wheelHold = 0;
+
+    if (input.held('Tab')) {
+      this._wheelHold += dt;
+      if (!w.open && this._wheelHold >= WHEEL_HOLD) {
+        w.open = true;
+        w.index = Math.max(0, ids.indexOf(this.activeId));
+      }
+    } else if (w.open) {
+      // Key lost without a release event (focus loss): close, do not equip.
+      w.open = false;
+    }
+
+    if (w.open) {
+      if (input.wheel) w.index = (w.index + (input.wheel > 0 ? 1 : -1) + n) % n;
+      for (let i = 0; i < n; i++) if (input.pressed(`Digit${i + 1}`)) w.index = i;
+      this._syncWheelItems();
+    } else {
+      for (let i = 0; i < n; i++) if (input.pressed(`Digit${i + 1}`)) this.setWeapon(ids[i]);
+      if (input.wheel) this.nextWeapon();
+    }
+
+    if (input.released('Tab')) {
+      if (w.open) {
+        this.setWeapon(ids[w.index]);
+        w.open = false;
+      } else if (this._wheelHold < WHEEL_HOLD) {
+        this.nextWeapon();
+      }
+      this._wheelHold = 0;
+    }
+  }
+
+  /** Refresh the wheel's rows in place — nothing allocated per frame. */
+  _syncWheelItems() {
+    const ids = this._ids ?? (this._ids = this.weaponIds);
+    const items = this.wheel.items;
+    items.length = ids.length;
+    for (let i = 0; i < ids.length; i++) {
+      const st = this.states.get(ids[i]);
+      const row = items[i] ?? (items[i] = { name: '', ammo: 0, reserve: 0 });
+      row.name = st?.def?.label ?? ids[i];
+      row.ammo = st?.mag ?? 0;
+      row.reserve = st?.reserve ?? 0;
+    }
   }
 
   nextWeapon() {
@@ -628,11 +701,7 @@ export class WeaponSystem {
       if (input.actionPressed('reload')) this.reload();
       if (input.pressed('KeyB')) this.cycleFireMode();
       if (input.pressed('KeyI')) this.inspect();
-      if (input.pressed('Digit1')) this.setWeapon('rifle');
-      if (input.pressed('Digit2')) this.setWeapon('smg');
-      if (input.pressed('Digit3')) this.setWeapon('pistol');
-      if (input.pressed('Tab')) this.nextWeapon();
-      if (input.wheel) this.nextWeapon();
+      this._updateWheel(dt, input);
       this._runTrigger(dt, input.fire, input.firePressed, def, s);
       st.trigger = input.fire && this.canFire();
       // Auto-reload on a dry trigger pull, like every modern shooter.

@@ -351,6 +351,32 @@ const CSS = `
 /* Rows sit in the top right, which in daylight is sky: the scrim has to be
    dark and dense enough to matter (58%), feathered only at the far end so it
    dissolves instead of terminating in a rectangle. */
+/* Weapon wheel. Slots ride a circle from 12 o'clock clockwise; the whole thing
+   is centred on the crosshair and fades rather than pops, so a quick tap of Tab
+   (which cycles instead of opening) never flashes it. */
+.ow-wheel {
+  position:absolute; left:50%; top:50%; width:0; height:0;
+  transition: opacity .12s ease-out; pointer-events:none;
+}
+.ow-wheel-slot {
+  position:absolute; left:0; top:0; width:118px;
+  text-align:center; opacity:.5;
+  transition: opacity .1s linear;
+}
+.ow-wheel.open .ow-wheel-slot.sel { opacity:1; }
+.ow-wheel-key {
+  font: 600 10px/1 ${FONT_MONO}; color: var(--amber);
+  letter-spacing:.12em; opacity:.7; margin-bottom:3px;
+}
+.ow-wheel-name {
+  font: 700 13px/1.1 ${FONT_DISPLAY}; color:#fff;
+  letter-spacing:.06em; text-shadow: 0 1px 3px rgba(0,0,0,.85);
+}
+.ow-wheel-ammo {
+  font: 500 11px/1.2 ${FONT_MONO}; color: rgba(240,246,250,.72); margin-top:2px;
+}
+.ow-wheel-slot.sel .ow-wheel-name { color: var(--amber); }
+
 .ow-kf-row {
   position:relative;
   display:flex; align-items:center; gap: calc(var(--u) * 1.6);

@@ -7,6 +7,7 @@ import { DamageArcs } from './damage.js';
 import { HealthFx } from './health.js';
 import { AmmoPanel } from './ammo.js';
 import { Killfeed } from './killfeed.js';
+import { WeaponWheel } from './weaponwheel.js';
 import { Compass, MatchBar } from './compass.js';
 import { Minimap } from './minimap.js';
 import { WorldMarkers } from './markers.js';
@@ -87,6 +88,7 @@ export class UiSystem {
     this.compass = new Compass(this.chromeLayer);
     this.matchBar = new MatchBar(this.chromeLayer);
     this.killfeed = new Killfeed(this.chromeLayer);
+    this.weaponWheel = new WeaponWheel(this.centreLayer);
     this.ammo = new AmmoPanel(this.chromeLayer);
     this.prompt = new Prompt(this.chromeLayer);
     this.banner = new Banner(this.chromeLayer);
@@ -509,6 +511,9 @@ export class UiSystem {
     this.health.update(dt, s);
     this.ammo.update(dt, s);
     this.killfeed.update(dt);
+    // `weapons` owns the wheel's contents and selection; this only draws them.
+    const wpn = this.ctx.peek('weapons');
+    if (wpn?.wheel) this.weaponWheel.setState(wpn.wheel);
     this.matchBar.update(s);
     this.prompt.update(dt);
     this.banner.update(dt);
@@ -610,6 +615,7 @@ export class UiSystem {
     this.health.dispose();
     this.ammo.dispose();
     this.killfeed.dispose();
+    this.weaponWheel.dispose();
     this.compass.dispose();
     this.matchBar.dispose();
     this.minimap.dispose();
