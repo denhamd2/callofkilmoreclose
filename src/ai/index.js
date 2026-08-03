@@ -18,6 +18,11 @@
  *
  * PUBLIC API — `const ai = ctx.get('ai')`
  *   ai.spawn(variant, position, yaw, opts) -> Agent
+ *   ai.createCharacter(variant, opts)      a body with no brain: mesh +
+ *                                          skeleton + animator, no collider,
+ *                                          not in `agents`, caller-owned
+ *                                          transform. `player` wears David
+ *                                          with this in third person.
  *   ai.agents                              live Agent list
  *   ai.debugStage('firefight')             staged combat tableau for captures
  *   ai.prewarmMaterials()                  await: build + compile every character
@@ -41,6 +46,7 @@ import * as THREE from 'three';
 import { SoldierMaterials } from './textures.js';
 import { buildSoldier, resolveMaterials, MATERIAL_SLOTS, VARIANTS } from './soldier.js';
 import { RIG } from './rig.js';
+import { Animator } from './animator.js';
 import { NavGrid, CoverMap } from './nav.js';
 import { Agent, STATE } from './agent.js';
 import { Squad } from './squad.js';
@@ -417,6 +423,67 @@ export class AiSystem {
       );
     }
     return v;
+  }
+
+  /**
+   * Build a character MODEL and nothing else — skinned mesh, skeleton and
+   * animator, with no senses, no state machine, no collider, and no entry in
+   * `agents`. Nothing here ticks: the caller owns the group's transform and
+   * calls `animator.update()` itself.
+   *
+   * This exists so `player` can wear David's body in the third-person camera
+   * without importing `ai`'s modules, which the engine contract forbids. The
+   * construction is the same one `Agent` performs (see agent.js, "body"); the
+   * shared parts are the variant cache, `RIG.createSkeleton()` and `Animator`.
+   *
+   * The group is NOT added to `ai.root` — the caller adds it wherever it
+   * belongs, and calls `dispose()` when done. Geometry and materials are owned
+   * by the variant cache and deliberately not freed here: they are shared with
+   * every other actor of the same variant.
+   *
+   * @param {string} variantName  a key of VARIANTS (soldier.js)
+   * @param {{ rng?: object }} [opts]
+   */
+  createCharacter(variantName, opts = {}) {
+    const def = this.variant(variantName);
+    const scale = def.variant.scale ?? 1;
+    const { bones, skeleton, root } = RIG.createSkeleton();
+
+    const mesh = new THREE.SkinnedMesh(def.geometry, def.materials);
+    mesh.castShadow = true;
+    mesh.receiveShadow = true;
+    mesh.frustumCulled = true;
+
+    const group = new THREE.Group();
+    group.name = `character:${variantName}`;
+    group.add(root);
+    group.add(mesh);
+    mesh.bind(skeleton);
+    group.scale.setScalar(scale);
+    // Bones derive their world matrices from the group's, so it has to be
+    // current before the first animator pass reads them.
+    group.updateMatrixWorld(true);
+
+    const animator = new Animator(RIG, bones, {
+      weapon: def.weapon,
+      rng: (opts.rng ?? this.rng).fork(),
+      scale,
+      probe: (x, z, fromY, out) => this.probeGround(x, z, fromY, out),
+    });
+
+    return {
+      group,
+      mesh,
+      bones,
+      skeleton,
+      animator,
+      def,
+      scale,
+      dispose() {
+        group.removeFromParent();
+        skeleton.dispose?.();
+      },
+    };
   }
 
   /** Bone index lookup for the shared rig (used by the ragdoll spec). */

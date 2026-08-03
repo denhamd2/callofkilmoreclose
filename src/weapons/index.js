@@ -135,6 +135,18 @@ export class WeaponSystem {
     this.mats = new WeaponMaterials(ctx);
     this.sim = new ProjectileSim(ctx);
     this.viewmodel = new Viewmodel(ctx, this.mats);
+    /**
+     * THIRD PERSON: the viewmodel is built but never drawn.
+     *
+     * The gun the player sees is the one in David's hands, animated by `ai`'s
+     * rig on the body `player` owns. This rig is kept alive rather than deleted
+     * because everything downstream still reads it — `boreDir()` supplies the
+     * fire direction, the recoil/sway/bob springs drive the camera kick
+     * channels, and the pose timeline still drives reload and holster timing.
+     * Only its pixels are unwanted. Hiding the anchor also hides the ADS
+     * reticle, which is correct: the crosshair comes from `ui` now.
+     */
+    this.viewmodel.anchor.visible = false;
     // three only honours `material.envMapIntensity` when the material carries its
     // OWN `envMap`; for a material lit by `scene.environment` the renderer
     // overwrites that uniform with `scene.environmentIntensity` every frame
@@ -384,7 +396,12 @@ export class WeaponSystem {
     }
 
     // ---- projectile ----
-    this.viewmodel.muzzleWorld(this._muzzle);
+    // Third person: the round leaves the gun in David's hands, not the
+    // viewmodel's, which rides the camera out on its boom. Falls back to the
+    // viewmodel muzzle until the body exists (first frame).
+    if (!this.ctx.peek('player')?.muzzleWorld?.(this._muzzle)) {
+      this.viewmodel.muzzleWorld(this._muzzle);
+    }
     const seed = this.rng.u32();
     this.sim.spawn({
       origin: this._muzzle,
@@ -677,7 +694,11 @@ export class WeaponSystem {
     // ---- muzzle flash / audio, now that the pose is final ---------------
     if (this._pendingShots > 0) {
       const def = this.current;
-      vm.muzzleWorld(this._firePayload.origin);
+      // Same substitution as the projectile above: the flash has to sit on the
+      // gun in his hands, or it fires out of thin air behind the player.
+      if (!this.ctx.peek('player')?.muzzleWorld?.(this._firePayload.origin)) {
+        vm.muzzleWorld(this._firePayload.origin);
+      }
       vm.boreDir(this._firePayload.dir);
       this._firePayload.weapon = def;
       this._firePayload.seed = this._fireSeed >>> 0;

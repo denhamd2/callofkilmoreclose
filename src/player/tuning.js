@@ -299,3 +299,27 @@ export const FOOTSTEP = {
   /** Landing suppresses the next step so you do not get a double transient. */
   landHold: 0.12,
 };
+
+/**
+ * THIRD PERSON — the over-the-shoulder boom.
+ *
+ * Distances are metres from the eye, which stays the aim origin. `shoulder` is
+ * positive to camera-right, so David sits left of centre and the crosshair has
+ * clear frame — the standard third-person shooter framing, and the reason the
+ * boom swings in and over on ADS rather than staying put: at the hip the body
+ * reads, down the sights it would block the shot.
+ *
+ * `radius` is the sphere cast that keeps the camera out of walls; `skin` holds
+ * it off the surface it hit so the near plane never clips into geometry.
+ */
+export const THIRD_PERSON = {
+  variant: 'David Denham',
+  distance: 3.1,
+  adsDistance: 1.75,
+  shoulder: 0.62,
+  adsShoulder: 0.42,
+  height: 0.18,
+  radius: 0.22,
+  skin: 0.12,
+  minDistance: 0.55,
+};

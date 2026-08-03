@@ -83,7 +83,7 @@ import { Movement } from './movement.js';
 import { CameraRig } from './camera.js';
 import { Health } from './health.js';
 import { LowHealthPass } from './lowhealth.js';
-import { STANCE, MOVE, CAMERA, HEALTH, FOOTSTEP, JUMP_SPEED } from './tuning.js';
+import { STANCE, MOVE, CAMERA, HEALTH, FOOTSTEP, JUMP_SPEED, THIRD_PERSON as TP } from './tuning.js';
 import { clamp, clamp01, lerp, approach, DEG } from './springs.js';
 
 export class PlayerSystem {
@@ -101,6 +101,22 @@ export class PlayerSystem {
 
     this.controlEnabled = true;
     this.adsAmount = 0;
+
+    /**
+     * THIRD PERSON. The camera rides a boom behind David's right shoulder; the
+     * eye position the rig computes stays the AIM origin, so movement, the
+     * look basis and `weapons`' muzzle ray are all unaffected by where the
+     * camera actually sits. `aimOrigin` is published for `weapons`.
+     */
+    this.aimOrigin = new THREE.Vector3();
+    this.body = null;
+    this._bodyTried = false;
+    this._boomDesired = new THREE.Vector3();
+    this._boomDir = new THREE.Vector3();
+    this._boomRight = new THREE.Vector3();
+    this._boomUp = new THREE.Vector3(0, 1, 0);
+    this._aimTarget = new THREE.Vector3();
+    this._animAccum = 0;
     this._adsExternal = false;
     this._adsExternalAge = 0;
     this.adsRequested = false;
@@ -285,9 +301,128 @@ export class PlayerSystem {
     if (this.controlEnabled) this.rig.applyTo(ctx.camera);
     else this.rig.forward.set(0, 0, -1).applyQuaternion(ctx.camera.quaternion);
 
+    // Third person. `applyTo` has just put the camera at the eye and settled
+    // the aim basis; the boom moves the camera only, so `rig.forward` — which
+    // is what movement and `weapons` aim along — is unchanged by it.
+    this.aimOrigin.copy(ctx.camera.position);
+    this._updateBody(dt, ctx);
+    this._applyBoom(ctx);
+
     this.lowHealthPass?.sync(this.health);
     this._syncHitbox();
     this._publishState();
+  }
+
+  /**
+   * David's body, built the first time a frame runs rather than in `init()`.
+   *
+   * `ai` initialises AFTER `player` (see main.js), so `ctx.get('ai')` during
+   * init would force it up early and reorder the RNG stream every character is
+   * stitched from — which the capture gate measures. By the first frame `ai` is
+   * up and `peek` is enough. The variant's materials are already prewarmed by
+   * `ai.prewarmMaterials()`; only its geometry is built here, once.
+   */
+  _ensureBody(ctx) {
+    if (this.body || this._bodyTried) return;
+    this._bodyTried = true;
+    const ai = ctx.peek('ai');
+    if (!ai?.createCharacter) return;
+    this.body = ai.createCharacter(TP.variant);
+    ctx.scene.add(this.body.group);
+  }
+
+  /** Put the body on the capsule and drive its animation from the movement state. */
+  _updateBody(dt, ctx) {
+    this._ensureBody(ctx);
+    const b = this.body;
+    if (!b) return;
+    const m = this.movement;
+
+    b.group.visible = !this.health.dead;
+    b.group.position.copy(m.renderPosition);
+    // Face where the camera is aiming, not where the feet are going: this is a
+    // shooter, so the gun has to point down the crosshair even when strafing.
+    b.group.rotation.y = this.rig.rotation.y;
+    b.group.updateMatrixWorld(true);
+
+    // A look/aim point far down the aim ray. The animator aims the upper body
+    // at it, which is what keeps the weapon on the crosshair.
+    this._aimTarget.copy(this.aimOrigin).addScaledVector(this.rig.forward, 60);
+
+    const speed = m.horizontalSpeed;
+    const crouch = m.stance === 'crouch' || m.stance === 'prone';
+    const moving = speed > 0.25;
+    let clip;
+    if (crouch) clip = moving ? 'crouchWalk' : 'crouchIdle';
+    else if (speed > 2.6) clip = 'run';
+    else if (moving) clip = 'walk';
+    else clip = 'idle';
+
+    b.animator.setState({
+      clip,
+      speed,
+      crouch,
+      aimTarget: this._aimTarget,
+      lookTarget: this._aimTarget,
+      aimWeight: Math.max(this.adsAmount, 0.55),
+      suppress: 0,
+    });
+
+    this._animAccum += dt;
+    b.animator.update(this._animAccum, ctx.time.elapsed);
+    this._animAccum = 0;
+  }
+
+  /**
+   * Push the camera back onto the boom, pulling it in when the arm would put it
+   * through geometry. A sphere cast rather than a ray: a ray slips through the
+   * corner of a wall and lands the camera inside a house.
+   */
+  _applyBoom(ctx) {
+    const cam = ctx.camera;
+    this._boomDir.copy(this.rig.forward).normalize();
+    this._boomRight.crossVectors(this._boomDir, this._boomUp).normalize();
+
+    // Aim pulls the camera in and over — the same move GTA makes when you raise
+    // the sights, so the shoulder stops eating the middle of the screen.
+    const t = clamp01(this.adsAmount);
+    const dist = lerp(TP.distance, TP.adsDistance, t);
+    const side = lerp(TP.shoulder, TP.adsShoulder, t);
+
+    this._boomDesired
+      .copy(this.aimOrigin)
+      .addScaledVector(this._boomRight, side)
+      .addScaledVector(this._boomUp, TP.height)
+      .addScaledVector(this._boomDir, -dist);
+
+    const phys = this.physics;
+    if (phys?.sphereCast) {
+      this._boomDir.copy(this._boomDesired).sub(this.aimOrigin);
+      const len = this._boomDir.length();
+      if (len > 1e-4) {
+        this._boomDir.divideScalar(len);
+        const hit = phys.sphereCast(this.aimOrigin, this._boomDir, TP.radius, len, phys.MASK.WORLD);
+        if (hit?.hit) {
+          this._boomDesired
+            .copy(this.aimOrigin)
+            .addScaledVector(this._boomDir, Math.max(TP.minDistance, hit.distance - TP.skin));
+        }
+      }
+    }
+
+    cam.position.copy(this._boomDesired);
+    cam.updateMatrixWorld();
+  }
+
+  /**
+   * World-space muzzle of the weapon in David's hands, or null before the body
+   * exists. `weapons` uses this instead of the viewmodel's muzzle in third
+   * person: the viewmodel lives in `viewScene` on the camera, which now sits on
+   * a boom three metres behind him, so its muzzle is nowhere near the gun.
+   */
+  muzzleWorld(out) {
+    if (!this.body) return null;
+    return out.copy(this.body.animator.muzzleWorld);
   }
 
   /** Keep the AI-facing hitbox on the interpolated capsule. */
