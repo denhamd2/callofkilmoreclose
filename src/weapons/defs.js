@@ -18,7 +18,7 @@ import { DEG } from './mathx.js';
 export const WEAPON_DEFS = {
   rifle: {
     id: 'rifle',
-    label: 'M4A1',
+    label: 'Carbine',
     class: 'carbine',
     caliber: '5.56x45',
     /* --- fire control --- */
@@ -306,6 +306,50 @@ export function buildRecoilPattern(def, Rng) {
   }
   return out;
 }
+
+/**
+ * UNARMED — David's default. Punch and kick, nothing in his hands.
+ *
+ * Derived from the pistol so every field the fire path, viewmodel and HUD read
+ * is present, then overridden: no magazine, no reserve, no muzzle velocity, no
+ * spread cone. `melee` is what `tryFire` branches on — it does a short forward
+ * sweep and emits `damage:dealt` at whoever is in the arc instead of putting a
+ * round downrange.
+ *
+ * It is a normal weapon-wheel slot, so guns stay one flick of the wheel away.
+ */
+WEAPON_DEFS.unarmed = {
+  ...WEAPON_DEFS.pistol,
+  id: 'unarmed',
+  label: 'Fists',
+  class: 'melee',
+  caliber: null,
+  melee: true,
+  /** Reach from the eye, in metres, and the half-angle of the strike arc. */
+  meleeRange: 2.3,
+  meleeArc: 0.62,
+  rpm: 105,
+  modes: ['melee'],
+  magSize: 0,
+  reserve: 0,
+  muzzleVelocity: 0,
+  damage: 27,
+  penetration: 0,
+  maxRange: 2.3,
+  tracerEvery: 0,
+  spreadHip: 0,
+  spreadAds: 0,
+  spreadPerShot: 0,
+  spreadMax: 0,
+  recoil: {
+    ...WEAPON_DEFS.pistol.recoil,
+    pitch: 0.005,
+    yaw: 0.0015,
+    kickBack: 0.03,
+    kickUp: 0.014,
+    punch: 0.55,
+  },
+};
 
 export const SPREAD_MODS = {
   crouch: 0.78,

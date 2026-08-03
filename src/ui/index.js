@@ -8,6 +8,7 @@ import { HealthFx } from './health.js';
 import { AmmoPanel } from './ammo.js';
 import { Killfeed } from './killfeed.js';
 import { WeaponWheel } from './weaponwheel.js';
+import { ControlsPanel } from './controls.js';
 import { Compass, MatchBar } from './compass.js';
 import { Minimap } from './minimap.js';
 import { WorldMarkers } from './markers.js';
@@ -91,6 +92,9 @@ export class UiSystem {
     this.weaponWheel = new WeaponWheel(this.centreLayer);
     this.ammo = new AmmoPanel(this.chromeLayer);
     this.prompt = new Prompt(this.chromeLayer);
+    // Always-on control list. Contextual: `update` swaps it to the driving set
+    // whenever the player is in a vehicle.
+    this.controls = new ControlsPanel(this.chromeLayer);
     this.banner = new Banner(this.chromeLayer);
     this.menu = new PauseMenu(this.root, ctx);
 
@@ -514,6 +518,7 @@ export class UiSystem {
     // `weapons` owns the wheel's contents and selection; this only draws them.
     const wpn = this.ctx.peek('weapons');
     if (wpn?.wheel) this.weaponWheel.setState(wpn.wheel);
+    this.controls.setContext(this.ctx.peek('vehicle')?.driving ? 'drive' : 'foot');
     this.matchBar.update(s);
     this.prompt.update(dt);
     this.banner.update(dt);
@@ -622,6 +627,7 @@ export class UiSystem {
     this.markers.dispose();
     this.prompt.dispose();
     this.banner.dispose();
+    this.controls.dispose();
     this.menu.dispose();
     this.root.remove();
     removeStyles();

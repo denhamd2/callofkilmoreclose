@@ -66,6 +66,7 @@ export class MySystem {
 | `ai` | `src/ai/` | enemy characters, navigation, perception, cover selection, combat behaviour |
 | `ui` | `src/ui/` | HUD, crosshair, hitmarkers, damage indicators, ammo, killfeed, menus |
 | `audio` | `src/audio/` | synthesized weapon/foley audio, spatialisation, reverb, occlusion, mix |
+| `vehicle` | `src/vehicle/` | drivable vehicles: chassis + wheels, enter/exit interaction, driving model, knockdowns |
 | `game` | `src/game/` | mission state — intro/active/success/fail, objective text, restart flow. Owns none of `ai`/`player`/`ui`, drives them through their public APIs only |
 
 Shared, owned by the lead (do not edit): `src/core/`, `src/main.js`,
@@ -92,6 +93,7 @@ Emit and listen via `ctx.events`. Payloads are plain objects. The canonical set:
 | `player:death` | `{ position }` | player |
 | `explosion` | `{ position, radius, damage }` | any |
 | `resize` | `{ width, height }` | engine |
+| `damage:dealt` | (see above) | also emitted by `vehicle` for knockdowns and by `weapons` for melee strikes — same payload, same rule: the target's own listener applies it |
 
 If you need an event that is not listed, add a row here in the same commit.
 

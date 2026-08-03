@@ -69,7 +69,9 @@ export class WeaponSystem {
     this.viewmodel = null;
     this.sim = null;
     this.states = new Map();
-    this.activeId = 'rifle';
+    // David carries nothing by default: his combat state is punch and kick.
+    // Guns stay one flick of the weapon wheel away — see WEAPON_DEFS.unarmed.
+    this.activeId = 'unarmed';
     this.debugMode = null;
 
     this._fireTimer = 0;
@@ -166,9 +168,16 @@ export class WeaponSystem {
     this.viewmodel.onClipEvent = (name, clip) => this._onClipEvent(name, clip);
 
     const t0 = performance.now();
-    const builders = { rifle: buildRifle, smg: buildSmg, pistol: buildPistol };
+    const builders = {
+      // Empty group: the viewmodel still draws the hands, there is just nothing
+      // in them.
+      unarmed: () => new THREE.Group(),
+      rifle: buildRifle,
+      smg: buildSmg,
+      pistol: buildPistol,
+    };
     let tris = 0;
-    for (const id of ['rifle', 'smg', 'pistol']) {
+    for (const id of ['unarmed', 'rifle', 'smg', 'pistol']) {
       const def = { ...WEAPON_DEFS[id] };
       def.cycleTime = 60 / def.rpm;
       const model = builders[id]();
@@ -427,6 +436,7 @@ export class WeaponSystem {
     const s = this.state;
     if (!s) return false;
     if (this.reloading || this.switching || this._fireTimer > 0) return false;
+    if (s.def.melee) return this._meleeStrike(s.def);
     if (!s.chambered) {
       // Dry: lock the bolt back and let the player know by feel.
       this.viewmodel.boltHold = 1;
@@ -506,6 +516,75 @@ export class WeaponSystem {
 
     // Shell leaves the port shortly after the shot, once the bolt is back.
     this._queueShell(Math.min(0.05, this._fireTimer * 0.45));
+    return true;
+  }
+
+  /**
+   * A punch or a kick. Sweeps forward from the eye and hits the first live
+   * actor inside `meleeRange` and the strike arc.
+   *
+   * Damage goes out as `damage:dealt` with the actor as `target`, which is the
+   * path `ai` already listens on and applies itself (see ARCHITECTURE.md) —
+   * this never calls applyDamage directly, so kills stay creditable and the
+   * killfeed names them the same way a shot does.
+   *
+   * Alternates punch and kick purely for feel: the kick is slower, hits harder
+   * and reaches slightly further.
+   */
+  _meleeStrike(def) {
+    const cam = this.ctx.camera;
+    if (!cam) return false;
+    const kick = (this._meleeAlt = !this._meleeAlt);
+    const reach = def.meleeRange * (kick ? 1.12 : 1);
+    const dmg = def.damage * (kick ? 1.45 : 1);
+
+    const origin = this._meleeOrigin ?? (this._meleeOrigin = new THREE.Vector3());
+    const fwd = this._meleeFwd ?? (this._meleeFwd = new THREE.Vector3());
+    const to = this._meleeTo ?? (this._meleeTo = new THREE.Vector3());
+    cam.getWorldPosition(origin);
+    cam.getWorldDirection(fwd);
+
+    const ai = this.ctx.peek('ai');
+    const cone = Math.cos(def.meleeArc);
+    let best = null;
+    let bestD = Infinity;
+    if (ai?.agents) {
+      for (let i = 0; i < ai.agents.length; i++) {
+        const a = ai.agents[i];
+        if (!a.alive) continue;
+        to.copy(a.position).sub(origin);
+        to.y *= 0.5; // a strike lands on a body, not a point at its feet
+        const d = to.length();
+        if (d > reach || d < 1e-3) continue;
+        to.multiplyScalar(1 / d);
+        if (fwd.x * to.x + fwd.y * to.y + fwd.z * to.z < cone) continue;
+        if (d < bestD) {
+          bestD = d;
+          best = a;
+        }
+      }
+    }
+
+    if (best) {
+      this.ctx.events.emit('damage:dealt', {
+        target: best,
+        amount: dmg,
+        headshot: false,
+        killed: false,
+        point: best.position,
+        incident: fwd,
+      });
+    }
+
+    const p = this.player;
+    if (p?.addRecoil) {
+      const r = def.recoil;
+      p.addRecoil(r.pitch * (kick ? 1.4 : 1), r.yaw, r.roll, r.punch * (best ? 1.3 : 1));
+    }
+    this.viewmodel.play(kick ? 'melee_kick' : 'melee_punch');
+    this._fireTimer = (60 / def.rpm) * (kick ? 1.35 : 1);
+    this._sinceShot = 0;
+    this.stats.fired++;
     return true;
   }
 

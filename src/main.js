@@ -12,6 +12,7 @@ import { FxSystem } from './fx/index.js';
 import { AiSystem } from './ai/index.js';
 import { UiSystem } from './ui/index.js';
 import { AudioSystem } from './audio/index.js';
+import { VehicleSystem } from './vehicle/index.js';
 import { GameSystem } from './game/index.js';
 
 import { installShotApi } from './dev/shots.js';
@@ -47,6 +48,7 @@ engine
   .add(AiSystem)
   .add(UiSystem)
   .add(AudioSystem)
+  .add(VehicleSystem)
   .add(GameSystem);
 
 try {

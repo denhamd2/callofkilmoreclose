@@ -599,6 +599,35 @@ const CSS = `
 .ow-dn.kill { color: var(--red);   font-size: calc(23px * var(--k)); }
 .ow-dn.armour { color: var(--cyan); }
 
+/* ============================================================== controls */
+.ow-controls {
+  position:absolute; left: calc(var(--u) * 3); bottom: calc(var(--u) * 3);
+  padding: calc(var(--u) * 1.5) calc(var(--u) * 2);
+  background: rgba(8,11,14,.34);
+  border-left: 1px solid rgba(255,255,255,.16);
+  border-radius: calc(2px * var(--k));
+  transition: opacity .25s ease;
+  pointer-events:none;
+}
+.ow-controls-title {
+  font-size: calc(9px * var(--k)); letter-spacing:.18em;
+  color: rgba(255,255,255,.42);
+  margin-bottom: calc(var(--u) * 1);
+}
+.ow-controls-row {
+  display:flex; align-items:center; gap: calc(var(--u) * 1.4);
+  line-height: calc(15px * var(--k));
+}
+.ow-controls-key {
+  min-width: calc(46px * var(--k));
+  font-size: calc(10px * var(--k)); letter-spacing:.06em;
+  color: var(--amber);
+}
+.ow-controls-act {
+  font-size: calc(10px * var(--k)); letter-spacing:.04em;
+  color: rgba(255,255,255,.74);
+}
+
 /* ================================================================ prompt */
 .ow-prompt {
   position:absolute; left:50%; top:58%;
