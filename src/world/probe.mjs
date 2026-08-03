@@ -47,6 +47,8 @@ if (!(await portOpen(PORT))) {
 
 const browser = await chromium.launch({
   headless: true,
+  // See tools/capture.mjs — honours PW_CHROMIUM_PATH, no-op when unset.
+  ...(process.env.PW_CHROMIUM_PATH ? { executablePath: process.env.PW_CHROMIUM_PATH } : {}),
   args: ['--use-angle=metal', '--ignore-gpu-blocklist', '--hide-scrollbars', '--mute-audio'],
 });
 const page = await browser.newPage({ viewport: { width: 1280, height: 720 } });

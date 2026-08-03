@@ -30,6 +30,8 @@ const FRAMES = Number(args.frames ?? 900);
 
 const browser = await chromium.launch({
   headless: true,
+  // See tools/capture.mjs — honours PW_CHROMIUM_PATH, no-op when unset.
+  ...(process.env.PW_CHROMIUM_PATH ? { executablePath: process.env.PW_CHROMIUM_PATH } : {}),
   args: ['--use-angle=metal', '--ignore-gpu-blocklist', '--mute-audio',
          '--disable-frame-rate-limit', '--disable-gpu-vsync'],
 });

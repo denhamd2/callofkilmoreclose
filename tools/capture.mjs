@@ -62,6 +62,10 @@ const server = await ensureServer();
 
 const browser = await chromium.launch({
   headless: true,
+  // Escape hatch for machines whose installed Chromium doesn't match the
+  // revision this playwright resolves (a container shipping its own browser,
+  // for one). Unset — the normal case — this changes nothing.
+  ...(process.env.PW_CHROMIUM_PATH ? { executablePath: process.env.PW_CHROMIUM_PATH } : {}),
   args: [
     '--use-angle=metal',
     '--enable-unsafe-webgpu',
