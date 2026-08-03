@@ -139,15 +139,32 @@ export class SkySystem {
 
     // ---- weather / atmosphere state ---------------------------------------
     this.weather = {
-      /** Aerosol multiplier. 1 clear, 2-3 hazy, 5 dust storm. */
-      turbidity: 1.35,
-      /** Fewer, deeper cumulus. Below ~0.34 the deck breaks into discrete
-       *  masses with clean blue between them instead of one lumpy sheet. */
-      cloudCoverage: 0.30,
-      /** Raised with the coverage drop: a cloud that survives the erosion is
-       *  now optically deep, so its self-shadowed base sits 2-3 stops under its
-       *  sunlit top and the billow reads as a solid with volume. */
-      cloudDensity: 1.9,
+      /**
+       * Aerosol multiplier. 1 clear, 2-3 hazy, 5 dust storm. Nudged up for damp
+       * maritime air, but only slightly: sun colour is derived physically from
+       * the scattering integral (see `sunLight.color` below), so pushing
+       * turbidity hard would REDDEN the key light, which is the opposite of the
+       * cool grey this street wants.
+       */
+      turbidity: 1.55,
+      /**
+       * Dublin, not the Maghreb. At 0.30 this deck broke into discrete cumulus
+       * with clean blue between them and, with a warm low sun, gave the street
+       * hard North-African contrast. 0.78 closes it into the broken-to-overcast
+       * sheet that is this city's default sky.
+       *
+       * The comment this replaces noted 0.34 as the threshold where the deck
+       * stops being a sheet — we are now well above it, deliberately.
+       */
+      cloudCoverage: 0.78,
+      /**
+       * Comes DOWN as coverage goes up, reversing the coupling the old comment
+       * described: density was raised to 1.9 precisely because coverage had
+       * dropped and each surviving cloud had to read as a deep solid on its own.
+       * A closed sheet does not need that, and at 1.9 it would sit several stops
+       * too dark and read as thunder rather than as ordinary Irish cloud.
+       */
+      cloudDensity: 1.35,
       /**
        * Cirrus is banded, not a glaze. Coverage and opacity both came down here
        * because the sky behind them is now 1.65 stops darker (see the photometric
@@ -156,11 +173,16 @@ export class SkySystem {
        * blue for free and at the old settings it dominated the upper half of every
        * daylight frame and read as hatching.
        */
-      cirrusCoverage: 0.21,
-      cirrusOpacity: 0.30,
-      windSpeed: 0.0042, // km/s at the cloud deck (~4 m/s)
+      // Cirrus sits ABOVE the main deck, so at 0.78 coverage almost none of it
+      // is visible. Left in at low strength for the gaps rather than removed,
+      // so a break in the cloud still has something in it.
+      cirrusCoverage: 0.10,
+      cirrusOpacity: 0.16,
+      windSpeed: 0.0055, // km/s at the cloud deck (~5.5 m/s) — a breezy Irish day
       windAngle: 0.7,
-      horizonMurk: 0.13,
+      // A damp horizon that washes out rather than ending on a hard line. This
+      // is doing a lot of the "maritime" read on its own.
+      horizonMurk: 0.20,
     };
 
     /**
@@ -182,15 +204,24 @@ export class SkySystem {
        * volumetrics.js) rather than grey — distance reads as colour temperature,
        * which is how it reads in a photograph.
        */
-      scatter: 3.6e-3, // 1/m at the fog base
-      extinction: 1.45e-3, // 1/m at the fog base
+      // Raised with the overcast sky, but deliberately NOT back to the 2.4e-3
+       // the note above records as the point where a 60 m facade went ghost.
+       // 1.85e-3 keeps roughly 90% of a 60 m surface's own light (against 92%
+       // at 1.45e-3), so the far end of a 253 m street softens without the
+       // mid-ground losing its hue. If facades start converging, this is the
+       // first number to walk back.
+      scatter: 4.3e-3, // 1/m at the fog base
+      extinction: 1.85e-3, // 1/m at the fog base
       /**
        * 18 m of e-folding, not 30. Dust and exhaust settle: the bottom of a
        * street is measurably hazier than roof height, and that vertical
        * gradient is most of what makes a long street read as deep rather than
        * as uniformly foggy. It also keeps the sky slot between buildings clear.
        */
-      heightScale: 18.0,
+      // 22, not 18: the 18 m figure was tuned for dust and exhaust settling out
+      // of dry air. Damp maritime air is less stratified, so the gradient from
+      // street to roof height is gentler.
+      heightScale: 22.0,
       baseY: -2.0,
       maxDistance: 900.0,
       /**
