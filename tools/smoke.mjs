@@ -106,30 +106,48 @@ try {
       tris: e?.ctx?.peek('render')?.renderer?.info?.render?.triangles ?? 0,
       canvas: canvas ? `${canvas.width}x${canvas.height}` : 'missing',
     };
-    // Read the middle of the frame back through a 2D canvas. `preserveDrawingBuffer`
-    // is off, so sample via drawImage rather than gl.readPixels on a stale buffer.
-    if (canvas) {
-      const s = document.createElement('canvas');
-      s.width = 32;
-      s.height = 18;
-      const g = s.getContext('2d');
-      g.drawImage(canvas, 0, 0, 32, 18);
-      const d = g.getImageData(0, 0, 32, 18).data;
-      let min = 255;
-      let max = 0;
-      let sum = 0;
-      for (let i = 0; i < d.length; i += 4) {
-        const l = (d[i] * 0.2126 + d[i + 1] * 0.7152 + d[i + 2] * 0.0722) | 0;
-        if (l < min) min = l;
-        if (l > max) max = l;
-        sum += l;
-      }
-      out.lumMin = min;
-      out.lumMax = max;
-      out.lumMean = Math.round(sum / (d.length / 4));
-    }
     return out;
   });
+
+  /**
+   * Judge the PIXELS from a real page screenshot, not from the canvas.
+   *
+   * Reading the canvas back with drawImage/getImageData looks like the obvious
+   * check and is a trap: the renderer runs with `preserveDrawingBuffer` off, so
+   * the drawing buffer is released once the frame is composited and a later
+   * read returns transparent black even when the frame was perfect. The first
+   * version of this file did exactly that and reported a black screen on a
+   * build that renders correctly.
+   *
+   * page.screenshot() composites the same way the display does, so what it
+   * returns is what a player sees.
+   */
+  const png = await page.screenshot({ type: 'png', timeout: 120000 });
+  const { PNG } = await import('pngjs');
+  const img = PNG.sync.read(png);
+  let min = 255;
+  let max = 0;
+  let sum = 0;
+  let n = 0;
+  // Sample the middle band only — the HUD lives at the edges, and a black scene
+  // behind a working HUD is precisely the case this has to catch.
+  const y0 = (img.height * 0.25) | 0;
+  const y1 = (img.height * 0.75) | 0;
+  const x0 = (img.width * 0.2) | 0;
+  const x1 = (img.width * 0.8) | 0;
+  for (let y = y0; y < y1; y += 2) {
+    for (let x = x0; x < x1; x += 2) {
+      const i = (img.width * y + x) << 2;
+      const l = (img.data[i] * 0.2126 + img.data[i + 1] * 0.7152 + img.data[i + 2] * 0.0722) | 0;
+      if (l < min) min = l;
+      if (l > max) max = l;
+      sum += l;
+      n++;
+    }
+  }
+  info.lumMin = min;
+  info.lumMax = max;
+  info.lumMean = Math.round(sum / Math.max(1, n));
 
   if (errors.length) fail.push(`page errors: ${errors.slice(0, 3).join(' ; ')}`);
   if (!info.calls) fail.push('renderer issued ZERO draw calls');
