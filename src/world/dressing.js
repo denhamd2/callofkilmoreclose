@@ -1792,13 +1792,17 @@ function merlonRun(A, rng, x0, x1, z, t, yTop, opts = {}) {
  */
 export function buildPerimeter(A, rng) {
   // The compound wall has to sit outside the real ~253 m OSM street length
-  // (STREET.zMin..zMax) and the BG* background infill either side of it —
-  // R=58 was left over from the old ~104 m fictional market street and cut
-  // straight across the lane around KW9/KW10 (z~90-110) once the street was
-  // rescaled to real OSM length, walling off the middle of a street whose
-  // ends are supposed to read as open. Margins clear the widest BG infill
-  // (BGE2 reaches x=36; BGN2/BGS2 reach z=234/z=-64) and both real
-  // zMin/zMax with room to spare.
+  // (STREET.zMin..zMax) — R=58 was left over from the old ~104 m fictional
+  // market street and cut straight across the lane around KW9/KW10
+  // (z~90-110) once the street was rescaled to real OSM length, walling off
+  // the middle of a street whose ends are supposed to read as open.
+  //
+  // These margins were originally sized to clear the BG* background infill
+  // (BGE2 reached x=36; BGN2/BGS2 reached z=234/z=-64). That infill is gone
+  // with the move to a single building type, so the only constraint left is
+  // STREET.zMin/zMax plus the 30 m run-off either end. The values are kept as
+  // they are — they clear that comfortably — but they are now margin, not a
+  // fit to anything.
   const RX = 44;
   const ZN = STREET.zMin - 30;
   const ZX = STREET.zMax + 30;
