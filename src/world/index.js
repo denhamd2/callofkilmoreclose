@@ -153,6 +153,27 @@ export class WorldSystem {
      * needs them to walk its civilians down the footpath rather than the road.
      */
     this.STREET = STREET;
+    /**
+     * Every house on the street, keyed by its Kilmore Close number, with the
+     * point on its garden path where someone stepping out of the front door
+     * would stand. `ai` stages the encounter off these rather than off raw
+     * coordinates, so moving a house in layout.js moves whoever lives there.
+     *
+     * `position` is 2.2 m out from the front face, on the street side — inside
+     * the 8.71 m front garden, clear of both the wall and the kerb. `yaw`
+     * faces the carriageway.
+     */
+    this.houses = BUILDINGS.map((b) => {
+      const out = b.streetSide === 1 ? 1 : -1;
+      return {
+        no: b.no,
+        id: b.id,
+        streetSide: b.streetSide,
+        position: A.toWorld(b.x + out * (b.w / 2 + 2.2), 0, b.z),
+        yaw: (out > 0 ? Math.PI / 2 : -Math.PI / 2) + LEVEL_YAW,
+      };
+    });
+    this._housesByNo = new Map(this.houses.map((h) => [h.no, h]));
     this.bounds = new THREE.Box3(
       new THREE.Vector3(-62, -2, -62),
       new THREE.Vector3(62, 26, 62)
@@ -416,6 +437,14 @@ export class WorldSystem {
   spawn(i = 0) {
     const n = this.spawnPoints.length;
     return this.spawnPoints[((i % n) + n) % n];
+  }
+
+  /**
+   * The doorstep of a Kilmore Close house, by house number, or null if no such
+   * number is on the street. See `this.houses`.
+   */
+  doorstep(no) {
+    return this._housesByNo.get(no) ?? null;
   }
 
   levelToWorld(x, y, z, out = new THREE.Vector3()) {

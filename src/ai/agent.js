@@ -284,6 +284,15 @@ export class Agent {
      * silently becomes a pacifist.
      */
     this.hostile = opts.hostile ?? true;
+    /**
+     * Name of the actor this one is fighting instead of the player, or null.
+     * Resolved lazily in `_duelPosition` because the partner may not be spawned
+     * yet when this constructor runs.
+     */
+    this.duel = opts.duel ?? null;
+    this._duelAgent = null;
+    /** Kilmore Close house number this character came out of (see index.js). */
+    this.house = opts.house ?? null;
     /** Seconds of "something just went off near me" left on a civilian. */
     this.spooked = 0;
     this.stuckTimer = 0;
@@ -347,6 +356,32 @@ export class Agent {
   /* perception                                                         */
   /* ================================================================== */
 
+  /**
+   * Where this agent's duel partner is, or null if they have none, theirs is
+   * dead, or they have not spawned yet. Returns a live reference to the
+   * partner's position — no allocation, so this is safe to call every tick.
+   */
+  _duelPosition() {
+    if (!this.duel) return null;
+    if (!this._duelAgent || !this._duelAgent.alive) {
+      if (this._duelAgent && !this._duelAgent.alive) {
+        // Partner is down: fall through to the player from here on.
+        this.duel = null;
+        this._duelAgent = null;
+        return null;
+      }
+      const list = this.ai.agents;
+      for (let i = 0; i < list.length; i++) {
+        if (list[i].name === this.duel && list[i].alive) {
+          this._duelAgent = list[i];
+          break;
+        }
+      }
+      if (!this._duelAgent) return null;
+    }
+    return this._duelAgent.position;
+  }
+
   _sense(dt) {
     // Position-gated squads (see index.js#populate) stay combat-deaf until
     // the player crosses their activation threshold, so the far encounter
@@ -356,7 +391,10 @@ export class Agent {
     // guarded by `hasTarget`, so blocking acquisition here is what keeps them
     // out of the state machine's combat half rather than a parallel branch.
     if (!this.hostile) return;
-    const player = this.ai.playerPosition(this._v3);
+    // A duellist goes for their opposite number instead of for the player.
+    // Mick McCabe and Angela Carpenter are paired this way, so they lock onto
+    // each other on the street rather than both converging on David.
+    const player = this._duelPosition() ?? this.ai.playerPosition(this._v3);
     if (!player) return;
     const eye = this.eye;
     const to = this._dir.copy(player).sub(eye);

@@ -60,15 +60,39 @@ import { GroundShadows } from './grounding.js';
 const PLAYER_ACTOR = { name: 'YOU' };
 
 /**
- * The Kilmore Close cast, split by whether they fight.
+ * THE CAST, BY ADDRESS.
  *
- * David Denham is deliberately in neither list — he is the player character.
- * CIVILIANS are not garrisoned: they walk (Oysters) or cycle (Angela) the
- * footpath continuously, so the street reads as inhabited rather than as an
- * ambush corridor, and they are what the player sees most often.
+ * Everyone on Kilmore Close comes out of a real house and walks towards David.
+ * `house` is a Kilmore Close number resolved through `world.doorstep(no)`, so
+ * these follow the houses if layout.js ever moves them — no coordinates here.
+ *
+ * `duel` pairs two characters who go for each other instead of for David.
+ *
+ * David Denham is absent: he is the player.
  */
-export const HOSTILES = ['Paddy Mason', 'MickMcCabe', 'Deco McCabe', 'Joan', 'Christopher Burgess'];
-export const CIVILIANS = ['Oysters', 'Angela Carpenter'];
+export const KILMORE_CAST = [
+  { name: 'MickMcCabe', house: 14, duel: 'Angela Carpenter' },
+  { name: 'Deco McCabe', house: 14 },
+  { name: 'Oysters', house: 26 },
+  { name: 'Angela Carpenter', house: 27, duel: 'MickMcCabe' },
+  { name: 'Paddy Mason', house: 31 },
+  { name: 'Joan', house: 16 },
+  { name: 'Christopher Burgess', house: 20 },
+];
+
+/**
+ * Every named character fights. The roster used to be split into HOSTILES and
+ * CIVILIANS, where civilians could never acquire a target and never entered a
+ * combat state — which left Oysters and Angela unable to defend themselves on
+ * a street where everyone else was armed.
+ *
+ * Appearance is a SEPARATE axis and is unchanged: `civilian` in soldier.js
+ * still strips the carrier, webbing, pouches and radio, so Oysters and Angela
+ * are dressed as the neighbours they are. `hostile` only decides whether the
+ * behaviour tree is allowed to fight.
+ */
+export const HOSTILES = KILMORE_CAST.map((c) => c.name);
+export const CIVILIANS = [];
 
 export class AiSystem {
   static id = 'ai';
@@ -570,175 +594,41 @@ export class AiSystem {
   }
 
   /**
-   * Garrison the level: two squads on patrol routes drawn from the world's own
-   * spawn points, far enough from the player to be found rather than spawned on
-   * top of. This is what the behaviour tree, navigation and perception actually
-   * run against in play.
+   * Stage the encounter on Kilmore Close.
+   *
+   * This replaces the old two-squad garrison, which drew its positions from
+   * `world.spawnPoints` and deliberately placed everyone FAR from the player so
+   * enemies were found rather than dropped on top of you. That is the wrong
+   * shape for this street: the cast are neighbours, they come out of their own
+   * front doors, and they converge on David.
+   *
+   * Each character is spawned on the garden path of their own house — resolved
+   * by house NUMBER through `world.doorstep()`, never by coordinate — and given
+   * a patrol route whose one waypoint is David. A hostile agent falls back to
+   * its patrol route whenever it has no target (see agent.js `_think`), so
+   * everyone walks towards him from the moment they step out, and engages when
+   * they see him.
    */
   populate(opts = {}) {
     const world = this.ctx.peek('world');
-    const spawns = world?.spawnPoints ?? [];
-    if (!spawns.length || !this.grid) return 0;
-    const player = this.playerPosition(this._v3).clone();
-    // rank the spawn points by distance from the player, take the far half
-    const ranked = spawns
-      .map((s, i) => ({ s, i, d: s.position.distanceTo(player) }))
-      .sort((a, b) => b.d - a.d)
-      .filter((e) => e.d > 18);
-    if (!ranked.length) return 0;
-
-    // Each named character is their own variant, so one roster slot is one
-    // identity — no separate variant/name cycles, no repeats.
-    //
-    // David Denham is NOT here: he is the player. He used to occupy one of only
-    // five enemy slots, which meant the player was also shooting himself.
-    // Oysters and Angela Carpenter are not here either — they are civilians and
-    // are placed on their own footpath routes, not garrisoned.
-    const ROSTER = HOSTILES;
-    const squads = opts.squads ?? 2;
-    const total = Math.min(opts.count ?? ROSTER.length, ROSTER.length);
-    // split `total` across `squads` as evenly as possible (e.g. 5 over 2 -> 3, 2)
-    const sizes = [];
-    let remaining = total;
-    for (let q = 0; q < squads; q++) {
-      const size = Math.ceil(remaining / (squads - q));
-      sizes.push(size);
-      remaining -= size;
-    }
-    let slot = 0;
-    let made = 0;
-    const squadAnchors = [];
-    for (let q = 0; q < squads && q < ranked.length; q++) {
-      const per = sizes[q];
-      const squad = this.createSquad();
-      // Spread anchors across the whole far-to-near range instead of always
-      // taking the front of `ranked`: the two farthest points are often close
-      // to each other (both near the same dead end), which put every squad
-      // in one cluster and made a 2-squad garrison read as one encounter.
-      const anchorIdx = Math.min(ranked.length - 1, Math.floor((q * ranked.length) / squads));
-      const anchor = ranked[anchorIdx].s;
-      squadAnchors.push({ squad, pos: anchor.position, d: ranked[anchorIdx].d });
-      // patrol route: this spawn point and the two next-nearest ones
-      const route = [anchor.position.clone()];
-      const others = ranked
-        .filter((e) => e.s !== anchor)
-        .sort(
-          (a, b) =>
-            a.s.position.distanceTo(anchor.position) - b.s.position.distanceTo(anchor.position)
-        )
-        .slice(0, 2);
-      for (const o of others) route.push(o.s.position.clone());
-
-      for (let m = 0; m < per; m++) {
-        const jitterA = this.rng.range(0, Math.PI * 2);
-        const jitterR = this.rng.range(0.8, 3.2);
-        const p = anchor.position
-          .clone()
-          .add(new THREE.Vector3(Math.cos(jitterA) * jitterR, 0, Math.sin(jitterA) * jitterR));
-        const ci = this.grid.nearest(p.x, p.z, anchor.position.y, 6, 1.4);
-        if (ci >= 0) {
-          p.set(
-            this.grid.worldX(ci % this.grid.nx),
-            this.grid.floor[ci],
-            this.grid.worldZ((ci / this.grid.nx) | 0)
-          );
-        } else {
-          p.y = this.groundAt(p.x, p.z, anchor.position.y + 4);
-        }
-        const identity = ROSTER[slot++];
-        const a = this.spawn(identity, p, anchor.yaw + this.rng.signed() * 0.7, {
-          patrol: route,
-          name: identity,
-          hostile: true,
-        });
-        squad.add(a);
-        made++;
-      }
-    }
-    // Position-gate every squad beyond the nearest one: a live playthrough
-    // showed patrol drift and weapon noise pulling the far squad into combat
-    // before the player had even engaged the near one, so it read as a single
-    // fight instead of two beats. Each gated squad stays combat-deaf (agent.js
-    // `_sense`/`hear` check `squad.active`) until the player crosses the
-    // midpoint line between it and the squad nearer to the player start.
-    if (squadAnchors.length > 1) {
-      squadAnchors.sort((a, b) => a.d - b.d);
-      const near = squadAnchors[0];
-      for (let i = 1; i < squadAnchors.length; i++) {
-        const far = squadAnchors[i];
-        const dx = far.pos.x - near.pos.x;
-        const dz = far.pos.z - near.pos.z;
-        const len = Math.hypot(dx, dz);
-        // Coincident anchors would give a zero normal, and `dot > 0` can never
-        // be true against it — the squad would stay combat-deaf for the whole
-        // level. Not reachable today (populate() is only ever called with the
-        // default 2 squads, and fewer than 2 ranked spawns creates only one),
-        // but `|| 1` silently produced exactly that, so make it explicit:
-        // degenerate geometry means leave the squad ACTIVE rather than gate it
-        // on a test it can never pass.
-        if (len < 1e-3) continue;
-        far.squad.active = false;
-        far.squad.activationNormal = { x: dx / len, z: dz / len };
-        far.squad.activationPoint = {
-          x: (near.pos.x + far.pos.x) / 2,
-          z: (near.pos.z + far.pos.z) / 2,
-        };
-      }
-    }
-
-    made += this._populateCivilians();
-    console.info(`[ai] garrison: ${made} actors in ${squads} squads + ${CIVILIANS.length} civilians`);
-    return made;
-  }
-
-  /**
-   * The civilians: Oysters walking and Angela cycling the length of Kilmore
-   * Close, all day, on the footpath.
-   *
-   * They are deliberately NOT part of the garrison and NOT in a squad. Two
-   * reasons. Behavioural: squad membership drives contact sharing and the
-   * position gate, neither of which means anything to someone who never
-   * fights. Compositional: the garrison spawns FAR from the player so enemies
-   * are found rather than dropped on top of you, which is exactly wrong for
-   * the characters whose whole job is to be visible — so these two are placed
-   * on the footpath near the player's end and walk the full street.
-   *
-   * The route runs along the footpath centreline, not the carriageway: the
-   * paved band sits between STREET.halfWidth and STREET.kerb, and the verge
-   * takes the kerb-side 0.9 m of it (see ground.js), so the walkable centre is
-   * about 1.35 m out from the carriageway edge.
-   */
-  _populateCivilians() {
-    const world = this.ctx.peek('world');
     if (!world || !this.grid) return 0;
-    const S = world.STREET ?? null;
-    // Fall back to the known layout numbers if `world` does not re-export
-    // STREET — this must not throw and leave the street empty.
-    const halfWidth = S?.halfWidth ?? 3.815;
-    const kerb = S?.kerb ?? 5.815;
-    const zMin = S?.zMin ?? -40;
-    const zMax = S?.zMax ?? 213;
-    const pathX = halfWidth + 0.9 + (kerb - halfWidth - 0.9) / 2;
+    if (typeof world.doorstep !== 'function') {
+      console.warn('[ai] world exposes no doorstep() — cast not staged');
+      return 0;
+    }
+    const player = this.playerPosition(this._v3).clone();
 
     let made = 0;
-    for (let i = 0; i < CIVILIANS.length; i++) {
-      const identity = CIVILIANS[i];
-      // one each side, so the street has life on both footpaths
-      const side = i % 2 === 0 ? -1 : 1;
-      const x = side * pathX;
-      // Walk the full length, with the two of them starting at opposite ends so
-      // they pass each other rather than travelling in convoy.
-      const z0 = i % 2 === 0 ? zMin + 12 : zMax - 12;
-      const z1 = i % 2 === 0 ? zMax - 12 : zMin + 12;
-      // fromY = 4, not 0: groundAt raycasts DOWNWARD from the height given, so
-      // starting at ground level would begin the ray under the footpath and
-      // miss it. 4 m clears the kerb and any verge without reaching a roof.
-      const route = [
-        new THREE.Vector3(x, this.groundAt(x, z0, 4), z0),
-        new THREE.Vector3(x, this.groundAt(x, z1, 4), z1),
-      ];
-      const start = route[0].clone();
-      const ci = this.grid.nearest(start.x, start.z, start.y, 8, 1.4);
+    const missing = [];
+    for (const c of KILMORE_CAST) {
+      const h = world.doorstep(c.house);
+      if (!h) {
+        missing.push(`${c.name}@${c.house}`);
+        continue;
+      }
+      const start = h.position.clone();
+      // Snap to the navmesh so nobody starts inside a garden wall or a hedge.
+      const ci = this.grid.nearest(start.x, start.z, start.y, 8, 1.6);
       if (ci >= 0) {
         start.set(
           this.grid.worldX(ci % this.grid.nx),
@@ -746,13 +636,22 @@ export class AiSystem {
           this.grid.worldZ((ci / this.grid.nx) | 0)
         );
       }
-      this.spawn(identity, start, side > 0 ? Math.PI : 0, {
-        patrol: route,
-        name: identity,
-        hostile: false,
+      this.spawn(c.name, start, h.yaw, {
+        name: c.name,
+        // Everyone fights. See KILMORE_CAST.
+        hostile: true,
+        team: 1,
+        house: c.house,
+        duel: c.duel ?? null,
+        // One waypoint: David. This is what "everyone is coming towards David"
+        // is actually built on.
+        patrol: [player.clone()],
       });
       made++;
     }
+    this.stats.agents = this.agents.length;
+    if (missing.length) console.warn(`[ai] no such house number for: ${missing.join(', ')}`);
+    console.info(`[ai] Kilmore Close: ${made} of ${KILMORE_CAST.length} cast staged at their own doors`);
     return made;
   }
 
