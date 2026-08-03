@@ -1071,3 +1071,167 @@ export function knuckleGuard(wrist, gripAxis, palmNormal) {
   transformMesh(g, m);
   return g;
 }
+
+/* ==========================================================================
+ * CIVILIAN PARTS
+ * ==========================================================================
+ * Everything above dresses a soldier. These are for the people who live on
+ * Kilmore Close: hair (which the engine had none of), a moustache, and the
+ * bare arm that a sleeveless vest exposes.
+ * ======================================================================== */
+
+/**
+ * Hair — a skull cap grown from the head's own profile.
+ *
+ * Structurally the same trick as `helmet()`: a lofted revolve with a per-angle
+ * lower edge. The difference is where that edge sits. A helmet's rim is level
+ * and rides over the ears; a hairline is not level at all — it is high across
+ * the forehead, drops at the temples, and runs down behind the ears to the
+ * nape. Getting that one curve right is most of what separates hair from a
+ * swim cap.
+ *
+ * @param p.length  0 = cropped, 1 = past the shoulders. Drives how far the
+ *                  back mass hangs below the skull.
+ * @param p.curl    0 = straight, 1 = tight curls. Amplitude of the high
+ *                  frequency displacement.
+ * @param p.volume  thickness off the scalp, ~1 = an ordinary head of hair.
+ */
+export function hair(nz, base, p = {}) {
+  const length = p.length ?? 0.35;
+  const curl = p.curl ?? 0.15;
+  const volume = p.volume ?? 1.0;
+  const out = emptyMesh();
+  const bx = base[0], by = base[1], bz = base[2];
+
+  // Sit just proud of the skull. headMesh's widest ring is ~0.086 half-width at
+  // y 0.119, so 0.090 + volume clears it without ballooning.
+  const t = 0.006 + 0.010 * volume;
+  const rx = 0.086 + t;
+  const rz = 0.090 + t;
+  const cy = by + 0.128;
+  const ry = 0.118;
+
+  const seg = 26;
+  const rows = 10;
+  const rings = [];
+  for (let r = 0; r < rows; r++) {
+    const u = r / (rows - 1); // 0 = hairline, 1 = crown
+    const phi = (0.5 + 0.5 * u) * Math.PI;
+    const y = -Math.cos(phi) * ry;
+    const s = Math.max(0.10, Math.sin(phi));
+    rings.push({ pts: ellipseProfile(rx * s, rz * s, seg), o: [bx, cy + y, bz - 0.004], u });
+  }
+  const cap = loft(rings, { capStart: false, capEnd: true });
+  computeNormals(cap);
+
+  // The hairline. `ang` is measured from straight ahead: cos>0 is the forehead,
+  // cos<0 the occiput, |sin| the temples.
+  warp(cap, (v) => {
+    const dy = v.y - cy;
+    if (dy > 0.02) return;
+    const ang = Math.atan2(v.x - bx, v.z - bz);
+    const front = Math.max(0, Math.cos(ang));
+    const back = Math.max(0, -Math.cos(ang));
+    const side = Math.abs(Math.sin(ang));
+    // forehead exposed, temples cut in, nape carried lowest
+    const drop = -front * 0.030 + side * 0.016 + back * (0.030 + 0.075 * length);
+    const k = Math.min(1, Math.max(0, (0.02 - dy) / 0.09));
+    v.y += (drop - 0.012) * k;
+  });
+  computeNormals(cap);
+  appendMesh(out, cap);
+
+  // Longer hair: a mass hanging off the back of the skull. Bound to Head like
+  // the cap, so it swings with the head rather than the shoulders — wrong for
+  // real hair, right for the cost, and invisible at the distance this is seen.
+  if (length > 0.5) {
+    const drop = 0.10 + 0.26 * length;
+    const mass = [];
+    const mRows = 8;
+    for (let r = 0; r < mRows; r++) {
+      const u = r / (mRows - 1);
+      // tapers and narrows as it falls
+      const w = (rx + 0.004) * (1 - 0.30 * u);
+      const d = (rz * 0.62) * (1 - 0.45 * u);
+      mass.push({
+        pts: ellipseProfile(w, d, seg),
+        o: [bx, cy + 0.02 - drop * u, bz - 0.030 - 0.020 * u],
+        u,
+      });
+    }
+    const back = loft(mass, { capStart: false, capEnd: true });
+    computeNormals(back);
+    // cut away the front half — this is a back mass, not a full tube
+    warp(back, (v) => {
+      const ang = Math.atan2(v.x - bx, v.z - bz);
+      const f = Math.max(0, Math.cos(ang));
+      if (f > 0.25) v.z -= (f - 0.25) * 0.055;
+    });
+    computeNormals(back);
+    appendMesh(out, back);
+  }
+
+  // Curl. Two octaves: a coarse one that makes clumps and a fine one for the
+  // strand break-up. A straight-haired character gets almost none of it, which
+  // is why `curl` scales both rather than switching between them.
+  displace(out, (x, y, z) => {
+    const clump = (nz.fbm3(x * 46, y * 46, z * 46, 3) - 0.5) * (0.0026 + 0.0090 * curl);
+    const strand = (nz.fbm3(x * 130, y * 130, z * 130, 2) - 0.5) * (0.0009 + 0.0026 * curl);
+    return clump + strand;
+  });
+  computeNormals(out);
+  return out;
+}
+
+/**
+ * Moustache. Sits under the nose, above the lip line, and follows the curve of
+ * the mouth rather than sitting flat — a straight bar under the nose reads as
+ * a smudge of dirt at any distance.
+ */
+export function moustache(nz, base, p = {}) {
+  const bx = base[0], by = base[1], bz = base[2];
+  const halfW = p.wide ?? 0.030;
+  const thick = p.thick ?? 0.0075;
+  const y0 = by + 0.086;
+  const seg = 14;
+  const rings = [];
+  for (let i = 0; i <= seg; i++) {
+    const u = i / seg;
+    const x = (u * 2 - 1) * halfW;
+    // wraps back around the lip, and droops at the outer ends
+    const zPull = -((x / halfW) ** 2) * 0.013;
+    const yDrop = -((x / halfW) ** 2) * 0.005;
+    const h = thick * (1 - 0.45 * (x / halfW) ** 2);
+    rings.push({
+      pts: ellipseProfile(0.0016, h, 8),
+      o: [bx + x, y0 + yDrop, bz + 0.088 + zPull],
+      u,
+    });
+  }
+  const m = loft(rings, { capStart: true, capEnd: true });
+  computeNormals(m);
+  displace(m, (x, y, z) => (nz.fbm3(x * 150, y * 150, z * 150, 2) - 0.5) * 0.0016);
+  computeNormals(m);
+  return m;
+}
+
+/**
+ * A bare arm, for the sleeveless vest. Same tube solve as `limbTube` but with
+ * anatomical radii instead of cloth ones: the deltoid and forearm swell, the
+ * elbow and wrist narrow, and there is no fold or crease field because skin
+ * does not bunch the way a sleeve does.
+ */
+export function bareArm(nz, sh, el, wr, side) {
+  const m = limbTube(nz, [sh[0] + side * 0.010, sh[1] + 0.040, sh[2]], el, wr,
+    // shoulder, deltoid, mid-upper, elbow, forearm belly, mid, wrist
+    [0.044, 0.053, 0.046, 0.038, 0.043, 0.036, 0.028], {
+    rings: 20,
+    seg: 16,
+    fold: 0,
+    crease: 0,
+    bend: [0, 0, -1],
+  });
+  displace(m, (x, y, z) => nz.fbm3(x * 60, y * 60, z * 60, 3) * 0.0009);
+  computeNormals(m);
+  return m;
+}

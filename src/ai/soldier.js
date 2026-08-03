@@ -438,7 +438,12 @@ export function buildSoldier(name, { rng, materials }) {
       name: `shoulder${suffix}`,
     });
     B.add(
-      P.limbTube(nz, [sh[0] + side * 0.012, sh[1] + 0.055, sh[2]], el, wr,
+      // A vest has no sleeve, so the arm itself is the silhouette: skin, with
+      // anatomical radii instead of cloth ones and none of the fold/crease
+      // field, because skin doesn't bunch the way a sleeve does.
+      V.vest
+        ? P.bareArm(nz, sh, el, wr, side)
+        : P.limbTube(nz, [sh[0] + side * 0.012, sh[1] + 0.055, sh[2]], el, wr,
         [0.050, 0.062, 0.056, 0.050, 0.046, 0.042, 0.038], {
         rings: 22,
         seg: 16,
@@ -449,7 +454,7 @@ export function buildSoldier(name, { rng, materials }) {
         bend: [0, 0, -1], // sleeve bunches inside the elbow
       }),
       {
-        material: 'cloth',
+        material: V.vest ? 'skin' : 'cloth',
         bones: [`Clavicle${suffix}`, `UpperArm${suffix}`, `Forearm${suffix}`, `Hand${suffix}`, 'Spine2'],
         bias: [0.5, 1, 1, 0.7, 0.25],
         colour: [1, 1, 1],
@@ -701,6 +706,31 @@ export function buildSoldier(name, { rng, materials }) {
     name: 'head',
   });
   B.add(P.nose(nz, head), { material: 'skin', bone: 'Head', grime: 0.25, name: 'nose' });
+  // ---- hair and moustache ------------------------------------------------
+  // Bald is the ABSENCE of the hair part, not a separate flag: Paddy Mason and
+  // Oysters simply have `hair: null`. Both parts ride the 'skin' material
+  // slot rather than adding new ones — a new material means another texture
+  // bake at boot and another draw call per character, and hair reads off its
+  // vertex colour and its silhouette, not off a bespoke map.
+  if (V.hair) {
+    B.add(P.hair(nz, head, V.hair), {
+      material: 'skin',
+      bone: 'Head',
+      colour: V.hair.tint ?? [0.3, 0.24, 0.2],
+      grime: 0.35,
+      dust: 0.2,
+      name: 'hair',
+    });
+  }
+  if (V.moustache) {
+    B.add(P.moustache(nz, head), {
+      material: 'skin',
+      bone: 'Head',
+      colour: V.moustacheTint ?? [0.34, 0.28, 0.24],
+      grime: 0.3,
+      name: 'moustache',
+    });
+  }
   B.add(P.ear(nz, head, -1), { material: 'skin', bone: 'Head', grime: 0.45, name: 'earR' });
   B.add(P.ear(nz, head, 1), { material: 'skin', bone: 'Head', grime: 0.45, name: 'earL' });
   for (const side of [-1, 1]) {
