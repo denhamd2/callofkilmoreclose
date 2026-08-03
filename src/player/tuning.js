@@ -322,4 +322,20 @@ export const THIRD_PERSON = {
   radius: 0.22,
   skin: 0.12,
   minDistance: 0.55,
+
+  /* ---- body orientation ------------------------------------------------- */
+  /**
+   * Radians/second the body turns toward its heading. `turnRate` is the
+   * free-running case (body follows movement); `aimTurnRate` is much faster
+   * because the gun has to stay on the crosshair when aiming or firing. Both
+   * are scaled up by how far there is to turn, so an about-face does not crawl.
+   */
+  turnRate: 6.2,
+  aimTurnRate: 15.0,
+  /**
+   * Speed above which the body plays the run cycle. Steady ground speed is
+   * 4.57 m/s and this used to be 2.6, so the walk clip was only ever seen
+   * during the ~50 ms acceleration ramp.
+   */
+  runSpeed: 3.4,
 };

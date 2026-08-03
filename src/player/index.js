@@ -84,7 +84,7 @@ import { CameraRig } from './camera.js';
 import { Health } from './health.js';
 import { LowHealthPass } from './lowhealth.js';
 import { STANCE, MOVE, CAMERA, HEALTH, FOOTSTEP, JUMP_SPEED, THIRD_PERSON as TP } from './tuning.js';
-import { clamp, clamp01, lerp, approach, DEG } from './springs.js';
+import { clamp, clamp01, lerp, approach, moveToward, angleDelta, DEG } from './springs.js';
 
 export class PlayerSystem {
   static id = 'player';
@@ -116,6 +116,25 @@ export class PlayerSystem {
     this._boomRight = new THREE.Vector3();
     this._boomUp = new THREE.Vector3(0, 1, 0);
     this._aimTarget = new THREE.Vector3();
+    /**
+     * Body orientation state. `_bodyYaw` is what is actually written to the
+     * mesh; `_bodyYawWanted` latches the last real movement heading so the body
+     * does not spin back to a default when the stick is released.
+     */
+    this._bodyYaw = 0;
+    this._bodyYawWanted = 0;
+    /** Seconds since the last shot — holds the body facing the crosshair. */
+    this._sinceFire = 99;
+    /** Preallocated animator state; setState only reads it. */
+    this._animState = {
+      clip: 'idle',
+      speed: 0,
+      crouch: false,
+      aimTarget: this._aimTarget,
+      lookTarget: this._aimTarget,
+      aimWeight: 0.12,
+      suppress: 0,
+    };
     this._animAccum = 0;
     this._adsExternal = false;
     this._adsExternalAge = 0;
@@ -204,6 +223,11 @@ export class PlayerSystem {
     on('damage:dealt', (e) => this._onDamageDealt(e));
     on('explosion', (e) => this._onExplosion(e));
     on('bullet:impact', (e) => this._onBulletImpact(e));
+    // Firing pins the body to the crosshair for a moment, so a shot taken while
+    // running does not leave David shooting sideways.
+    on('weapon:fire', () => {
+      this._sinceFire = 0;
+    });
 
     console.info(
       `[player] spawn ${spawn.feet.x.toFixed(1)}, ${spawn.feet.y.toFixed(2)}, ` +
@@ -333,6 +357,7 @@ export class PlayerSystem {
 
   /** Put the body on the capsule and drive its animation from the movement state. */
   _updateBody(dt, ctx) {
+    this._sinceFire += dt;
     this._ensureBody(ctx);
     const b = this.body;
     if (!b) return;
@@ -340,9 +365,43 @@ export class PlayerSystem {
 
     b.group.visible = !this.health.dead;
     b.group.position.copy(m.renderPosition);
-    // Face where the camera is aiming, not where the feet are going: this is a
-    // shooter, so the gun has to point down the crosshair even when strafing.
-    b.group.rotation.y = this.rig.rotation.y;
+
+    /**
+     * BODY YAW.
+     *
+     * This used to be `b.group.rotation.y = this.rig.rotation.y` — the composed
+     * CAMERA yaw, assigned raw every frame. Two things were wrong with it.
+     *
+     * First, `rig.rotation.y` carries breath sway, recoil, weapon kick and
+     * trauma shake on top of the look yaw, so David's whole body counter-
+     * rotated with the breathing sine while standing still and flinched on
+     * every shot.
+     *
+     * Second, it was instantaneous: a 180 degree flick teleported the body,
+     * because nothing in the controller limited turn rate.
+     *
+     * Now: when he is aiming or has just fired, the body drives to the LOOK yaw
+     * (m.yaw, clean of all the additive channels) fast, so the gun still points
+     * down the crosshair. Otherwise it turns toward where he is actually
+     * MOVING, at a limited rate — which is what reads as weight, and what stops
+     * a strafing run cycle from moonwalking sideways.
+     */
+    const aiming = this.adsAmount > 0.15 || this._sinceFire < 0.9;
+    let desiredYaw = m.yaw;
+    if (!aiming) {
+      const vx = m.velocity.x;
+      const vz = m.velocity.z;
+      if (vx * vx + vz * vz > 0.36) this._bodyYawWanted = Math.atan2(vx, vz);
+      desiredYaw = this._bodyYawWanted;
+    } else {
+      this._bodyYawWanted = m.yaw;
+    }
+    const dYaw = angleDelta(this._bodyYaw, desiredYaw);
+    // Rate scales with how far there is to go, so small corrections are smooth
+    // and a full about-face still completes quickly instead of crawling.
+    const rate = (aiming ? TP.aimTurnRate : TP.turnRate) * (1 + Math.abs(dYaw) * 0.85);
+    this._bodyYaw += Math.sign(dYaw) * Math.min(Math.abs(dYaw), rate * dt);
+    b.group.rotation.y = this._bodyYaw;
     b.group.updateMatrixWorld(true);
 
     // A look/aim point far down the aim ray. The animator aims the upper body
@@ -354,19 +413,30 @@ export class PlayerSystem {
     const moving = speed > 0.25;
     let clip;
     if (crouch) clip = moving ? 'crouchWalk' : 'crouchIdle';
-    else if (speed > 2.6) clip = 'run';
+    // The run threshold was 2.6 while steady ground speed is 4.57, so 'walk'
+    // was only ever visible during the ~50 ms acceleration ramp — David went
+    // from a standstill to a full run inside two frames. Walking now owns
+    // everything up to a real jog.
+    else if (speed > TP.runSpeed) clip = 'run';
     else if (moving) clip = 'walk';
     else clip = 'idle';
 
-    b.animator.setState({
-      clip,
-      speed,
-      crouch,
-      aimTarget: this._aimTarget,
-      lookTarget: this._aimTarget,
-      aimWeight: Math.max(this.adsAmount, 0.55),
-      suppress: 0,
-    });
+    /**
+     * Preallocated. This was a fresh object literal every frame — the only
+     * per-frame allocation in this file. `Animator.setState` only reads fields,
+     * so reusing one object is behaviourally identical.
+     */
+    const st = this._animState;
+    st.clip = clip;
+    st.speed = speed;
+    st.crouch = crouch;
+    st.aimTarget = this._aimTarget;
+    st.lookTarget = this._aimTarget;
+    // Drop the aim pose right down when he is not actually aiming, so the
+    // upper body relaxes instead of holding a permanent shouldered stance.
+    st.aimWeight = Math.max(this.adsAmount, aiming ? 0.55 : 0.12);
+    st.suppress = 0;
+    b.animator.setState(st);
 
     this._animAccum += dt;
     b.animator.update(this._animAccum, ctx.time.elapsed);
