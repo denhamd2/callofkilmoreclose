@@ -231,20 +231,30 @@ const bays = (d) => Math.max(1, Math.round(d / 3.05));
 const bayCentre = (d, b) => -d / 2 + (b + 0.5) * (d / bays(d));
 
 /**
- * The fixed window pattern: ground floor is the front door in bay 0 and
- * windows across the rest, upper floor is windows all the way. Authored as
- * `bayKinds` so it overrides the per-bay dice roll in buildings.js (which gave
- * each bay a 72%/88% chance of a window and blank wall otherwise, and was why
- * no two frontages matched). Applies to whichever side faces the street, so a
- * 2-bay and a 3-bay frontage still read as the same house.
+ * The fixed window pattern: EXACTLY two windows upstairs and one downstairs
+ * beside the front door, on every house, whatever its frontage.
+ *
+ * Authored as `bayKinds` so it overrides the per-bay dice roll in buildings.js
+ * (which gave each bay a 72%/88% chance of a window and blank wall otherwise,
+ * and was why no two frontages matched).
+ *
+ * The count used to be derived from the bay count — `round(d / 3.05)` — so a
+ * wide house got MORE windows: of the 28 houses, 13 came out with three or four
+ * windows upstairs instead of two. That is what made the wider footprints read
+ * as stretched houses rather than as the same archetype on a bigger plot. The
+ * pattern is now pinned to the archetype and the leftover frontage is left
+ * blank, which is what the side garage stands against.
  */
 function windows(streetSide, d) {
   const n = bays(d);
   const ground = [];
   const upper = [];
   for (let b = 0; b < n; b++) {
-    ground.push(b === 0 ? 'door' : 'window');
-    upper.push('window');
+    // Bay 0 is the front door, bay 1 the single ground-floor window, and the
+    // two upper windows sit directly over them. Everything beyond bay 1 is
+    // blank pebbledash, which is the frontage the side garage stands against.
+    ground.push(b === 0 ? 'door' : b === 1 ? 'window' : 'blank');
+    upper.push(b < 2 ? 'window' : 'blank');
   }
   return { [streetSide]: [ground, upper] };
 }
@@ -257,7 +267,7 @@ function windows(streetSide, d) {
 function attachments(d) {
   const half = d / 2;
   return [
-    { kind: 'porch', along: +Math.max(bayCentre(d, 0), -(half - 0.95)).toFixed(3), w: 1.9, depth: 1.5, h: 2.5 },
+    { kind: 'porch', along: +Math.max(bayCentre(d, 0), -(half - 0.95)).toFixed(3), w: 1.9, depth: 1.5, h: 2.5, doorKey: 'window_glass' },
     { kind: 'garage', along: +Math.min(bayCentre(d, bays(d) - 1), half - 1.3).toFixed(3), w: 2.6, depth: 2.5, h: 2.3, doorKey: 'wood_prop' },
   ];
 }

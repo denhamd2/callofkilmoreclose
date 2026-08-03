@@ -360,9 +360,55 @@ function buildAttachments(A, rng, spec, wallKey, streetSide) {
     const lz = cz + n[2] * faceOff;
     const leafX = alongX ? leafW : 0.06;
     const leafZ = alongX ? 0.06 : leafW;
-    A.add(leafKey, BOX(A), LL(IDENT, lx, leafH / 2 + 0.03, lz, 0, leafX, leafH, leafZ), {
-      masks: [0.3, 0.3, 0.1],
-    });
+    if (isGarage) {
+      A.add(leafKey, BOX(A), LL(IDENT, lx, leafH / 2 + 0.03, lz, 0, leafX, leafH, leafZ), {
+        masks: [0.3, 0.3, 0.1],
+      });
+    } else {
+      // A porch door on this street is a GLASS SLIDER, not a solid leaf: two
+      // glazed panels in a frame, one standing slightly proud of the other on
+      // its track so the overlap reads as "this one slides". Built as two
+      // panels rather than one so the meeting stile is visible at walk-up
+      // distance, which is the detail that says slider rather than picture
+      // window.
+      const panelW = leafW * 0.54;
+      const frame = 0.045;
+      for (const sgn of [-1, 1]) {
+        const off = (panelW / 2 - leafW * 0.04) * sgn;
+        // the leading (sgn>0) panel sits on the outer track
+        const proud = sgn > 0 ? 0.035 : 0;
+        const px = lx + (alongX ? off : 0) + n[0] * proud;
+        const pz = lz + (alongX ? 0 : off) + n[2] * proud;
+        A.add(
+          leafKey,
+          BOX(A),
+          LL(IDENT, px, leafH / 2 + 0.03, pz, 0, alongX ? panelW : 0.05, leafH, alongX ? 0.05 : panelW),
+          { masks: [0.15, 0.2, 0.05] }
+        );
+        // slim frame around each panel, so the glass has an edge to catch light
+        A.add(
+          'metal_dark',
+          BOX(A),
+          LL(
+            IDENT,
+            px,
+            leafH / 2 + 0.03,
+            pz,
+            0,
+            alongX ? panelW + frame : 0.03,
+            leafH + frame,
+            alongX ? 0.03 : panelW + frame
+          ),
+          { masks: [0.4, 0.55, 0.15] }
+        );
+      }
+      // head and sill track
+      for (const ty of [0.05, leafH + 0.05]) {
+        A.add('metal_dark', BOX(A), LL(IDENT, lx, ty, lz, 0, leafX + 0.06, 0.07, leafZ + 0.06), {
+          masks: [0.45, 0.6, 0.15],
+        });
+      }
+    }
 
     // ---- a porch is GLAZED, a garage is not ------------------------------
     // The Street View reference calls for a small glazed porch, and this was
