@@ -67,11 +67,23 @@
  *    pass closed the loop end with a fictional GATE arch and the lane end
  *    with a barricade; both were removed once this connectivity was pinned
  *    down to specific roads.)
- *  - SET_PIECES positions below are proportionally rescaled from the old
- *    ~104 m street to the new ~247 m one so nothing sits off the map; their
- *    CONTENT (market stalls, sandbag walls, palms, Jersey barriers…) is
- *    still the old market-street set and is deliberately NOT rethemed here —
- *    that belongs to the dressing/materials pass that follows this one.
+ *  - SET_PIECES POSITIONS below are proportionally rescaled from the old
+ *    market street by a measured factor of 2.375 (old z span 104 m -> 247 m),
+ *    so nothing sits off the map. Note 247 m is that arithmetic product and
+ *    nothing more — it is NOT a street length. Four different figures describe
+ *    this street and they mean different things:
+ *      ~209 m  real OSM along-axis extent of the 26 footprints (PCA fit)
+ *       218.2 m modelled building span, KW22's near z to KW1's far z
+ *       247 m   the SET_PIECES rescale product (104 x 2.375) — an intermediate
+ *       253 m   STREET.zMin..zMax, the drawn road ribbon, which runs past the
+ *               end houses at both ends so the street does not stop dead
+ *    The 6 m gap between the 247 m rescale target and the 253 m ribbon is why
+ *    set pieces sit slightly inside both street ends rather than reaching them.
+ *  - SET_PIECES CONTENT is rethemed for the residential setting — see the
+ *    comment on the table itself. (This note previously claimed the content was
+ *    still the old market-street set. That was stale from the moment the
+ *    dressing pass landed, and it caused a later pass to misdiagnose correct
+ *    residential dressing as leftover market dressing. Keep it in step.)
  *
  * Coordinate conversion: local tangent-plane approximation centred on the
  * centroid of the 26 building footprints (equirectangular: metres-per-degree

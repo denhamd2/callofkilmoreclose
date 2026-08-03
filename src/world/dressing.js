@@ -809,104 +809,6 @@ export function hedgeRow(A, rng, x, z, ry, len, h = 1.0, baseY = null) {
   A.box('foliage', x, y + h / 2, z, len, h, 0.5, ry);
 }
 
-/**
- * A course-laid sandbag wall.
- *
- * What makes a stack of bags read as cover rather than as a tray of bread rolls:
- *
- *  - three different bag silhouettes, picked so neighbours rarely match;
- *  - the bags INTERPENETRATE. Real bags are laid wet-soft and squash into each
- *    other; 1-2 cm of overlap along the run and between courses is what closes
- *    the daylight gaps that turn a wall into a lattice;
- *  - squash grows with the number of bags above, so the bottom course is
- *    visibly flatter and wider than the top one;
- *  - per-bag yaw ±12°, non-uniform scale 0.90-1.12, and 2-4 cm of row-pitch
- *    jitter so no two courses line up;
- *  - the odd header bag laid across the run, and per-bag weathering variation.
- *
- * `baseY` puts the run on a roof or a rampart walkway instead of the street.
- */
-export function sandbagWall(A, rng, x, z, ry, len, courses = 3, baseY = null) {
-  const y = baseY ?? groundY(x, z);
-  const BAG_W = 0.5;
-  const BAG_H = 0.17;
-  const IDS = ['sandbag_a', 'sandbag_b', 'sandbag_c'];
-  let cy = y + 0.01;
-  let prev = -1;
-  for (let c = 0; c < courses; c++) {
-    // load from the bags above: the bottom of a five-high wall carries most of it
-    const load = (courses - 1 - c) / Math.max(1, courses - 1);
-    const squash = 1 - load * 0.19; // vertical
-    const spread = 1 + load * 0.07; // and it bulges out sideways
-    // 2-4 cm of row-pitch jitter, so course seams never stack vertically
-    const pitch = BAG_W - rng.range(0.02, 0.04);
-    const per = Math.max(2, Math.round(len / pitch));
-    const stagger = (c % 2) * pitch * 0.5 + rng.range(-0.03, 0.03);
-    const shrink = c === courses - 1 && courses > 2 ? 1 : 0;
-    const bagH = BAG_H * squash;
-    for (let i = shrink; i < per - shrink; i++) {
-      const lx = -len / 2 + stagger + (i + 0.5) * pitch;
-      if (Math.abs(lx) > len / 2) continue;
-      // never the same silhouette twice in a row
-      let pick = rng.int(0, 2);
-      if (pick === prev) pick = (pick + 1 + rng.int(0, 1)) % 3;
-      prev = pick;
-      // Headers: bags turned across the run. Real emplacements are laid part
-      // stretcher, part header, and the mix is what stops a run reading as a
-      // row of identical parallel loaves.
-      const header = rng.float() < 0.3;
-      const lz = rng.range(-0.03, 0.03) + (header ? rng.range(-0.05, 0.05) : 0);
-      const px = x + Math.cos(ry) * lx + Math.sin(ry) * lz;
-      const pz = z - Math.sin(ry) * lx + Math.cos(ry) * lz;
-      A.putS(
-        IDS[pick],
-        px,
-        cy, // the bag prop's origin is its base, so scale never lifts it
-        pz,
-        ry + (header ? Math.PI / 2 : 0) + rng.range(-0.21, 0.21),
-        rng.range(0.9, 1.12) * spread,
-        rng.range(0.9, 1.06) * squash,
-        rng.range(0.94, 1.12) * spread,
-        [1, rng.range(0.7, 1.6), rng.range(0.85, 1.3)],
-        rng.range(-0.09, 0.09),
-        rng.range(-0.11, 0.11)
-      );
-    }
-    // the next course beds 1.5-2.5 cm into this one
-    cy += bagH - rng.range(0.015, 0.025);
-  }
-  const h = Math.max(0.2, cy - y + 0.06);
-  A.box('fabric', x, y + h / 2, z, len, h, 0.46, ry);
-  if (baseY !== null) return; // a rampart run: no ground clutter behind it
-  // spilled sand and grit along the foot of the run: bags leak, and the line
-  // where the bottom course meets the deck is otherwise a ruled edge
-  const skirts = Math.max(2, Math.round(len / 1.1));
-  for (let i = 0; i < skirts; i++) {
-    const lx = -len / 2 + ((i + 0.5) / skirts) * len;
-    groundSkirt(A, rng, x + Math.cos(ry) * lx, y, z - Math.sin(ry) * lx, 0.44, {
-      pebbles: rng.int(1, 3),
-      key: 'sand',
-      grime: 0.7,
-    });
-  }
-  // ammo tins and a jerry can behind the wall
-  for (let i = 0; i < rng.int(1, 3); i++) {
-    const lx = rng.range(-len / 2, len / 2);
-    const px = x + Math.cos(ry) * lx + Math.sin(ry) * 0.7;
-    const pz = z - Math.sin(ry) * lx + Math.cos(ry) * 0.7;
-    if (!isOpen(px, pz, 0.3)) continue;
-    A.put(
-      rng.pick(['jerry_can', 'crate_b', 'box_card_a', 'gas_bottle']),
-      px,
-      groundY(px, pz),
-      pz,
-      rng.float() * 6.28,
-      1,
-      [1, 1.3, 1]
-    );
-  }
-}
-
 // --- builder's skip -----------------------------------------------------------
 /**
  * A skip outside the one house getting done up — the ordinary equivalent of
@@ -1304,7 +1206,8 @@ function dressBuilding(A, rng, info) {
       const oz = wp[2] + rng.range(-1.0, 1.0);
       if (!isOpen(ox, oz, 0.15)) continue;
       A.put(
-        rng.pick(['bucket', 'crate_b', 'stool', 'sandbag_a', 'litter', 'jerry_can', 'planter']),
+        // Doorstep junk, minus the sandbag and jerry can that read as militia.
+        rng.pick(['bucket', 'crate_b', 'stool', 'planter', 'litter', 'bin_black', 'planter']),
         ox,
         groundY(ox, oz),
         oz,
@@ -1362,7 +1265,9 @@ function dressBuilding(A, rng, info) {
       A.box('wood', px, roofY + n * 0.26, pz, 0.7, n * 0.53, 0.7);
     } else {
       A.put(
-        rng.pick(['stool', 'chair', 'tyre', 'barrel_rust', 'pallet', 'gas_bottle']),
+        // Roof/yard clutter. tyre, barrel_rust and gas_bottle were the militia
+        // set; a stool, a chair, a pallet and a water butt are ordinary.
+        rng.pick(['stool', 'chair', 'crate_c', 'barrel_blue', 'pallet', 'planter']),
         px,
         roofY,
         pz,
@@ -1507,7 +1412,12 @@ export function scatterDebris(A, rng) {
   A.jitter = jitterRig();
 
   // --- against the building line, both sides of the street ---
-  for (let i = 0; i < 340; i++) {
+  // 340 was a war-damaged market street's worth of masonry. A lived-in close
+  // collects litter, weeds and the odd bottle against a wall — not bricks,
+  // cinder blocks, broken slabs and planks — so both the count and the
+  // vocabulary come down. The gaussian falloff below is unchanged: where things
+  // collect is right, it was only ever what collects that was wrong.
+  for (let i = 0; i < 120; i++) {
     const side = rng.float() < 0.5 ? -1 : 1;
     const z = rng.range(zMin + 1, zMax - 1);
     // exponential falloff away from the wall
@@ -1517,15 +1427,11 @@ export function scatterDebris(A, rng) {
     const y = groundY(x, z);
     const pick = rng.float();
     let id;
-    if (pick < 0.3) id = 'litter';
-    else if (pick < 0.46) id = rng.pick(['brick_a', 'brick_b']);
-    else if (pick < 0.58) id = rng.pick(['rock_a', 'rock_b']);
-    else if (pick < 0.68) id = 'weeds';
-    else if (pick < 0.76) id = rng.pick(['can', 'bottle']);
-    else if (pick < 0.84) id = rng.pick(['plank_a', 'plank_b']);
-    else if (pick < 0.9) id = 'cinder';
-    else if (pick < 0.95) id = rng.pick(['box_card_a', 'box_card_b']);
-    else id = rng.pick(['tyre_small', 'bucket', 'crate_b', 'slab_shard']);
+    if (pick < 0.34) id = 'litter';
+    else if (pick < 0.62) id = 'weeds';
+    else if (pick < 0.78) id = rng.pick(['can', 'bottle']);
+    else if (pick < 0.9) id = rng.pick(['box_card_a', 'box_card_b']);
+    else id = rng.pick(['bucket', 'crate_b']);
     A.put(id, x, y + 0.015, z, rng.float() * 6.28, rng.range(0.65, 1.25), [
       1,
       rng.range(1.0, 1.5),
@@ -1534,12 +1440,14 @@ export function scatterDebris(A, rng) {
   }
 
   // --- the road surface: sparser, and pushed to the gutters ---
-  for (let i = 0; i < 180; i++) {
+  for (let i = 0; i < 70; i++) {
     const x = rng.range(-STREET.halfWidth + 0.1, STREET.halfWidth - 0.1) * (0.45 + 0.55 * Math.abs(rng.signed()));
     const z = rng.range(zMin + 1, zMax - 1);
     if (!isOpen(x, z, 0.05)) continue;
     A.put(
-      rng.pick(['litter', 'can', 'rock_b', 'brick_b', 'litter', 'bottle', 'weeds']),
+      // rock/brick on the carriageway read as shelling debris; gutter litter,
+      // a can and weeds through the joints are what a real road carries.
+      rng.pick(['litter', 'can', 'litter', 'weeds', 'litter', 'bottle', 'weeds']),
       x,
       groundY(x, z) + 0.012,
       z,
@@ -1563,17 +1471,22 @@ export function scatterDebris(A, rng) {
       if (rng.float() > wallBias) continue;
       const pick = rng.float();
       let id;
+      // Alleys and rear lanes legitimately stay the junkiest ground in the
+      // level — a back lane really does collect crates, a pallet, an old
+      // barrel. What goes is the demolition vocabulary (cinder, slab_shard,
+      // rebar) and the militia one (jerry_can, gas_bottle, rusted drums);
+      // weeds and shrub take the freed weight, since an unswept lane greens up.
       if (pick < 0.2) id = 'litter';
-      else if (pick < 0.34) id = rng.pick(['brick_a', 'brick_b', 'cinder']);
+      else if (pick < 0.34) id = rng.pick(['weeds', 'shrub']);
       else if (pick < 0.46) id = rng.pick(['rock_a', 'rock_b']);
       else if (pick < 0.56) id = 'weeds';
       else if (pick < 0.64) id = 'shrub';
       else if (pick < 0.72) id = rng.pick(['plank_a', 'plank_b']);
       else if (pick < 0.8) id = rng.pick(['crate_a', 'crate_b', 'crate_flat', 'pallet']);
-      else if (pick < 0.86) id = rng.pick(['barrel_rust', 'barrel_blue', 'barrel_wood']);
-      else if (pick < 0.9) id = rng.pick(['tyre', 'tyre_small']);
-      else if (pick < 0.95) id = rng.pick(['box_card_a', 'box_card_b', 'bucket', 'jerry_can']);
-      else id = rng.pick(['slab_shard', 'rebar', 'gas_bottle']);
+      else if (pick < 0.86) id = rng.pick(['barrel_blue', 'barrel_wood']);
+      else if (pick < 0.9) id = rng.pick(['bin_black', 'bin_green']);
+      else if (pick < 0.95) id = rng.pick(['box_card_a', 'box_card_b', 'bucket', 'planter']);
+      else id = rng.pick(['weeds', 'litter', 'bottle']);
       const y = groundY(x, z);
       A.put(id, x, y + 0.015, z, rng.float() * 6.28, rng.range(0.7, 1.2), [
         1,
@@ -1748,11 +1661,22 @@ function merlonRun(A, rng, x0, x1, z, t, yTop, opts = {}) {
 }
 
 /**
- * The map edge: a continuous wall of compound walls and distant infill so the
- * playable area reads as part of a bigger town. The street's own two ends
- * (z near STREET.zMin/zMax) are deliberately left unblocked — they read as
- * continuing into the real road network (Kilmore Avenue north, Beechlawn
- * Avenue south; see ROAD_ENDS in layout.js) rather than a dead end.
+ * The map edge — now an INVISIBLE boundary.
+ *
+ * This used to raise a continuous 3.0-3.8 m compound wall right around the
+ * level. On a Middle-Eastern market street that read as a walled compound; on a
+ * Dublin residential close it read as a prison yard, and it flatly contradicted
+ * ROAD_ENDS, where both street ends are documented as opening onto real roads
+ * (Kilmore Avenue north, Beechlawn Avenue south). So the wall mesh is gone and
+ * only the collider ring remains: the player is stopped in exactly the same
+ * place, but nothing draws.
+ *
+ * STOPGAP, not a finish. An invisible wall is honest about the boundary's
+ * position and dishonest about its existence — walk into it and nothing
+ * explains why you stopped. The real answer is a far-field treatment (fence
+ * and hedgerow lines, rear-garden walls, distant terrain) so the edge reads as
+ * something rather than as nothing. That belongs to a later dressing pass; this
+ * one only removes what was wrong.
  */
 export function buildPerimeter(A, rng) {
   // The compound wall has to sit outside the real ~253 m OSM street length
@@ -1784,15 +1708,15 @@ export function buildPerimeter(A, rng) {
       const px = x0 + dx * t;
       const pz = z0 + dz * t;
       const h = rng.range(3.0, 3.8);
-      A.add(
-        rng.pick(['plaster_sand', 'plaster_cream', 'concrete']),
-        BOX(A),
-        LL(IDENT, px, h / 2, pz, ry, len / n + 0.05, h, 0.4),
-        { masks: [0.5, 0.7, 0.4] }
-      );
-      A.add('concrete', BOX_SOFT(A), LL(IDENT, px, h + 0.06, pz, ry, len / n + 0.14, 0.12, 0.54), {
-        masks: [0.8, 0.4, 0.15],
-      });
+      // The wall MESH is gone — see the note on this function. Only the collider
+      // below survives, so the boundary still stops the player.
+      //
+      // This draw is dead but deliberate: buildPerimeter runs before every other
+      // dressing pass (world/index.js), so removing a draw from the shared
+      // placement stream would shift the position of every prop in the level and
+      // walk them through the SHOT_CLEAR camera keepouts. Keeping the pick keeps
+      // the stream — and therefore every downstream position — byte-identical.
+      rng.pick(['plaster_sand', 'plaster_cream', 'concrete']);
       A.box('concrete', px, h / 2, pz, len / n + 0.05, h, 0.45, ry);
     }
   }
