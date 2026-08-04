@@ -1,0 +1,10 @@
+[gd_resource type="Theme" load_steps=2 format=3]
+
+[ext_resource type="FontFile" path="res://assets/fonts/pricedown_bl.otf" id="1_font"]
+
+[resource]
+Button/fonts/font = ExtResource("1_font")
+Button/font_sizes/font_size = 28
+ScoreLabel/base_type = &"Label"
+ScoreLabel/fonts/font = ExtResource("1_font")
+ScoreLabel/font_sizes/font_size = 18

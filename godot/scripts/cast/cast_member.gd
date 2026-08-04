@@ -104,6 +104,8 @@ func seed_rng(value: int) -> void:
 ## Called once the street navmesh is baked. Fighting waits on the same signal:
 ## a brain that starts chasing before there is a path just stands still.
 func enable_roaming() -> void:
+	if ProfileToggles.has(&"no_ai"):
+		return
 	_roam_enabled = true
 	_loiter = _rng.randf_range(0.0, LOITER.y)
 	if _brain != null:
@@ -244,6 +246,10 @@ func _on_died(_source: Node) -> void:
 
 func _on_revived() -> void:
 	set_collision_layer_value(3, true)
+	_knocked = KnockPhase.NONE
+	_knock_timer = 0.0
+	_launch_grace = 0.0
+	velocity = Vector3.ZERO
 	if _animator != null:
 		_animator.reset_alive()
 

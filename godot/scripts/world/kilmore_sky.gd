@@ -85,7 +85,7 @@ func _grade_environment() -> void:
 
 	# Indirect bounce. Overcast light is almost entirely ambient, so colour
 	# bleeding between road, render and grass does most of the atmosphere here.
-	env.ssil_enabled = true
+	env.ssil_enabled = not ProfileToggles.has(&"no_ssil")
 	env.ssil_radius = 4.0
 	env.ssil_intensity = 1.0
 	env.ssil_sharpness = 0.98
@@ -107,18 +107,16 @@ func _grade_environment() -> void:
 	# longer terminates in a hard edge against the sky. Density is deliberately
 	# low: at 0.008 over 120 m the mid-street washed out to flat grey and the far
 	# houses disappeared, which reads as a bug rather than as weather.
-	env.volumetric_fog_enabled = true
+	env.volumetric_fog_enabled = not ProfileToggles.has(&"no_volumetric")
 	env.volumetric_fog_density = 0.0022
 	env.volumetric_fog_albedo = Color(0.76, 0.79, 0.83)
 	env.volumetric_fog_length = 90.0
 	env.volumetric_fog_gi_inject = 0.4
 	env.volumetric_fog_ambient_inject = 0.3
 
-	# SDFGI is the expensive one and the one most at risk of doing nothing here:
-	# the whole street is MultiMeshInstance3D, which Godot only voxelizes while
-	# the instances stay at the default GI_MODE_STATIC. Verified against a
-	# reference shot before being left on; if it regresses, drop this block and
-	# keep SSAO + SSIL, which carry most of the overcast read on their own.
+	# SDFGI voxelizes the MultiMesh street on first use (~1–2 fps steady-state plus a
+	# cold-start hitch). Kept on for the overcast atmospheric fill; bisect flags
+	# live in `profile_toggles.gd` if it needs turning off again.
 	env.sdfgi_enabled = true
 	env.sdfgi_cascades = 4
 	env.sdfgi_min_cell_size = 0.25

@@ -125,6 +125,53 @@ static func _car_surface_kind(part: String) -> StringName:
 	return &"paint"
 
 
+static func car_glass_bloodied() -> StandardMaterial3D:
+	var key := "car_glass_bloodied"
+	var hit: Variant = _cache.get(key)
+	if hit != null:
+		return hit as StandardMaterial3D
+	var m := _car_glass().duplicate() as StandardMaterial3D
+	m.albedo_color = Color(0.35, 0.12, 0.10, 0.42)
+	m.roughness = 0.18
+	_cache[key] = m
+	return m
+
+
+static func apply_car_damage(root: Node3D, paint: Color, health_frac: float) -> void:
+	var darken := clampf(1.0 - (1.0 - health_frac) * 0.55, 0.35, 1.0)
+	var damaged_paint := paint * darken
+	var shattered := health_frac < 0.35
+	var heavy := health_frac < 0.55
+	var critical := health_frac < 0.25
+	for mi in root.find_children("*", "MeshInstance3D", true, false):
+		var part := _part_name(mi)
+		var kind := _car_surface_kind(part)
+		var pl := part.to_lower()
+		if kind == &"glass":
+			mi.visible = not shattered
+			if not shattered:
+				mi.material_override = car_glass_bloodied() if health_frac < 0.7 else _car_glass()
+		elif kind == &"rubber":
+			mi.material_override = _mat(RUBBER, 0.94)
+		elif kind == &"trim":
+			# Mirrors and indicators detach visually once the body is beat up.
+			if critical and ("mirror" in pl or "indicator" in pl or "casing" in pl):
+				mi.visible = false
+			elif heavy and ("mirror" in pl or "plate" in pl):
+				mi.material_override = _mat(TRIM.darkened(0.45), 0.55, 0.1)
+			else:
+				mi.material_override = _mat(TRIM, 0.42, 0.25)
+		else:
+			var dent := 0.32 + (1.0 - health_frac) * 0.28
+			if heavy:
+				dent += 0.08
+			mi.material_override = _mat(damaged_paint, dent, 0.14 if critical else 0.18)
+
+
+static func prop_mat(colour: Color, rough: float = 0.88) -> StandardMaterial3D:
+	return _mat(colour, rough)
+
+
 static func dress_car(root: Node3D, paint: Color = Color(0.78, 0.80, 0.84)) -> void:
 	for mi in root.find_children("*", "MeshInstance3D", true, false):
 		var part := _part_name(mi)
@@ -153,13 +200,35 @@ static func _plant_surface_kind(part: String) -> StringName:
 
 
 static func dress_tree(root: Node3D) -> void:
+	var canopy_bottom := INF
 	for mi in root.find_children("*", "MeshInstance3D", true, false):
+		if mi.name == "GeneratedTrunk":
+			continue
 		var part := _part_name(mi)
 		var kind := _plant_surface_kind(part)
 		if kind == &"bark":
 			mi.material_override = _mat(BARK, 0.96)
 		else:
 			mi.material_override = _mat(CANOPY, 0.90)
+		var local_aabb: AABB = mi.transform * mi.get_aabb()
+		canopy_bottom = minf(canopy_bottom, local_aabb.position.y)
+	if root.get_node_or_null("GeneratedTrunk") == null:
+		var trunk_h := 1.6 if canopy_bottom == INF else clampf(canopy_bottom, 1.0, 2.8)
+		_add_tree_trunk(root, trunk_h)
+
+
+static func _add_tree_trunk(root: Node3D, height: float) -> void:
+	var trunk := MeshInstance3D.new()
+	trunk.name = &"GeneratedTrunk"
+	var cyl := CylinderMesh.new()
+	cyl.top_radius = 0.14
+	cyl.bottom_radius = 0.22
+	cyl.height = height
+	trunk.mesh = cyl
+	trunk.position = Vector3(0.0, height * 0.5, 0.0)
+	trunk.material_override = _mat(BARK, 0.96)
+	root.add_child(trunk)
+	root.move_child(trunk, 0)
 
 
 static func dress_bush(root: Node3D) -> void:

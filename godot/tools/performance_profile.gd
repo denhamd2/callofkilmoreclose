@@ -7,7 +7,7 @@
 
 extends Node
 
-const WARMUP_FRAMES := 30
+const WARMUP_FRAMES := 90
 const SAMPLE_FRAMES := 240
 const DRIVE_FRAMES := 120
 

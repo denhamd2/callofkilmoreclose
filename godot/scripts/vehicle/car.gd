@@ -50,6 +50,10 @@ const MIN_KNOCK_SPEED := 2.2
 ## Damage per m/s of impact speed. At ~14 m/s (the probe's drive speed) that is
 ## ~112 against 160 hp — a heavy hit that is survivable, so they get back up.
 const KNOCK_DAMAGE_PER_MS := 8.0
+## Car takes damage when it hits the world or a pedestrian (m/s thresholds).
+const MIN_CRASH_SPEED := 3.5
+const CRASH_DAMAGE_PER_MS := 3.5
+const PED_CRASH_DAMAGE_PER_MS := 0.35
 const EXIT_SPOTS: Array[Vector3] = [
 	Vector3(-0.2, 0.1, 1.85),
 	Vector3(-0.2, 0.1, -1.85),
@@ -65,12 +69,20 @@ var _steer := 0.0
 var _heading := 0.0
 var _prompt_shown := false
 var _player: DavidController = null
+var _paint := Color(0.36, 0.11, 0.13)
+var _bloodied := false
+var _smoke: GPUParticles3D = null
+var _debris_spawned := false
+var _crash_cooldown := 0.0
+
+@onready var _health: Health = $Health
 
 @onready var _prompt: Label = get_node_or_null("../HUD/Prompt")
 @onready var _mesh: Node3D = $Mesh
 
 
 func _ready() -> void:
+	add_to_group("hittable")
 	_drive_agent = KilmoreDriveAgent.new()
 	input_agent = _drive_agent
 	add_child(_drive_agent)
@@ -87,9 +99,12 @@ func _ready() -> void:
 
 	PlayerInput.interact_pressed.connect(_on_interact)
 	if _mesh != null:
-		MeshDress.dress_car(_mesh, Color(0.36, 0.11, 0.13))
+		MeshDress.dress_car(_mesh, _paint)
 	_hide_pogo_wheel_placeholders()
 	_build_cabin()
+	if _health != null:
+		_health.damaged.connect(_on_damaged)
+	body_entered.connect(_on_body_entered)
 	_park()
 
 
@@ -104,6 +119,7 @@ func place(at: Transform3D) -> void:
 
 
 func _physics_process(delta: float) -> void:
+	_crash_cooldown = maxf(0.0, _crash_cooldown - delta)
 	_drive_agent.active = driver != null
 	if driver != null:
 		_seat_driver()
@@ -129,6 +145,8 @@ func _physics_process(delta: float) -> void:
 ## generate contacts. The car must NOT be put on layer 1 — its own suspension
 ## raycasts are mask 1 and are not parent-excluded, so it would drive up itself.
 func _check_pedestrian_impacts() -> void:
+	if ProfileToggles.has(&"no_contacts"):
+		return
 	var v := linear_velocity
 	# Below a brisk walk this is a nudge, not a knockdown.
 	if v.length() < MIN_KNOCK_SPEED:
@@ -148,7 +166,10 @@ func _check_pedestrian_impacts() -> void:
 			dir = global_basis.x
 		# Damage scales with how hard they were hit; survivors get back up.
 		Damage.apply(victim, impact * KNOCK_DAMAGE_PER_MS, self)
+		if _health != null:
+			_health.apply(impact * PED_CRASH_DAMAGE_PER_MS, victim)
 		victim.knock_down(dir, impact)
+		set_bloodied(dir)
 		StreetAudio.play_melee_thud()
 
 
@@ -239,16 +260,36 @@ func _nearest_player() -> DavidController:
 	return null
 
 
+func _nearest_street() -> StreetBuilder:
+	return get_parent().get_node_or_null("Street") as StreetBuilder
+
+
+func _nearest_slot_index() -> int:
+	var david := _nearest_player()
+	if david == null:
+		return -1
+	var street := _nearest_street()
+	if street == null:
+		return -1
+	return street.nearest_open_park_slot(david.global_position, ENTER_DIST)
+
+
 func _update_prompt() -> void:
 	if _prompt == null:
 		return
 	var david := _nearest_player()
-	var near := david != null and not david.driving \
+	var near_car := david != null and not david.driving \
 		and david.global_position.distance_to(global_position) <= ENTER_DIST
+	var slot_i := _nearest_slot_index()
+	var near_slot := slot_i >= 0
+	var near := near_car or near_slot
 	if near != _prompt_shown:
 		_prompt_shown = near
 		_prompt.visible = near
-		_prompt.text = "Press F  —  Get in"
+		if near_slot and not near_car:
+			_prompt.text = "Press F  —  Take car"
+		else:
+			_prompt.text = "Press F  —  Get in"
 
 
 func _on_interact() -> void:
@@ -257,6 +298,13 @@ func _on_interact() -> void:
 		return
 	var david := _nearest_player()
 	if david == null or david.driving:
+		return
+	var slot_i := _nearest_slot_index()
+	var street := _nearest_street()
+	if slot_i >= 0 and street != null:
+		street.claim_park_slot(slot_i)
+		place(street.park_slot_place(slot_i))
+		_enter(david)
 		return
 	if david.global_position.distance_to(global_position) > ENTER_DIST:
 		return
@@ -311,3 +359,118 @@ func _exit() -> void:
 		cam.set_driving(false)
 	_park()
 	exited.emit()
+
+
+func _on_body_entered(body: Node) -> void:
+	if _health == null or _crash_cooldown > 0.0:
+		return
+	# Pedestrians are handled in _check_pedestrian_impacts.
+	if body != null and body.has_method(&"knock_down"):
+		return
+	var spd := linear_velocity.length()
+	if spd < MIN_CRASH_SPEED:
+		return
+	_crash_cooldown = 0.25
+	var dmg := (spd - MIN_CRASH_SPEED) * CRASH_DAMAGE_PER_MS
+	_health.apply(dmg, body)
+	_apply_damage_look(_health.hp)
+	if _health.hp <= _health.max_hp * 0.45:
+		_ensure_smoke()
+	_spawn_debris_if_needed()
+
+
+func take_hit(amount: float, source: Node = null) -> void:
+	Damage.apply(self, amount, source)
+
+
+func _on_damaged(_amount: float, _source: Node, hp: float) -> void:
+	_apply_damage_look(hp)
+	_spawn_debris_if_needed()
+	if hp <= _health.max_hp * 0.45:
+		_ensure_smoke()
+
+
+func _apply_damage_look(hp: float = -1.0) -> void:
+	if _mesh == null or _health == null:
+		return
+	var frac := hp / _health.max_hp if hp >= 0.0 else _health.fraction()
+	MeshDress.apply_car_damage(_mesh, _paint, frac)
+
+
+func set_bloodied(impact_dir: Vector3 = Vector3.ZERO) -> void:
+	if _bloodied:
+		return
+	_bloodied = true
+	_apply_damage_look()
+	var bonnet := global_transform.translated_local(Vector3(0.9, 0.15, 0.0)).origin
+	var normal := global_transform.basis.y
+	if impact_dir.length_squared() > 0.01:
+		normal = (-impact_dir).normalized()
+	DecalPool.project(DecalPool.Kind.BLOOD, bonnet, normal)
+
+
+func clear_cosmetics() -> void:
+	_bloodied = false
+	_debris_spawned = false
+	if _smoke != null:
+		_smoke.emitting = false
+	if _mesh != null:
+		MeshDress.dress_car(_mesh, _paint)
+	if _health != null:
+		_health.revive()
+
+
+func _ensure_smoke() -> void:
+	if _smoke != null:
+		_smoke.emitting = true
+		return
+	_smoke = GPUParticles3D.new()
+	_smoke.name = "DamageSmoke"
+	_smoke.position = Vector3(0.0, 0.35, 0.0)
+	_smoke.amount = 24
+	_smoke.lifetime = 1.6
+	_smoke.emitting = true
+	var mat := ParticleProcessMaterial.new()
+	mat.direction = Vector3(0.0, 1.0, 0.0)
+	mat.spread = 18.0
+	mat.initial_velocity_min = 0.4
+	mat.initial_velocity_max = 1.2
+	mat.gravity = Vector3(0.0, 0.6, 0.0)
+	_smoke.process_material = mat
+	add_child(_smoke)
+
+
+func _spawn_debris_if_needed() -> void:
+	if _debris_spawned or _mesh == null or _health == null:
+		return
+	if _health.fraction() > 0.35:
+		return
+	_debris_spawned = true
+	for mi in _mesh.find_children("*", "MeshInstance3D", true, false):
+		var pl := mi.name.to_lower()
+		if "mirror" in pl or "indicator" in pl:
+			_spawn_debris_piece(mi)
+
+
+func _spawn_debris_piece(mi: MeshInstance3D) -> void:
+	if mi.mesh == null:
+		return
+	mi.visible = false
+	var piece := RigidBody3D.new()
+	piece.name = "CarDebris"
+	piece.mass = 0.8
+	piece.collision_layer = 1
+	piece.collision_mask = 1
+	var col := CollisionShape3D.new()
+	var box := BoxShape3D.new()
+	box.size = mi.get_aabb().size.max(Vector3(0.08, 0.08, 0.08))
+	col.shape = box
+	piece.add_child(col)
+	var copy := MeshInstance3D.new()
+	copy.mesh = mi.mesh
+	copy.material_override = mi.material_override
+	piece.add_child(copy)
+	get_parent().add_child(piece)
+	piece.global_transform = mi.global_transform
+	piece.linear_velocity = linear_velocity * 0.35 + Vector3(
+		randf_range(-1.5, 1.5), randf_range(1.0, 3.0), randf_range(-1.5, 1.5))

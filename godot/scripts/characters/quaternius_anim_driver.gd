@@ -16,6 +16,7 @@ const CLIP_MELEE := &"Punch_Jab"
 const CLIP_MELEE_ALT := &"Punch_Cross"
 const CLIP_MELEE_ENTER := &"Punch_Enter"
 const CLIP_SHOOT := &"Pistol_Shoot"
+const CLIP_THROW := &"Spell_Simple_Shoot"
 ## Hit reactions. Both clips ship in the Quaternius library and were unused, so
 ## damage previously produced no visible response at all.
 const CLIP_HIT_CHEST := &"Hit_Chest"
@@ -120,6 +121,10 @@ func play_shoot(duration: float) -> void:
 	_play_action(CLIP_SHOOT, duration)
 
 
+func play_throw(duration: float = 0.5) -> void:
+	_play_action(CLIP_THROW, duration)
+
+
 ## KNOCKDOWN — thrown by a vehicle.
 ##
 ## The library has no prone clip and no get-up clip, so this is assembled from
@@ -217,8 +222,20 @@ func play_death() -> void:
 
 func reset_alive() -> void:
 	_dead = false
+	_action_until = 0.0
+	_action_priority = 0
+	_action_duration = 0.0
 	_jump_phase = 0
-	_travel(&"idle")
+	_current_locomotion = &""
+	if _player != null:
+		_player.active = true
+		if _player.has_animation(CLIP_IDLE):
+			_player.play(CLIP_IDLE)
+			_player.seek(0.0, true)
+	_resume_tree_if_needed()
+	if _playback != null:
+		_playback.start(&"idle")
+	_current_locomotion = &"idle"
 
 
 func _build_animation_tree() -> void:
@@ -303,6 +320,10 @@ func _play_action(clip: StringName, duration: float,
 	_action_until = now + duration
 	if _tree != null:
 		_tree.active = false
+	# Godot 4.2+ deactivates the AnimationPlayer when an AnimationTree binds it;
+	# turning the tree off does not turn the player back on, so play() advances
+	# nothing until we take manual control explicitly.
+	_player.active = true
 	_player.speed_scale = 1.0
 	_player.play(clip, BLEND_TIME * 0.5)
 

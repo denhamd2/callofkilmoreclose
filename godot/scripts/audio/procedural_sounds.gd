@@ -73,6 +73,20 @@ static func gun_crack() -> AudioStreamWAV:
 	return _one_shot(pcm)
 
 
+static func explosion() -> AudioStreamWAV:
+	var frames := int(SAMPLE_RATE * 0.45)
+	var pcm := PackedByteArray()
+	pcm.resize(frames * 2)
+	for i in frames:
+		var t := float(i) / float(SAMPLE_RATE)
+		var env := exp(-t * 7.5)
+		var boom := sin(t * TAU * 48.0) * 0.65 + sin(t * TAU * 22.0) * 0.35
+		var n := randf_range(-1.0, 1.0) * 0.35
+		var s := (boom + n) * env * 0.7
+		_write_i16(pcm, i * 2, int(clampf(s, -1.0, 1.0) * 32767.0))
+	return _one_shot(pcm)
+
+
 static func _one_shot(pcm: PackedByteArray) -> AudioStreamWAV:
 	var stream := AudioStreamWAV.new()
 	stream.format = AudioStreamWAV.FORMAT_16_BITS

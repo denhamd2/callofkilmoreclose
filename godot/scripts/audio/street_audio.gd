@@ -79,6 +79,21 @@ func play_gun_crack() -> void:
 	_gun.play()
 
 
+func play_explosion_at(pos: Vector3) -> void:
+	if not enabled:
+		return
+	var p := AudioStreamPlayer3D.new()
+	p.bus = BUS_FOLEY
+	p.volume_db = -2.0
+	p.max_distance = 90.0
+	p.attenuation_model = AudioStreamPlayer3D.ATTENUATION_INVERSE_DISTANCE
+	p.stream = ProceduralSounds.explosion()
+	p.global_position = pos
+	get_tree().root.add_child(p)
+	p.finished.connect(p.queue_free)
+	p.play()
+
+
 func _play_footstep() -> void:
 	if _foot == null or _foot_variants.is_empty():
 		return

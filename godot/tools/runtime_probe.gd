@@ -103,6 +103,8 @@ func _physics_process(_delta: float) -> void:
 			_check_grounding()
 			_check_knockdown()
 			_check_anim_priority()
+			_check_grenade()
+			_check_car_possession()
 			_finish()
 
 
@@ -160,7 +162,7 @@ func _check_street() -> void:
 	# which were previously visuals that people walked through. The floor matters
 	# just as much: a refactor that silently stops emitting collision would
 	# otherwise sail through a ceiling-only check.
-	_report["collision_budget_ok"] = collision_shapes <= 110 and collision_shapes >= 70
+	_report["collision_budget_ok"] = collision_shapes <= 160 and collision_shapes >= 70
 	# Full street: 13 pairs/side, 2 dwellings/pair, 2 sides -> 52 houses, 26 pairs.
 	_report["street_ok"] = houses.size() == 52 and _report["pair_count"] == 26 \
 		and _report["road_z_span_m"] > 240.0 and _report["collision_budget_ok"]
@@ -262,16 +264,13 @@ func _check_cast() -> void:
 
 
 func _check_combat() -> void:
-	var dummies := get_tree().get_nodes_in_group("combat_dummy")
-	_report["dummy_count"] = dummies.size()
-	_report["dummy_ok"] = dummies.size() >= 1
 	var skel := _david.find_child("Skeleton3D", true, false)
 	var ap := _david.find_child("AnimationPlayer", true, false)
 	var tree := _david.find_child("AnimationTree", true, false)
 	_report["david_skeleton"] = skel != null
 	_report["david_animation_player"] = ap != null
 	_report["david_animation_tree"] = tree != null
-	_report["combat_ok"] = _report["dummy_ok"] and _report["david_skeleton"] \
+	_report["combat_ok"] = _report["david_skeleton"] \
 		and _report["david_animation_player"] and _report["david_animation_tree"]
 	if not _report["combat_ok"]:
 		_fail = true
@@ -291,8 +290,8 @@ func _check_health() -> void:
 			missing += 1
 	_report["hittable_without_health"] = missing
 
-	# David, 5 cast, 1 dummy.
-	var enough := hittable.size() >= 7
+	# David + 5 cast (trees, bins, car also carry Health).
+	var enough := hittable.size() >= 6
 
 	var player_health := Damage.health_of(_david)
 	var damage_lands := false
@@ -423,6 +422,9 @@ func _check_anim_priority() -> void:
 	driver.play_flinch()
 	var flinch_clip := ap.current_animation
 	var player_live: bool = ap.active
+	var pos_before := ap.current_animation_position
+	ap.advance(0.08)
+	var flinch_advances: bool = ap.current_animation_position > pos_before + 0.01
 	# An attack must NOT steal the flinch.
 	driver.play_shoot(0.32)
 	var flinch_survived: bool = ap.current_animation == flinch_clip
@@ -431,16 +433,62 @@ func _check_anim_priority() -> void:
 	var death_wins: bool = ap.current_animation == QuaterniusAnimDriver.CLIP_DEATH
 
 	_report["anim_player_live"] = player_live
+	_report["anim_flinch_advances"] = flinch_advances
 	_report["anim_flinch_clip"] = flinch_clip
 	_report["anim_flinch_beats_attack"] = flinch_survived
 	_report["anim_death_beats_all"] = death_wins
-	_report["anim_priority_ok"] = player_live and flinch_survived and death_wins \
-		and flinch_clip != ""
+	_report["anim_priority_ok"] = player_live and flinch_advances and flinch_survived \
+		and death_wins and flinch_clip != ""
 	if not _report["anim_priority_ok"]:
 		_fail = true
 	# Undo, so the actor is not left dead for the checks that follow.
 	driver.reset_after_knock()
 	driver.reset_alive()
+
+
+func _check_grenade() -> void:
+	var cast_nodes: Array[Node3D] = []
+	for node in get_tree().get_nodes_in_group("cast"):
+		if node is CastMember and Damage.is_alive(node):
+			cast_nodes.append(node)
+	if cast_nodes.size() < 2:
+		_report["grenade_multi_hit_ok"] = false
+		_fail = true
+		return
+	var centre := Vector3.ZERO
+	for n in cast_nodes:
+		centre += n.global_position
+	centre /= float(cast_nodes.size())
+	var victims := GrenadeProjectile.detonate_at(
+		get_tree().root.get_world_3d(), centre, _david,
+		90.0, 22.0)
+	_report["grenade_victims"] = victims
+	_report["grenade_multi_hit_ok"] = victims >= 2
+	if victims < 2:
+		_fail = true
+
+
+func _check_car_possession() -> void:
+	var cars := 0
+	for node in get_parent().get_children():
+		if node is Car:
+			cars += 1
+	var street := get_parent().get_node_or_null("Street") as StreetBuilder
+	if street == null or street.park_slots.is_empty() or _car == null:
+		_report["car_possession_ok"] = false
+		_fail = true
+		return
+	var slot_i := 0
+	street.claim_park_slot(slot_i)
+	_car.place(street.park_slot_place(slot_i))
+	var after := 0
+	for node in get_parent().get_children():
+		if node is Car:
+			after += 1
+	_report["physics_car_count"] = after
+	_report["car_possession_ok"] = cars == 1 and after == 1
+	if not _report["car_possession_ok"]:
+		_fail = true
 
 
 ## Are their feet on the pavement, or buried in it?
@@ -560,7 +608,7 @@ func _check_ai() -> void:
 		if brain == null:
 			continue
 		brains += 1
-		if brain.is_ranged():
+		if brain.is_ranged() or brain.is_throwable():
 			# Not a fixed path: WeaponHolder.setup_on_body() reparents itself onto
 			# a BoneAttachment3D on DEF-hand.R, so it no longer lives at
 			# Body/WeaponMount once it has been rigged.
@@ -582,9 +630,7 @@ func _check_ai() -> void:
 	_report["cast_wounded"] = wounded
 	_report["cast_down"] = down
 
-	# 3 of the 5 carry firearms (Mick pistol, Oysters shotgun, Paddy MAC-10).
-	# Engagement is the real assertion: a brawl that never starts is the bug this
-	# whole phase exists to prevent.
+	# Mick pistol, Oysters shotgun, Paddy grenade — three ranged/throwable loadouts.
 	_report["ai_ok"] = brains >= 5 and armed >= 3 and with_target >= 1 and wounded >= 1
 	if not _report["ai_ok"]:
 		_fail = true

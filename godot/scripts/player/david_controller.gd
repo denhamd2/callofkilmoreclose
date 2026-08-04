@@ -92,7 +92,7 @@ func _ready() -> void:
 	_melee_query.collide_with_areas = false
 	# Was unset, i.e. all 32 layers — so a punch routinely "hit" the ground plate
 	# or a boundary wall and reported that back as the target. player | npc only.
-	_melee_query.collision_mask = 2 | 4
+	_melee_query.collision_mask = 2 | 4 | 8
 	var skip: Array[RID] = [get_rid()]
 	_melee_query.exclude = skip
 	PlayerInput.jump_pressed.connect(_on_jump)
@@ -277,13 +277,32 @@ func _resolve_melee() -> void:
 			best_d = d
 			best = collider
 	if best != null:
+		var hit_pos := origin + dir * best_d
+		DecalPool.project(DecalPool.Kind.BULLET, hit_pos, -dir)
 		melee_hit.emit(best)
 
 
 # ------------------------------------------------------------------ firearm
 
 func _on_fire() -> void:
-	if driving or dead or _fire_timer > 0.0 or loadout != Loadout.RANGED:
+	if driving or dead:
+		return
+	var entry := WeaponCatalog.get_entry(weapon_id)
+	if bool(entry.get("throwable", false)):
+		if _fire_timer > 0.0:
+			return
+		_fire_timer = float(entry.get("fire_cooldown", 4.5))
+		shot_fired.emit()
+		if _animator != null:
+			_animator.play_throw(0.5)
+		var from := global_position + Vector3(0.0, 1.35, 0.0)
+		var dir := _camera.aim_direction()
+		if dir.length_squared() < 0.001:
+			dir = -global_transform.basis.z
+		var to := from + dir.normalized() * float(entry.get("fire_range", 18.0))
+		GrenadeThrow.launch(from, to, self, entry)
+		return
+	if _fire_timer > 0.0 or loadout != Loadout.RANGED:
 		return
 	_fire_timer = get_fire_cooldown()
 	shot_fired.emit()
@@ -310,9 +329,12 @@ func _resolve_fire() -> void:
 	var hit := space.intersect_ray(query)
 	if hit.is_empty():
 		return
+	var hit_pos: Vector3 = hit.get("position", origin + dir * get_fire_range())
+	var hit_normal: Vector3 = hit.get("normal", -dir)
+	_spawn_spark(hit_pos)
+	DecalPool.project(DecalPool.Kind.BULLET, hit_pos, hit_normal)
 	var collider := hit.get("collider") as Node3D
 	if collider != null and collider != self:
-		_spawn_spark(hit.get("position", origin + dir * FIRE_RANGE))
 		shot_hit.emit(collider)
 
 

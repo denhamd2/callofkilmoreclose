@@ -92,15 +92,44 @@ Unless `@ziva` / explicit Ziva invocation:
 
 1. Unless the user invoked `@ziva`, implement in **Cursor**.
 2. If `@ziva` / explicit Ziva request: paste or run the task in the **Ziva** panel in Godot.
-3. Keep changes **minimal** and **incremental**.
-4. Verify after each step:
+3. Keep changes **minimal** and **incremental** — one subsystem per pass.
+4. **Read real files** before editing scenes or scripts; never guess node paths.
+5. Verify after each pass (all four gates). **Open `godot/shots/` and look** at PNGs
+   for anything touching rendering, materials, animation, combat, or street dressing.
+
+**Entry scene:** `scenes/ui/title.tscn` is the player-facing boot screen. Gate runs
+(`--probe`, `--shot`, `--profile`) auto-skip it and load `scenes/main.tscn` directly.
 
 ```sh
 python3 godot/tools/validate_project.py     # structural; must print OK
 godot --path godot --headless -- --probe    # gameplay/nav/combat; must exit 0
-godot --path godot -- --shot                # windowed; the only visual gate
+godot --path godot -- --shot                # windowed; inspect godot/shots/
 godot --path godot -- --profile             # windowed; real render budget
 ```
+
+Targeted visual checks:
+
+```sh
+godot --path godot -- --shot --shot-drive   # car cabin / bloodied glass
+godot --path godot -- --shot --shot-fight   # brawl test; read FIGHT_TEST line in log
+godot --path godot -- --shot --shot-anim    # flinch/one-shot playback diagnostic
+```
+
+Windowed bisect for FPS regressions: combine `--profile` with flags documented in
+`scripts/core/profile_toggles.gd` (`--profile-no-sdfgi`, `--profile-no-ai`, etc.).
+Record ranked results in root `CLAUDE.md`.
+
+## Patterns to follow
+
+| Concern | Pattern |
+|---------|---------|
+| Damage | `Damage.apply(target, amount, source)` → `Health` child |
+| Combat AI | `CombatBrain` child; perception at 6 Hz; seeded RNG |
+| One-shot anims | `_player.active = true` when tree off; priority death > flinch > attack |
+| Street FX | `DecalPool.project()` at hit position + normal |
+| Cars | One physics `Car`; `park_slots` possession; `Health` + `apply_car_damage` |
+| Trees | `dress_tree()` paints canopy + procedural `GeneratedTrunk` cylinder |
+| Probes | Extend `runtime_probe.gd` when adding gameplay contracts |
 
 `--headless` runs a dummy RenderingDevice, so it cannot verify a single pixel and
 every `RENDER_*` monitor reads 0. After adding a new `class_name`, rescan or

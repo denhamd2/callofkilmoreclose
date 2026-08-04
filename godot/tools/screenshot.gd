@@ -35,6 +35,7 @@ const POSES: Array[Dictionary] = [
 	{"name": "facade_18", "eye": Vector3(-2.0, 1.7, 88.0), "look": Vector3(-12.0, 2.2, 84.0)},
 	{"name": "actors", "eye": Vector3(-2.5, 1.6, 89.5), "look": Vector3(-4.8, 1.2, 82.0)},
 	{"name": "high_wide", "eye": Vector3(18.0, 14.0, 110.0), "look": Vector3(0.0, 2.0, 60.0)},
+	{"name": "verge_trees", "eye": Vector3(2.0, 1.55, 124.0), "look": Vector3(5.0, 2.0, 128.0)},
 ]
 
 
@@ -133,6 +134,50 @@ func _diagnose_oneshot() -> void:
 			ap.current_animation_position])
 
 
+## Park the two McCabes face-to-face and let CombatBrain brawl, then print HP.
+## Used to verify fighting animations and damage land in a live windowed run.
+func _run_brawl_test() -> void:
+	var mick: CastMember = null
+	var deco: CastMember = null
+	for node in get_tree().get_nodes_in_group("cast"):
+		if node is CastMember:
+			var cm := node as CastMember
+			if cm.display_name == "MickMcCabe":
+				mick = cm
+			elif cm.display_name == "Deco McCabe":
+				deco = cm
+	if mick == null or deco == null:
+		print("FIGHT_TEST missing McCabes")
+		return
+	var centre := Vector3(-10.5, 0.425, 85.0)
+	mick.global_position = centre + Vector3(-0.9, 0.0, 0.0)
+	deco.global_position = centre + Vector3(0.9, 0.0, 0.0)
+	mick.look_at(Vector3(deco.global_position.x, mick.global_position.y,
+		deco.global_position.z), Vector3.UP)
+	deco.look_at(Vector3(mick.global_position.x, deco.global_position.y,
+		mick.global_position.z), Vector3.UP)
+	var hm := Damage.health_of(mick)
+	var hd := Damage.health_of(deco)
+	if hm != null:
+		hm.revive()
+	if hd != null:
+		hd.revive()
+	var start_m := hm.hp if hm else -1.0
+	var start_d := hd.hp if hd else -1.0
+	# Let CombatBrain settle on the new positions.
+	for _i in 30:
+		await get_tree().physics_frame
+	for _i in 420:
+		await get_tree().physics_frame
+	var end_m := hm.hp if hm else -1.0
+	var end_d := hd.hp if hd else -1.0
+	var wounded := int(end_m < start_m) + int(end_d < start_d)
+	print("FIGHT_TEST start_mick=%.0f start_deco=%.0f end_mick=%.0f end_deco=%.0f wounded=%d" % [
+		start_m, start_d, end_m, end_d, wounded])
+	if wounded < 1:
+		push_warning("FIGHT_TEST: no damage dealt — check CombatBrain / Health wiring")
+
+
 func _run() -> void:
 	var warmup := _arg_int("--shot-frames=", DEFAULT_WARMUP)
 	for _i in warmup:
@@ -154,6 +199,9 @@ func _run() -> void:
 
 	if OS.get_cmdline_user_args().has("--shot-anim"):
 		await _diagnose_oneshot()
+
+	if OS.get_cmdline_user_args().has("--shot-fight"):
+		await _run_brawl_test()
 
 	var written := 0
 	for i in poses.size():

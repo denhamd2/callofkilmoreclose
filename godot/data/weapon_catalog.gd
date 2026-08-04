@@ -96,6 +96,22 @@ const ENTRIES: Dictionary = {
 		"offset": Vector3(0.05, 0.03, 0.1),
 		"rotation_deg": Vector3(0, 90, 0),
 	},
+	&"grenade": {
+		"label": "Grenade",
+		"model": "res://assets/weapons/styloo/nade_low.glb",
+		"ranged": false,
+		"throwable": true,
+		"fire_damage": 0.0,
+		"fire_cooldown": 4.5,
+		"fire_range": 18.0,
+		"fuse_time": 2.4,
+		"blast_damage": 55.0,
+		"blast_radius": 5.5,
+		"hold_length": 0.0,
+		"scale": 0.85,
+		"offset": Vector3(0.02, 0.02, 0.03),
+		"rotation_deg": Vector3(0, 90, 0),
+	},
 }
 
 

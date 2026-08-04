@@ -36,7 +36,7 @@ Shortcuts/density_decrement=Object(Shortcut,"resource_local_to_scene":false,"res
 
 config/name="Call of Kilmore Close"
 config/description="Third-person vertical slice of Kilmore Close, Dublin. Migrated from the Three.js prototype."
-run/main_scene="res://scenes/main.tscn"
+run/main_scene="res://scenes/ui/title.tscn"
 config/features=PackedStringArray("4.7", "Forward Plus")
 
 [autoload]
@@ -45,6 +45,7 @@ PlayerInput="*res://scripts/core/player_input.gd"
 StreetAudio="*res://scripts/audio/street_audio.gd"
 SimpleGrass="*res://addons/simplegrasstextured/singleton.tscn"
 GuiData="*res://scripts/Singletons/guiData.gd"
+DecalPool="*res://scripts/fx/decal_pool.gd"
 
 [debug_draw_3d]
 
@@ -56,6 +57,10 @@ window/size/viewport_width=1920
 window/size/viewport_height=1080
 window/stretch/mode="canvas_items"
 window/stretch/aspect="expand"
+
+[gui]
+
+theme/custom="res://assets/fonts/game_theme.tres"
 
 [editor_plugins]
 

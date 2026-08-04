@@ -24,7 +24,6 @@ const SETTLE := 0.3
 var _cast: Array[CastMember] = []
 
 const _CAST_SCENE: PackedScene = preload("res://scenes/cast/cast_member.tscn")
-const _DUMMY_SCENE: PackedScene = preload("res://scenes/combat/training_dummy.tscn")
 const _COMBAT_HUD_SCENE: PackedScene = preload("res://scenes/ui/combat_hud.tscn")
 const _WEAPON_SELECTOR_SCENE: PackedScene = preload("res://scenes/ui/weapon_selector.tscn")
 const _COMBAT_CONTROLS_SCENE: PackedScene = preload("res://scenes/ui/combat_controls.tscn")
@@ -48,7 +47,6 @@ func _ready() -> void:
 	# whole roster slides to the world origin.
 	if _street != null and _street.has_signal(&"navmesh_ready"):
 		_street.navmesh_ready.connect(_on_navmesh_ready)
-	_spawn_training_dummy()
 	_spawn_combat_hud()
 	_spawn_weapon_selector()
 	_spawn_combat_controls()
@@ -125,18 +123,6 @@ func _on_navmesh_ready(polygon_count: int) -> void:
 	for member in _cast:
 		if member != null:
 			member.enable_roaming()
-
-
-func _spawn_training_dummy() -> void:
-	var spawn := KilmoreClose.david_spawn()
-	var ahead := spawn.origin + (-spawn.basis.z) * 4.0
-	ahead.y = KilmoreClose.WALK_H + SETTLE
-	var dummy := _DUMMY_SCENE.instantiate() as Node3D
-	if dummy == null:
-		return
-	add_child(dummy)
-	dummy.global_position = ahead
-	dummy.look_at(Vector3(spawn.origin.x, ahead.y, spawn.origin.z), Vector3.UP)
 
 
 func _spawn_combat_hud() -> void:

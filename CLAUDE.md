@@ -29,12 +29,31 @@ and fight each other and the player unprompted.
 | Cast | MickMcCabe, Deco McCabe, Oysters, Angela Carpenter, Paddy Mason — navmesh roaming, factions, mixed loadouts |
 | Combat | `Health` / `Damage` / `Factions` + `CombatBrain`: perception, target selection, melee and hitscan ranged |
 | Lighting | One fixed sun via Sky3D. No day/night, ever |
-| Render | AgX tonemap, SSAO, SSIL, SSR, glow, volumetric fog, SDFGI, 4096 PCSS shadows, 4× MSAA |
+| Render | AgX tonemap, SSAO, SSIL, SSR, SDFGI, glow, volumetric fog, 4096 PCSS shadows, 4× MSAA |
 | Materials | Albedo + derived normal + packed ORM (`tools/generate_pbr_maps.py`) |
 
-Measured windowed (`-- --profile`): **~49 fps p50, 20 ms frame p50, ~490 draw
-calls**. Physics p50 is ~0.003 ms and always was — that number is the profiler's
-own callback cost and has never been a render measurement.
+Measured windowed (`-- --profile`, 90-frame warmup): **~46 fps p50, 21 ms frame p50,
+~525 draw calls**. Physics p50 is ~0.003 ms and always was — that number is the
+profiler's own callback cost and has never been a render measurement.
+
+### Round-3 FPS bisect (Aug 2026)
+
+Round 2 reported 49→23 fps; a single cold `--profile` run can read ~25 fps while
+warmed runs sit ~46 fps — shader/GI compile during the old 30-frame warmup, not a
+steady-state halving. Windowed bisect flags live in `scripts/core/profile_toggles.gd`:
+
+| Toggle | fps p50 (warmed) | Verdict |
+|--------|------------------|---------|
+| Baseline | ~46 | — |
+| `--profile-no-sdfgi` | ~47 | optional — ~1–2 fps if disabled; removes cold hitch |
+| `--profile-no-ai` | ~25→46 (variance) | negligible steady-state |
+| `--profile-no-contacts` | ~46 | negligible |
+| `--profile-sight-30` | ~45 | negligible |
+| `--profile-nav-coarse` | ~46 | negligible (nav is CPU, not the GPU bound) |
+| `--profile-no-volumetric` | ~45 | kept on — marginal |
+| `--profile-no-ssil` | ~43 | kept on — worth the contact read |
+
+`cpu_physics_ms` p50 ~1.8 ms vs `frame_ms` ~21 ms → GPU/post bound, not script.
 
 ## Why Android was dropped
 
@@ -118,6 +137,9 @@ reinstating the mobile render budget.
 - **Houses are boxes.** Unit `BoxMesh`/`PrismMesh` scaled by transform. Normal
   maps and lighting take them a long way, but they will not stop reading as boxes
   without modelled house meshes — which contradicts "the geometry IS the data".
+- **Houses are marked, not destroyed.** Bullet decals stick to walls, but per-house
+  destruction would mean abandoning the MultiMesh street batching that keeps draw
+  calls near ~500 for the full cul-de-sac.
 - Gates and railings are solid panels; real ones are see-through verticals.
 - No backward or strafe locomotion clips exist in the 46-clip library, so a
   GTA-style 2D locomotion blend space is not possible. Movement-facing turning is

@@ -30,7 +30,7 @@ const ROSTER: Array[Dictionary] = [
 		"faction": Factions.RESIDENTS, "weapon": WeaponCatalog.UNARMED},
 	{"name": "Paddy Mason", "house": 31, "gate_z_offset": 0.0,
 		"jacket": Color(0.18, 0.32, 0.24),
-		"faction": Factions.RESIDENTS, "weapon": &"mac10"},
+		"faction": Factions.RESIDENTS, "weapon": &"grenade"},
 ]
 
 

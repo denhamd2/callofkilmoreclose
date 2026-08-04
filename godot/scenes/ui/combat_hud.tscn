@@ -19,40 +19,6 @@ offset_bottom = 16.0
 texture = ExtResource("2_crosshair")
 expand_mode = 0
 
-[node name="HPBar" type="Control" parent="."]
-layout_mode = 0
-anchor_left = 0.5
-anchor_top = 1.0
-anchor_right = 0.5
-anchor_bottom = 1.0
-offset_left = -96.0
-offset_top = -48.0
-offset_right = 96.0
-offset_bottom = -28.0
-
-[node name="Background" type="ColorRect" parent="HPBar"]
-layout_mode = 0
-offset_right = 192.0
-offset_bottom = 20.0
-color = Color(0.08, 0.08, 0.08, 0.7)
-
-[node name="Fill" type="ColorRect" parent="HPBar"]
-layout_mode = 0
-offset_right = 192.0
-offset_bottom = 20.0
-color = Color(0.9, 0.2, 0.15, 0.85)
-
-[node name="Label" type="Label" parent="HPBar"]
-layout_mode = 0
-offset_left = 4.0
-offset_top = 2.0
-offset_right = 188.0
-offset_bottom = 18.0
-text = "TARGET"
-horizontal_alignment = 1
-theme_override_font_sizes/font_size = 13
-theme_override_colors/font_color = Color(1, 1, 1, 0.9)
-
 [node name="PlayerHP" type="Control" parent="."]
 layout_mode = 0
 anchor_top = 1.0
@@ -77,9 +43,10 @@ color = Color(0.42, 0.72, 0.38, 0.9)
 [node name="Label" type="Label" parent="PlayerHP"]
 layout_mode = 0
 offset_left = 6.0
-offset_top = 3.0
+offset_top = 2.0
 offset_right = 214.0
-offset_bottom = 19.0
-text = "DAVID"
-theme_override_font_sizes/font_size = 13
+offset_bottom = 20.0
+theme_type_variation = &"ScoreLabel"
+theme_override_font_sizes/font_size = 15
 theme_override_colors/font_color = Color(1, 1, 1, 0.92)
+text = "DAVID"

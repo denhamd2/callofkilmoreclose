@@ -21,6 +21,7 @@ enum State { IDLE, CHASE, ATTACK_MELEE, ATTACK_RANGED, FLINCH, DEAD }
 ## 26, 27 and 31 — spread over roughly 100 m of street — so at the old 30 m only
 ## the two McCabes sharing number 14 ever met, and the street stayed quiet.
 const SIGHT_RANGE := 120.0
+const SIGHT_RANGE_PROBE := 30.0
 ## Inside this range a target must be in line of sight to be engaged. Beyond it an
 ## actor will still set off towards the nearest enemy it knows about, which is what
 ## actually collapses the roster into one brawl.
@@ -41,6 +42,8 @@ const FLINCH_TIME := 0.35
 ## Rounds per burst for fully automatic weapons, then a pause.
 const BURST := 3
 const BURST_PAUSE := 0.55
+const GRENADE_PAUSE := 2.0
+const THROW_RANGE := 18.0
 
 var state: State = State.IDLE
 var target: Node3D = null
@@ -81,6 +84,10 @@ func is_ranged() -> bool:
 	return bool(WeaponCatalog.get_entry(_weapon_id).get("ranged", false))
 
 
+func is_throwable() -> bool:
+	return bool(WeaponCatalog.get_entry(_weapon_id).get("throwable", false))
+
+
 func _physics_process(delta: float) -> void:
 	if not _enabled or _host == null:
 		return
@@ -114,13 +121,21 @@ func _physics_process(delta: float) -> void:
 	_reaction = maxf(0.0, _reaction - delta)
 
 	var dist := _host.global_position.distance_to(target.global_position)
-	if is_ranged():
+	if is_throwable():
+		_act_throw(dist)
+	elif is_ranged():
 		_act_ranged(dist)
 	else:
 		_act_melee(dist)
 
 
 # ------------------------------------------------------------ perception
+
+func _sight_range() -> float:
+	if ProfileToggles.has(&"sight_30"):
+		return SIGHT_RANGE_PROBE
+	return SIGHT_RANGE
+
 
 func _reselect() -> void:
 	var best: Node3D = null
@@ -135,7 +150,7 @@ func _reselect() -> void:
 		if not Damage.is_alive(other):
 			continue
 		var d := _host.global_position.distance_to(other.global_position)
-		if d > SIGHT_RANGE:
+		if d > _sight_range():
 			continue
 		# Line of sight gates *engagement*, not awareness. A neighbour four houses
 		# down is walked towards; only once close does the wall between you matter.
@@ -191,6 +206,31 @@ func _act_melee(dist: float) -> void:
 			StreetAudio.play_melee_thud()
 
 
+func _act_throw(dist: float) -> void:
+	var entry := WeaponCatalog.get_entry(_weapon_id)
+	var range_m := float(entry.get("fire_range", THROW_RANGE))
+	if dist > range_m:
+		state = State.CHASE
+		_pursue(target.global_position)
+		return
+	state = State.ATTACK_RANGED
+	_release()
+	_face_target()
+	if _attack_cd > 0.0 or _reaction > 0.0:
+		return
+	if _burst_left <= 0:
+		_burst_left = BURST
+		_attack_cd = GRENADE_PAUSE
+		return
+	_burst_left = 0
+	_attack_cd = float(entry.get("fire_cooldown", 4.5))
+	if _animator != null:
+		_animator.play_throw(0.5)
+	var from := _host.global_position + Vector3(0.0, 1.4, 0.0)
+	var to := target.global_position + Vector3(0.0, 0.8, 0.0)
+	GrenadeThrow.launch(from, to, _host, entry)
+
+
 func _act_ranged(dist: float) -> void:
 	var entry := WeaponCatalog.get_entry(_weapon_id)
 	var range_m := float(entry.get("fire_range", 30.0))
@@ -242,6 +282,9 @@ func _fire(entry: Dictionary, range_m: float) -> void:
 	var hit := space.intersect_ray(query)
 	if hit.is_empty():
 		return
+	var hit_pos: Vector3 = hit.get("position", from + dir * range_m)
+	var hit_normal: Vector3 = hit.get("normal", -dir)
+	DecalPool.project(DecalPool.Kind.BULLET, hit_pos, hit_normal)
 	var collider := hit.get("collider") as Node3D
 	if collider == null or collider == _host:
 		return

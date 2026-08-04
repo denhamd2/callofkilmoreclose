@@ -1,7 +1,8 @@
-[gd_scene load_steps=17 format=3]
+[gd_scene load_steps=18 format=3]
 
 [ext_resource type="PackedScene" uid="uid://bnjb48cqq0xux" path="res://scenes/Pogo/SuspensionPogo.tscn" id="1_susp"]
 [ext_resource type="Script" path="res://scripts/vehicle/car.gd" id="1_car"]
+[ext_resource type="Script" path="res://scripts/combat/health.gd" id="1_health"]
 [ext_resource type="Script" path="res://scripts/Pogo/chassis_pogo.gd" id="2_chassis"]
 [ext_resource type="Curve" uid="uid://bnapfb8fykl0q" path="res://Resources/Curves/Pogo Traction Curve.tres" id="3_traction"]
 [ext_resource type="Script" path="res://scripts/Pogo/engine_pogo.gd" id="3_engine"]
@@ -121,6 +122,10 @@ script = ExtResource("5_trans")
 
 [node name="Brakes" type="Node" parent="."]
 script = ExtResource("6_brakes")
+
+[node name="Health" type="Node" parent="."]
+script = ExtResource("1_health")
+max_hp = 220.0
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="."]
 transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 0, -0.584, 0)

@@ -48,7 +48,7 @@ PROFILES = {
     "brick_red":   dict(bump=2.6, blur=1, rough=(0.62, 0.86), ao=0.65, metal=0.0),
     "block_wall":  dict(bump=2.4, blur=1, rough=(0.68, 0.90), ao=0.60, metal=0.0),
     "chimney":     dict(bump=2.2, blur=1, rough=(0.70, 0.90), ao=0.55, metal=0.0),
-    "roof":        dict(bump=2.8, blur=1, rough=(0.60, 0.82), ao=0.70, metal=0.0),
+    "roof":        dict(bump=3.4, blur=1, rough=(0.68, 0.88), ao=0.75, metal=0.0),
     "tarmac":      dict(bump=1.4, blur=1, rough=(0.58, 0.76), ao=0.35, metal=0.0),
     "path":        dict(bump=1.6, blur=1, rough=(0.66, 0.86), ao=0.45, metal=0.0),
     "drive":       dict(bump=1.8, blur=1, rough=(0.64, 0.84), ao=0.50, metal=0.0),

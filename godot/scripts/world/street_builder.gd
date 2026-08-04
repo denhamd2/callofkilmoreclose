@@ -32,6 +32,10 @@ signal built
 ## returns Vector3.ZERO, and every agent then slides to the world origin.
 signal navmesh_ready(polygon_count: int)
 
+## Parked-car slots the live `Car` can possess. Each entry:
+## `{ transform, visual, collider, claimed }`.
+var park_slots: Array[Dictionary] = []
+
 ## Scene group the navmesh bake reads its source colliders from.
 const NAV_SOURCE_GROUP := &"navmesh_source"
 
@@ -64,6 +68,9 @@ const _TREE_VARIANTS: Array[PackedScene] = [
 	preload("res://assets/models/trees_bushes/tree_e_visual.tscn"),
 ]
 const _BUSH_MESH: PackedScene = preload("res://assets/models/trees_bushes/bush_a_visual.tscn")
+const _DESTRUCTIBLE_TREE: PackedScene = preload("res://scenes/fx/destructible_tree.tscn")
+const _BIN_SCRIPT: Script = preload("res://scripts/fx/destructible_bin.gd")
+const _HEALTH_SCRIPT: Script = preload("res://scripts/combat/health.gd")
 
 # 7-segment digit patterns (segments: top, UR, LR, bottom, LL, UL, mid).
 const _DIGIT_SEG: Dictionary = {
@@ -75,10 +82,25 @@ const _DIGIT_SEG: Dictionary = {
 }
 
 var _tree_spots: Array = []
-# Remnant lawn / verge centres collected during build for selective blade scatter (P2).
 var _lawn_spots: Array = []  # Vector3 centres of remnant lawns
 var _lawn_sizes: Array = []  # Vector2(len_x, width_z) per lawn
+var _garden_rects: Array = []  # {centre: Vector3, size: Vector2} full front plots
+var _driveway_spots: Array = []  # {pos: Vector3, yaw: float} for static cars
 var _verge_y: float = 0.0
+var _footpath_verge_y: float = 0.0
+
+const _CAR_PAINTS: Array = [
+	Color(0.92, 0.92, 0.94),   # white
+	Color(0.72, 0.74, 0.76),   # silver
+	Color(0.55, 0.10, 0.12),   # red
+	Color(0.12, 0.18, 0.38),   # navy
+	Color(0.08, 0.08, 0.10),   # black
+	Color(0.18, 0.38, 0.22),   # green
+	Color(0.42, 0.10, 0.14),   # burgundy
+	Color(0.78, 0.72, 0.58),   # beige
+	Color(0.32, 0.34, 0.36),   # dark grey
+	Color(0.22, 0.38, 0.62),   # blue
+]
 
 
 func _ready() -> void:
@@ -97,6 +119,7 @@ func _ready() -> void:
 	_build_street_dressing()
 	_flush_batches()
 	_spawn_static_cars()
+	_spawn_driveway_cars()
 	_spawn_static_trees()
 	_spawn_garden_bushes()
 	_spawn_detail_grass()
@@ -128,8 +151,8 @@ func _bake_navmesh() -> void:
 	var nav := NavigationMesh.new()
 	# Must match navigation/3d/default_cell_size in project.godot, or Godot warns
 	# and paths degrade against the map's own rasterisation.
-	nav.cell_size = 0.15
-	nav.cell_height = 0.15
+	nav.cell_size = 0.25 if ProfileToggles.has(&"nav_coarse") else 0.15
+	nav.cell_height = nav.cell_size
 	nav.agent_height = 1.8
 	nav.agent_radius = 0.4
 	# The kerb upstand is KilmoreClose.WALK_H (0.125 m), so it has to be
@@ -239,13 +262,10 @@ func _build_materials() -> void:
 	# Mid-height salmon/terracotta panels (reference facades).
 	_mat["band_mid"] = _dress(_flat(Color(1, 1, 1), 0.90),
 		"res://assets/textures/band_mid.png", 0.65, Color(1.0, 0.96, 0.94))
-	# Roof: weathered concrete interlocking tiles, the standard 1960s-70s Dublin
-	# estate covering. Warm grey-brown and lichen-dulled, NOT slate — the previous
-	# near-white tint over the dark texture read as blue-black slate, which is the
-	# wrong material for these houses entirely. Tiled tighter (0.30 vs 0.45) so the
-	# horizontal tile courses are legible from the footpath.
-	_mat["roof"] = _dress(_flat(Color(1, 1, 1), 0.84),
-		"res://assets/textures/roof.png", 0.30, Color(0.66, 0.63, 0.57))
+	# Roof: weathered charcoal concrete interlocking tiles (Marley-style courses).
+	# Dark albedo + tighter world_scale so tile laps read from the footpath.
+	_mat["roof"] = _dress(_flat(Color(1, 1, 1), 0.88),
+		"res://assets/textures/roof.png", 0.24, Color(0.48, 0.46, 0.43))
 	# Chimney stack: rendered and painted like the house, not brick. In the
 	# reference the stack is a pale grey-cream render with a plain concrete capping
 	# slab — no exposed brickwork at all.
@@ -271,9 +291,9 @@ func _build_materials() -> void:
 	_mat["garage_door"] = _dress(_flat(Color(1, 1, 1), 0.62),
 		"res://assets/textures/garage_door.png", 0.5, Color(0.95, 0.92, 0.88))
 	_mat["tarmac"] = _dress(_flat(Color(1, 1, 1), 0.72),
-		"res://assets/textures/tarmac.png", 0.25, Color(0.90, 0.90, 0.92))
+		"res://assets/textures/tarmac.png", 0.22, Color(0.60, 0.60, 0.62))
 	_mat["path"] = _dress(_flat(Color(1, 1, 1), 0.85),
-		"res://assets/textures/path.png", 0.38, Color(0.76, 0.76, 0.74))
+		"res://assets/textures/path.png", 0.34, Color(0.50, 0.50, 0.48))
 	_mat["drive"] = _dress(_flat(Color(1, 1, 1), 0.82),
 		"res://assets/textures/drive.png", 0.45, Color(1, 1, 1))
 	_mat["kerb"] = _dress(_flat(Color(1, 1, 1), 0.80),
@@ -285,6 +305,8 @@ func _build_materials() -> void:
 		"res://assets/textures/grass.png", 0.48, Color(0.40, 0.47, 0.32))
 	_mat["grass_lawn"] = _dress(_flat(Color(1, 1, 1), 0.98),
 		"res://assets/textures/grass_lawn.png", 0.34, Color(0.52, 0.60, 0.42))
+	_mat["grass_footpath_verge"] = _dress(_flat(Color(1, 1, 1), 0.98),
+		"res://assets/textures/grass_lawn.png", 0.36, Color(0.46, 0.54, 0.38))
 	# Soft soil/grit at lawn–drive and lawn–path joints.
 	_mat["soil"] = _flat(Color(0.32, 0.26, 0.18), 0.96)
 	_mat["hedge"] = _dress(_flat(Color(1, 1, 1), 0.98),
@@ -414,13 +436,55 @@ func _static_box_tilted(size: Vector3, origin: Vector3, roll: float) -> void:
 	_collision.add_child(col)
 
 
-func _static_box(size: Vector3, origin: Vector3) -> void:
+func _static_box(size: Vector3, origin: Vector3) -> CollisionShape3D:
 	var shape := BoxShape3D.new()
 	shape.size = size
 	var col := CollisionShape3D.new()
 	col.shape = shape
 	col.position = origin
 	_collision.add_child(col)
+	return col
+
+
+func claim_park_slot(index: int) -> void:
+	if index < 0 or index >= park_slots.size():
+		return
+	var slot: Dictionary = park_slots[index]
+	if bool(slot.get("claimed", false)):
+		return
+	slot["claimed"] = true
+	var visual := slot.get("visual") as Node3D
+	if visual != null:
+		visual.visible = false
+	var collider := slot.get("collider") as CollisionShape3D
+	if collider != null:
+		collider.disabled = true
+
+
+func nearest_open_park_slot(near: Vector3, max_dist: float) -> int:
+	var best := -1
+	var best_d := max_dist
+	for i in park_slots.size():
+		var slot: Dictionary = park_slots[i]
+		if bool(slot.get("claimed", false)):
+			continue
+		var pos: Vector3 = slot.get("transform", Transform3D.IDENTITY).origin
+		var d := near.distance_to(pos)
+		if d < best_d:
+			best_d = d
+			best = i
+	return best
+
+
+func park_slot_place(index: int) -> Transform3D:
+	if index < 0 or index >= park_slots.size():
+		return Transform3D.IDENTITY
+	var visual := park_slots[index].get("visual") as Node3D
+	if visual == null:
+		return Transform3D.IDENTITY
+	var at := visual.global_transform
+	at.origin.y = Car.RIDE_HEIGHT
+	return at
 
 
 ## A box occluder. Not a CollisionShape3D, so it costs nothing in the physics
@@ -465,6 +529,8 @@ func _build_ground() -> void:
 		Vector3(0.0, -0.1, z_mid))
 
 	_verge_y = walk_h - 0.14
+	_footpath_verge_y = walk_h - 0.10
+	var footpath_verge_w := 0.45
 	for side in [KilmoreClose.SIDE_NEAR, KilmoreClose.SIDE_FAR]:
 		var s := float(side)
 		# Footpath, raised by the kerb upstand.
@@ -478,9 +544,11 @@ func _build_ground() -> void:
 		# Roadside verge — narrow grass between kerb and carriageway.
 		_mesh_box("grass_verge", Vector3(0.55, 0.12, z_len),
 			Vector3(s * (KilmoreClose.HALF_WIDTH + 0.38), _verge_y, z_mid))
-		# Front-plot underlay: muted far grass (not a golf-lawn carpet).
-		# Remnant lawns + drives sit on top via _add_house_plot.
-		_mesh_box("grass_far", Vector3(KilmoreClose.SETBACK, 0.18, z_len),
+		# Footpath outer verge — grass strip between path and garden wall.
+		_mesh_box("grass_footpath_verge", Vector3(footpath_verge_w, 0.10, z_len),
+			Vector3(s * (KilmoreClose.KERB + 0.12), _footpath_verge_y, z_mid))
+		# Front-plot underlay: lawn texture across the full garden depth.
+		_mesh_box("grass_lawn", Vector3(KilmoreClose.SETBACK, 0.18, z_len),
 			Vector3(s * (KilmoreClose.KERB + KilmoreClose.SETBACK * 0.5),
 				walk_h - 0.12, z_mid))
 		_build_boundary(side, zr)
@@ -588,12 +656,14 @@ func _add_ped_gate(x: float, walk_h: float, gz: float) -> void:
 
 
 func _garage_along_z(h: Dictionary) -> float:
-	var mirror: bool = h["mirror"]
-	var n := KilmoreClose.bay_count()
-	var half := KilmoreClose.HOUSE_W * 0.5
-	var far_bay := 0 if mirror else (n - 1)
-	return float(h["z"]) + clampf(KilmoreClose.bay_centre(far_bay),
-		-(half - KilmoreClose.GARAGE_W * 0.5), half - KilmoreClose.GARAGE_W * 0.5)
+	# Outer-end garages project half of PAIR_GAP into the inter-pair passage so
+	# adjacent pairs meet with no visible hole (PAIR_GAP is where garages stand).
+	var p: int = h["pair"]
+	var pair_origin := float(p) * KilmoreClose.PITCH
+	if h["mirror"]:
+		return pair_origin - KilmoreClose.PAIR_GAP * 0.5 + KilmoreClose.GARAGE_W * 0.5
+	return pair_origin + KilmoreClose.PAIR_W + KilmoreClose.PAIR_GAP * 0.5 \
+		- KilmoreClose.GARAGE_W * 0.5
 
 
 func _add_house_plot(h: Dictionary, walk_h: float) -> void:
@@ -627,6 +697,22 @@ func _add_house_plot(h: Dictionary, walk_h: float) -> void:
 
 	_lawn_spots.append(Vector3(lawn_cx, walk_h - 0.02, lawn_z))
 	_lawn_sizes.append(Vector2(lawn_len * 0.85, lawn_w * 0.85))
+
+	var garden_cx := kerb_x - out * KilmoreClose.SETBACK * 0.5
+	_garden_rects.append({
+		"centre": Vector3(garden_cx, walk_h - 0.02, float(h["z"])),
+		"size": Vector2(KilmoreClose.SETBACK * 0.88, KilmoreClose.HOUSE_W * 0.92),
+	})
+
+	if int(h["number"]) % 2 == 0:
+		# Length along the driveway (X); nose toward the garage. Opposite yaw to
+		# kerbside slots, which park parallel to the street (Z).
+		var car_yaw := -PI * 0.5 if side == KilmoreClose.SIDE_NEAR else PI * 0.5
+		_driveway_spots.append({
+			"pos": Vector3(drive_cx, walk_h - 0.04, g_z),
+			"yaw": car_yaw,
+			"house_z": float(h["z"]),
+		})
 
 	# P1: sparse multi-part shrubs (not a single cube).
 	if int(h["number"]) % 3 == 0:
@@ -780,14 +866,50 @@ func _build_street_dressing() -> void:
 
 
 func _add_wheelie_bin(x: float, walk_h: float, z: float, mat_key: String) -> void:
-	_push("bin_body", mat_key, "box", Vector3(0.48, 0.82, 0.42),
-		Vector3(x, walk_h + 0.41, z))
-	_push("bin_lid", mat_key, "box", Vector3(0.50, 0.10, 0.44),
-		Vector3(x, walk_h + 0.88, z))
-	_push("bin_wheel", "metal_black", "box", Vector3(0.12, 0.12, 0.12),
-		Vector3(x - 0.14, walk_h + 0.06, z + 0.12))
-	_push("bin_wheel", "metal_black", "box", Vector3(0.12, 0.12, 0.12),
-		Vector3(x + 0.14, walk_h + 0.06, z + 0.12))
+	_spawn_wheelie_bin(x, walk_h, z, mat_key)
+
+
+func _spawn_wheelie_bin(x: float, walk_h: float, z: float, mat_key: String) -> void:
+	var bin := RigidBody3D.new()
+	bin.name = "WheelieBin"
+	bin.set_script(_BIN_SCRIPT)
+	bin.collision_layer = 1
+	bin.collision_mask = 1 | 2 | 4 | 8
+	bin.mass = 14.0
+	bin.position = Vector3(x, walk_h + 0.41, z)
+	var health := Node.new()
+	health.name = "Health"
+	health.set_script(_HEALTH_SCRIPT)
+	health.set("max_hp", 28.0)
+	bin.add_child(health)
+	var shape := CollisionShape3D.new()
+	var box := BoxShape3D.new()
+	box.size = Vector3(0.48, 0.82, 0.42)
+	shape.shape = box
+	bin.add_child(shape)
+	var colour := _mat_colour(mat_key)
+	for part in [
+		[Vector3(0.48, 0.82, 0.42), Vector3(0.0, 0.0, 0.0)],
+		[Vector3(0.50, 0.10, 0.44), Vector3(0.0, 0.47, 0.0)],
+	]:
+		var mi := MeshInstance3D.new()
+		var mesh := BoxMesh.new()
+		mesh.size = part[0]
+		mi.mesh = mesh
+		mi.material_override = MeshDress.prop_mat(colour, 0.88)
+		mi.position = part[1]
+		bin.add_child(mi)
+	add_child(bin)
+
+
+func _mat_colour(mat_key: String) -> Color:
+	match mat_key:
+		"bin_red":
+			return Color(0.55, 0.12, 0.10)
+		"bin_green":
+			return Color(0.12, 0.38, 0.18)
+		_:
+			return Color(0.12, 0.12, 0.13)
 
 
 func _spawn_static_trees() -> void:
@@ -795,16 +917,19 @@ func _spawn_static_trees() -> void:
 	for spot in _tree_spots:
 		if _TREE_VARIANTS.is_empty():
 			continue
+		var wrapper := _DESTRUCTIBLE_TREE.instantiate() as Node3D
+		if wrapper == null:
+			continue
+		wrapper.name = "StreetTree"
+		wrapper.position = spot
+		wrapper.rotation.y = float(spot_i % 5) * 0.35 - 0.7
 		var scene := _TREE_VARIANTS[spot_i % _TREE_VARIANTS.size()]
 		var tree := scene.instantiate() as Node3D
-		if tree == null:
-			continue
-		tree.name = "StreetTree"
-		tree.position = spot
-		tree.rotation.y = float(spot_i % 5) * 0.35 - 0.7
-		MeshDress.dress_tree(tree)
-		_disable_shadows(tree)
-		add_child(tree)
+		if tree != null:
+			wrapper.add_child(tree)
+			MeshDress.dress_tree(tree)
+			_disable_shadows(tree)
+		add_child(wrapper)
 		spot_i += 1
 
 
@@ -831,9 +956,7 @@ func _spawn_garden_bushes() -> void:
 		add_child(bush)
 
 
-## P2 — selective SimpleGrassTextured blades on remnant lawns + verges only.
-## Caps density hard; shadows off; interactive mode off (mobile-safe).
-## Hinterland grass stays flat materials from P0.
+## SimpleGrassTextured blades on garden lawns, remnant patches, and verges.
 func _spawn_detail_grass() -> void:
 	var grass_script: Script = load("res://addons/simplegrasstextured/grass.gd") as Script
 	if grass_script == null:
@@ -853,38 +976,75 @@ func _spawn_detail_grass() -> void:
 	_configure_sgt(verge_node, Color(0.62, 0.70, 0.48), 0.38, 0.55)
 
 	var up := Vector3.UP
-	# ~10 blades per remnant lawn × 52 ≈ 520 — modest MultiMesh count.
+	var blade_budget := 1200
+	var blades := 0
+
+	# Full front gardens — ~7 blades each × 52 houses.
+	for i in _garden_rects.size():
+		if blades >= blade_budget:
+			break
+		var rect: Dictionary = _garden_rects[i]
+		var centre: Vector3 = rect["centre"]
+		var sz: Vector2 = rect["size"]
+		var seed_i := i * 23 + 7
+		for k in 7:
+			if blades >= blade_budget:
+				break
+			var fx := _hash01(seed_i + k * 3) - 0.5
+			var fz := _hash01(seed_i + k * 3 + 1) - 0.5
+			var pos := centre + Vector3(fx * sz.x, 0.0, fz * sz.y)
+			var sc := 0.72 + _hash01(seed_i + k * 3 + 2) * 0.38
+			lawn_node.call("add_grass", pos, up, Vector3(sc, sc, sc),
+				_hash01(seed_i + k) * TAU)
+			blades += 1
+
+	# Remnant lawn patches (same material, extra density).
 	for i in _lawn_spots.size():
+		if blades >= blade_budget:
+			break
 		var centre: Vector3 = _lawn_spots[i]
 		var sz: Vector2 = _lawn_sizes[i]
 		var seed_i := i * 17 + 3
-		for k in 10:
+		for k in 4:
+			if blades >= blade_budget:
+				break
 			var fx := _hash01(seed_i + k * 3) - 0.5
 			var fz := _hash01(seed_i + k * 3 + 1) - 0.5
 			var pos := centre + Vector3(fx * sz.x, 0.0, fz * sz.y)
 			var sc := 0.75 + _hash01(seed_i + k * 3 + 2) * 0.35
 			lawn_node.call("add_grass", pos, up, Vector3(sc, sc, sc),
 				_hash01(seed_i + k) * TAU)
+			blades += 1
 
-	# Verge scatter: both sides, every ~2.8 m, 2 blades — ~200 total.
+	# Roadside + footpath verges: both sides, every ~2.8 m.
 	var zr := KilmoreClose.road_z_range()
 	var z := zr.x + 4.0
 	var vi := 0
-	while z < zr.y - 4.0:
+	while z < zr.y - 4.0 and blades < blade_budget:
 		for side in [KilmoreClose.SIDE_NEAR, KilmoreClose.SIDE_FAR]:
+			if blades >= blade_budget:
+				break
 			var s := float(side)
-			var vx := s * (KilmoreClose.HALF_WIDTH + 0.38)
+			var road_vx := s * (KilmoreClose.HALF_WIDTH + 0.38)
+			var path_vx := s * (KilmoreClose.KERB + 0.12)
 			for k in 2:
+				if blades >= blade_budget:
+					break
 				var oz := (_hash01(vi * 11 + k) - 0.5) * 0.35
 				var ox := (_hash01(vi * 11 + k + 5) - 0.5) * 0.18
-				var pos := Vector3(vx + ox, _verge_y + 0.08, z + oz)
-				var sc := 0.55 + _hash01(vi + k) * 0.25
-				verge_node.call("add_grass", pos, up, Vector3(sc, sc, sc),
+				var pos_r := Vector3(road_vx + ox, _verge_y + 0.08, z + oz)
+				var sc_r := 0.55 + _hash01(vi + k) * 0.25
+				verge_node.call("add_grass", pos_r, up, Vector3(sc_r, sc_r, sc_r),
 					_hash01(vi * 7 + k) * TAU)
+				blades += 1
+				var pos_p := Vector3(path_vx + ox * 0.6, _footpath_verge_y + 0.06, z + oz)
+				var sc_p := 0.50 + _hash01(vi + k + 3) * 0.22
+				verge_node.call("add_grass", pos_p, up, Vector3(sc_p, sc_p, sc_p),
+					_hash01(vi * 9 + k) * TAU)
+				blades += 1
 			vi += 1
 		z += 2.8
 
-	# Runtime: grass.gd disables _process, so flush buffers explicitly.
 	lawn_node.call("_update_multimesh")
 	verge_node.call("_update_multimesh")
 
@@ -911,44 +1071,66 @@ func _hash01(n: int) -> float:
 
 
 func _spawn_static_cars() -> void:
-	var paints: Array = [
-		Color(0.78, 0.80, 0.84),
-		Color(0.12, 0.14, 0.16),
-		Color(0.55, 0.58, 0.62),
-		Color(0.22, 0.32, 0.48),
-		Color(0.72, 0.74, 0.76),
-	]
-	# PARALLEL PARKED, nose-to-tail along the kerb like the drivable car outside 18.
-	#
-	# These were broadside across the carriageway. The yaws here were written when
-	# the glTF was mis-oriented; once its axis correction landed in
-	# `golf_mk4_visual.tscn` the corrected model's length runs along local +X, and
-	# the street runs along Z — so a yaw of 0 parks a car straight across the road.
-	# A quarter turn puts the length along the street. `Car.place()` applies exactly
-	# the same PI/2 to the drivable one, which is why that one looked right.
+	park_slots.clear()
 	var park_yaw := PI * 0.5
 	var spots: Array = [
+		[Vector3(-(KilmoreClose.HALF_WIDTH - 0.95), 0.0, 22.0), park_yaw],
 		[Vector3(-(KilmoreClose.HALF_WIDTH - 0.95), 0.0, 30.0), park_yaw],
+		[Vector3(KilmoreClose.HALF_WIDTH - 0.95, 0.0, 52.0), -park_yaw],
 		[Vector3(KilmoreClose.HALF_WIDTH - 0.95, 0.0, 68.0), -park_yaw],
+		[Vector3(-(KilmoreClose.HALF_WIDTH - 0.95), 0.0, 98.0), park_yaw + 0.02],
+		[Vector3(KilmoreClose.HALF_WIDTH - 0.95, 0.0, 118.0), -park_yaw],
 		[Vector3(-(KilmoreClose.HALF_WIDTH - 0.95), 0.0, 142.0), park_yaw + 0.04],
+		[Vector3(KilmoreClose.HALF_WIDTH - 0.95, 0.0, 162.0), -park_yaw - 0.02],
+		[Vector3(-(KilmoreClose.HALF_WIDTH - 0.95), 0.0, 188.0), -park_yaw - 0.03],
 		[Vector3(KilmoreClose.HALF_WIDTH - 0.95, 0.0, 188.0), -park_yaw - 0.03],
+		[Vector3(-(KilmoreClose.HALF_WIDTH - 0.95), 0.0, 210.0), park_yaw],
+		[Vector3(KilmoreClose.HALF_WIDTH - 0.95, 0.0, 228.0), -park_yaw],
 		[Vector3(-(KilmoreClose.HALF_WIDTH - 0.95), 0.0, 228.0), park_yaw],
+		[Vector3(KilmoreClose.HALF_WIDTH - 0.95, 0.0, 248.0), -park_yaw + 0.03],
 	]
 	for i in spots.size():
 		var spot: Array = spots[i]
-		var car := _CAR_MESH.instantiate() as Node3D
-		if car == null:
+		_place_static_car(spot[0] as Vector3, spot[1] as float, i, true)
+
+
+func _spawn_driveway_cars() -> void:
+	var paint_i := 20
+	for spot in _driveway_spots:
+		var pos: Vector3 = spot["pos"]
+		if _kerb_slot_near(pos.z, 3.5):
 			continue
-		car.name = "ParkedCar"
-		car.position = spot[0]
-		car.rotation.y = spot[1]
-		MeshDress.dress_car(car, paints[i % paints.size()])
-		_disable_shadows(car)
-		add_child(car)
-		# These were visuals only, so David and the cast walked straight through
-		# five Golfs and the navmesh ran under them. An axis-aligned box is close
-		# enough — the parking angles here are 0, PI, and under 7 degrees.
-		_static_box(Vector3(1.95, 1.5, 4.1), spot[0] + Vector3(0.0, 0.75, 0.0))
+		var yaw: float = spot["yaw"]
+		_place_static_car(pos, yaw, paint_i, false)
+		paint_i += 1
+
+
+func _kerb_slot_near(z: float, radius: float) -> bool:
+	for slot in park_slots:
+		var t: Transform3D = slot["transform"]
+		if absf(t.origin.z - z) < radius:
+			return true
+	return false
+
+
+func _place_static_car(pos: Vector3, yaw: float, paint_i: int, possessable: bool) -> void:
+	var car := _CAR_MESH.instantiate() as Node3D
+	if car == null:
+		return
+	car.name = "ParkedCar" if possessable else "DrivewayCar"
+	car.position = pos
+	car.rotation.y = yaw
+	MeshDress.dress_car(car, _CAR_PAINTS[paint_i % _CAR_PAINTS.size()])
+	_disable_shadows(car)
+	add_child(car)
+	if possessable:
+		var coll := _static_box(Vector3(1.95, 1.5, 4.1), pos + Vector3(0.0, 0.75, 0.0))
+		park_slots.append({
+			"transform": Transform3D(Basis.from_euler(Vector3(0.0, yaw, 0.0)), pos),
+			"visual": car,
+			"collider": coll,
+			"claimed": false,
+		})
 
 
 func _disable_shadows(node: Node) -> void:
@@ -968,35 +1150,43 @@ func _disable_shadows(node: Node) -> void:
 func _add_pair_shell(p: Dictionary) -> void:
 	var c: Vector3 = p["centre"]
 	var wall_h := KilmoreClose.WALL_H
+	var floor_h := KilmoreClose.FLOOR_H
+	var upper_h := wall_h - floor_h
 	var depth := KilmoreClose.HOUSE_D
 	var width := KilmoreClose.PAIR_W
+	var wing_w := KilmoreClose.GARAGE_W
+	var upper_w := width - 2.0 * wing_w
 
-	# Wall block.
+	# Wall block — ground floor full width; first floor only over the inner span
+	# so the garage wings at each pair end read as single-storey.
 	_push("wall", "dash", "box",
-		Vector3(depth, wall_h, width),
-		Vector3(c.x, wall_h * 0.5, c.z))
+		Vector3(depth, floor_h, width),
+		Vector3(c.x, floor_h * 0.5, c.z))
+	if upper_h > 0.05 and upper_w > 0.05:
+		_push("wall", "dash", "box",
+			Vector3(depth, upper_h, upper_w),
+			Vector3(c.x, floor_h + upper_h * 0.5, c.z))
 	# Brick course around the base, stood slightly proud of the pebbledash. Height
 	# 0.85 rather than 0.9: at 0.9 its top clipped 0.03 m off the bottom of the
 	# ground-floor window frame, which starts at WIN_LO_SILL - 0.08 = 0.87.
 	_push("band", "band", "box",
 		Vector3(depth + 0.10, 0.85, width + 0.10),
 		Vector3(c.x, 0.425, c.z))
-	# Pitched roof, ridge along the street, with a small eave overhang. The pitch is
-	# deliberately shallow — ROOF_H 1.65 over a 4.25 m half-span is about 21°, which
-	# is what concrete interlocking tiles are laid at and what the reference shows.
-	# A steeper roof reads as slate and makes the houses look Victorian.
+	# Pitched roof, ridge along the street, with a small eave overhang. ROOF_H over
+	# half the prism depth (~4.55 m) is ~24° — interlocking tile pitch on these semis.
 	_push("roof", "roof", "prism",
-		Vector3(depth + 0.6, KilmoreClose.ROOF_H, width + 0.4),
+		Vector3(depth + 0.6, KilmoreClose.ROOF_H, upper_w + 0.4),
 		Vector3(c.x, wall_h + KilmoreClose.ROOF_H * 0.5, c.z))
 	# Painted fascia board under the eaves — the pale line running under every roof
 	# edge in the reference. Sits proud of the gutter so it reads as the board the
-	# gutter is fixed to.
+	# gutter is fixed to. Shortened to match the upper wall — no eaves line over
+	# the single-storey garage wings.
 	_push("fascia", "fascia", "box",
-		Vector3(depth + 0.62, 0.16, width + 0.42),
+		Vector3(depth + 0.62, 0.16, upper_w + 0.42),
 		Vector3(c.x, wall_h + 0.08, c.z))
 	# Gutter, hung on the fascia.
 	_push("gutter", "pipe", "box",
-		Vector3(depth + 0.66, 0.09, width + 0.46),
+		Vector3(depth + 0.66, 0.09, upper_w + 0.46),
 		Vector3(c.x, wall_h - 0.02, c.z))
 	# A chimney at each gable end of the pair. Rendered and painted like the house
 	# rather than exposed brick — in the reference the stack is the same pale render
@@ -1005,7 +1195,7 @@ func _add_pair_shell(p: Dictionary) -> void:
 	# the wrong period.
 	var stack_h := 1.7
 	for sgn in [-1.0, 1.0]:
-		var stack_z: float = c.z + sgn * (width * 0.5 - 0.75)
+		var stack_z: float = c.z + sgn * (upper_w * 0.5 - 0.75)
 		var stack_top := wall_h + KilmoreClose.ROOF_H * 0.55 + stack_h * 0.5
 		_push("chimney", "chimney", "box",
 			Vector3(0.9, stack_h, 0.7),
@@ -1020,9 +1210,8 @@ func _add_pair_shell(p: Dictionary) -> void:
 				Vector3(0.26, 0.34, 0.26),
 				Vector3(c.x, stack_top + 0.29, stack_z + pot * 0.17))
 
-	# Collision: one box for the pair's wall block. The roof is above head
-	# height and the porch/garage carry their own boxes, so this is all the
-	# solidity the building needs.
+	# Collision: one box for the pair's wall block (visual upper storey is trimmed,
+	# but solidity stays one volume for the collision budget).
 	_static_box(Vector3(depth, wall_h, width), Vector3(c.x, wall_h * 0.5, c.z))
 
 	# And an occluder on the same volume. With 5 m walls down both sides of a
@@ -1066,17 +1255,9 @@ func _add_house(h: Dictionary) -> void:
 			_add_window(face_x, out, z + along, KilmoreClose.WIN_HI_SILL,
 				KilmoreClose.WIN_HI_W, KilmoreClose.WIN_HI_H)
 
-	# Porch over the front door, garage at the far end. Both clamped inside the
-	# frontage so neither overhangs the corner of the wall.
-	var half := KilmoreClose.HOUSE_W * 0.5
-	var far_bay := 0 if mirror else (n - 1)
-	var garage_along := clampf(KilmoreClose.bay_centre(far_bay),
-		-(half - KilmoreClose.GARAGE_W * 0.5),
-		half - KilmoreClose.GARAGE_W * 0.5)
-
 	_add_porch(face_x, out, z + KilmoreClose.door_along(mirror), int(h["number"]))
-	_add_garage(face_x, out, z + garage_along)
-	_add_facade_trim(face_x, out, z, mirror)
+	_add_garage(face_x, out, _garage_along_z(h))
+	_add_facade_trim(face_x, out, h)
 	_add_downpipe(face_x, out, z, mirror)
 
 
@@ -1091,17 +1272,21 @@ func _add_house(h: Dictionary) -> void:
 ## window frame tops out at WIN_LO_SILL + WIN_LO_H + 0.08 = 2.43 and the
 ## first-floor frame starts at WIN_HI_SILL - 0.08 = 3.37. Centre 2.90, height 0.94
 ## fills exactly that and touches neither.
-func _add_facade_trim(face_x: float, out: float, z: float, mirror: bool) -> void:
+func _add_facade_trim(face_x: float, out: float, h: Dictionary) -> void:
+	var z: float = h["z"]
+	var mirror: bool = h["mirror"]
 	var lo_frame_top := KilmoreClose.WIN_LO_SILL + KilmoreClose.WIN_LO_H + 0.08
 	var hi_frame_bottom := KilmoreClose.WIN_HI_SILL - 0.08
 	var panel_h := hi_frame_bottom - lo_frame_top
 	var panel_y := (lo_frame_top + hi_frame_bottom) * 0.5
-	# Wider than before: in the reference the band runs most of the frontage
-	# rather than stopping short of the window group.
-	var panel_w := KilmoreClose.HOUSE_W * 0.62
+	# Inner frontage only — stop short of the single-storey garage bay.
+	var garage_z := _garage_along_z(h)
+	var garage_sign := signf(garage_z - z if absf(garage_z - z) > 0.01 else 1.0)
+	var panel_w := (KilmoreClose.HOUSE_W - KilmoreClose.GARAGE_W) * 0.72
+	var panel_z := z - garage_sign * KilmoreClose.GARAGE_W * 0.22
 	_push("band_mid", "band_mid", "box",
 		Vector3(0.08, panel_h, panel_w),
-		Vector3(face_x + out * 0.04, panel_y, z))
+		Vector3(face_x + out * 0.04, panel_y, panel_z))
 
 	# Brick head over the front door. This was a full-height 0.10–2.40 slab that
 	# sat coplanar with the door leaf and rendered over it; the brick jambs either
