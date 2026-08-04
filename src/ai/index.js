@@ -569,7 +569,18 @@ export class AiSystem {
       new THREE.Box3(new THREE.Vector3(-70, -4, -70), new THREE.Vector3(70, 24, 70));
     bounds.expandByScalar(2);
     const t0 = performance.now();
-    this.grid = new NavGrid(phys, { bounds, cell: 0.8, radius: 0.36, height: 1.78 });
+    /**
+     * Nav cell size is quality-driven. The honest bounds for a 304 m street are
+     * 287x381 = 109k cells at 0.8 m, which is a real boot cost and a real
+     * memory footprint on a phone; `mobile` coarsens to 1.3 m, roughly 41k.
+     *
+     * The trade is pavement width: the footpath is 2.0 m and NavGrid inflates
+     * obstacles by the agent radius, so at 1.3 m agents will favour the
+     * carriageway over the path. That is an acceptable loss on hardware that
+     * would otherwise spend a second of boot on navigation.
+     */
+    const navCell = this.ctx.config?.q?.navCell ?? 0.8;
+    this.grid = new NavGrid(phys, { bounds, cell: navCell, radius: 0.36, height: 1.78 });
     this.grid.build();
     this.cover = new CoverMap(this.grid, phys);
     this.cover.build({ step: 1, reach: 1.3 });
@@ -655,7 +666,16 @@ export class AiSystem {
 
     let made = 0;
     const missing = [];
-    for (const c of KILMORE_CAST) {
+    /**
+     * Cap the cast on weak hardware. Each actor is a skinned mesh with layered
+     * animation, foot IK, a ground probe and a share of the A* budget, so the
+     * per-agent cost dominates on a phone long before the pixels do. The five
+     * named spawns the brief requires (14, 18, 26, 27, 31) come first in
+     * KILMORE_CAST, so a cap of 5 keeps the scripted encounter intact and drops
+     * only the extras.
+     */
+    const cap = this.ctx.config?.q?.aiMax ?? 32;
+    for (const c of KILMORE_CAST.slice(0, cap)) {
       const h = world.doorstep(c.house);
       if (!h) {
         missing.push(`${c.name}@${c.house}`);
@@ -684,7 +704,9 @@ export class AiSystem {
       });
       made++;
     }
-    made += this._populateAmbient(world);
+    // Ambient neighbours are atmosphere, not gameplay: first thing to go when
+    // the actor budget is tight.
+    if (cap > KILMORE_CAST.length) made += this._populateAmbient(world);
     this.stats.agents = this.agents.length;
     if (missing.length) console.warn(`[ai] no such house number for: ${missing.join(', ')}`);
     console.info(`[ai] Kilmore Close: ${made} of ${KILMORE_CAST.length} cast staged at their own doors`);

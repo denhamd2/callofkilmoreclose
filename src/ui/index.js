@@ -9,6 +9,7 @@ import { AmmoPanel } from './ammo.js';
 import { Killfeed } from './killfeed.js';
 import { WeaponWheel } from './weaponwheel.js';
 import { ControlsPanel } from './controls.js';
+import { TouchControls } from './touch.js';
 import { Compass, MatchBar } from './compass.js';
 import { Minimap } from './minimap.js';
 import { WorldMarkers } from './markers.js';
@@ -101,6 +102,10 @@ export class UiSystem {
     // Always-on control list. Contextual: `update` swaps it to the driving set
     // whenever the player is in a vehicle.
     this.controls = new ControlsPanel(this.chromeLayer);
+    this.touch = new TouchControls(this.chromeLayer);
+    // See the low-fx block in style.js for what this switches off and why.
+    if (ctx.config?.quality === 'mobile') this.root.classList.add('ow-lowfx');
+    this._lowFx = ctx.config?.quality === 'mobile';
     this.banner = new Banner(this.chromeLayer);
     this.menu = new PauseMenu(this.root, ctx);
 
@@ -532,6 +537,10 @@ export class UiSystem {
     this.state.hidden = this.state.melee === true || driving;
     const driving = this.ctx.peek('vehicle')?.driving === true;
     this.controls.setContext(driving ? 'drive' : 'foot');
+    this.touch.update(this.ctx.input);
+    // The keyboard hint list is meaningless on a phone and eats a corner of a
+    // small screen, so it yields to the on-screen controls.
+    this.controls.setVisible(this.ctx.input?.touchActive !== true);
     this.matchBar.update(s);
     this.prompt.update(dt);
     this.banner.update(dt);
@@ -554,6 +563,10 @@ export class UiSystem {
     this.markers.updateDamage(dt, ctx.camera, this.vw, this.vh, this.k);
 
     // ---- minimap ---------------------------------------------------------
+    // Minimap is hidden on mobile (low-fx), so neither bake it nor draw it —
+    // the bake is a 512^2 render-target readback and the draw is a per-frame
+    // canvas rebuild with a fresh radial gradient.
+    if (this._lowFx) return;
     if (!this.minimap.bakeDone && ++this._bakeFrame > 6 && this._bakeFrame % 20 === 0) {
       this.minimap.tryBake(ctx);
     }
@@ -641,6 +654,7 @@ export class UiSystem {
     this.prompt.dispose();
     this.banner.dispose();
     this.controls.dispose();
+    this.touch.dispose();
     this.menu.dispose();
     this.root.remove();
     removeStyles();

@@ -604,6 +604,49 @@ const CSS = `
 .ow-ammo-melee .ow-mag,
 .ow-ammo-melee .ow-ammo-mode { display:none; }
 
+/* =========================================================== low-fx (mobile)
+   Three things in this stylesheet are disproportionately expensive on a phone
+   GPU and are switched off wholesale when the mobile preset is active:
+
+   - backdrop-filter on the hurt desaturation. A full-screen backdrop filter
+     forces the compositor to read back and re-filter the whole frame.
+   - the SVG url(#ow-warp) filter on the blood overlays. An SVG filter on a
+     full-screen element is the single most expensive thing the HUD can do.
+   - the minimap, which redraws a canvas every frame including a per-frame
+     radial gradient and per-blip shadowBlur.
+
+   The hurt state still reads: the vignette, the red bloom and the low-health
+   beat are all plain gradients and stay. */
+.ow-lowfx .ow-desat { backdrop-filter: none; }
+.ow-lowfx .ow-blood-a, .ow-lowfx .ow-blood-b { filter: none; }
+.ow-lowfx .ow-minimap { display: none; }
+
+/* ================================================================= touch */
+.ow-touch { position:absolute; inset:0; pointer-events:none; }
+.ow-touch-stick {
+  position:absolute; width:20vmin; height:20vmin;
+  margin-left:-10vmin; margin-top:-10vmin;
+  border:1px solid rgba(255,255,255,.28); border-radius:50%;
+  background: rgba(8,11,14,.22);
+}
+.ow-touch-stick i {
+  position:absolute; left:50%; top:50%;
+  width:8vmin; height:8vmin; margin-left:-4vmin; margin-top:-4vmin;
+  border-radius:50%;
+  background: rgba(255,255,255,.30);
+  border:1px solid rgba(255,255,255,.45);
+}
+.ow-touch-btn {
+  position:absolute; transform:translate(-50%,-50%);
+  display:flex; align-items:center; justify-content:center;
+  border:1px solid rgba(255,255,255,.34); border-radius:50%;
+  background: rgba(8,11,14,.30);
+  color: rgba(238,244,247,.86);
+  font-size:3.1vmin; letter-spacing:.08em;
+  text-shadow: var(--sh-hard);
+}
+.ow-touch-btn.on { background: rgba(255,176,42,.34); border-color: var(--amber); }
+
 /* ============================================================== controls */
 .ow-controls {
   position:absolute; left: calc(var(--u) * 3); bottom: calc(var(--u) * 3);

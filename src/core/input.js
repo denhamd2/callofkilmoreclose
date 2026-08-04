@@ -6,6 +6,35 @@
  * the transition happened — read them in update(), not fixedUpdate().
  */
 
+/**
+ * ON-SCREEN BUTTONS for touch devices.
+ *
+ * Exported so `ui` draws exactly what `input` tests — one source of truth, so
+ * the visual and the hit target cannot drift apart. Positions are fractions of
+ * the viewport (y from the top); radius is a fraction of min(width, height).
+ *
+ * `code` is a synthetic key/mouse code injected into the normal `down` set, so
+ * every consumer (`action()`, `get fire`, `held('Tab')`) works unchanged and
+ * nothing downstream needs to know touch exists.
+ */
+export const TOUCH_BUTTONS = [
+  { id: 'fire', code: 'Mouse0', label: 'FIRE', x: 0.885, y: 0.775, r: 0.085 },
+  { id: 'use', code: 'KeyF', label: 'USE', x: 0.715, y: 0.735, r: 0.058 },
+  { id: 'wheel', code: 'Tab', label: 'WEAP', x: 0.885, y: 0.545, r: 0.058 },
+  { id: 'jump', code: 'Space', label: 'JUMP', x: 0.715, y: 0.925, r: 0.058 },
+];
+
+/** Left of this fraction of the screen is the movement stick; right is look. */
+const TOUCH_STICK_ZONE = 0.42;
+/** Stick travel, as a fraction of min(width, height), for full deflection. */
+const TOUCH_STICK_RANGE = 0.10;
+/**
+ * Touch look is in CSS pixels while mouse look is in raw device deltas, and a
+ * thumb drags far less than a mouse. This scales the drag before it enters the
+ * shared accumulator so `config.sensitivity` stays meaningful for both.
+ */
+const TOUCH_LOOK_SCALE = 1.9;
+
 export const ACTIONS = {
   forward: ['KeyW', 'ArrowUp'],
   back: ['KeyS', 'ArrowDown'],
@@ -51,6 +80,20 @@ export class Input {
     this.gamepadIndex = null;
     this.stick = { moveX: 0, moveY: 0, lookX: 0, lookY: 0 };
 
+    /**
+     * Touch state. `touchActive` flips true on the first touch and is what `ui`
+     * uses to decide whether to draw the on-screen controls at all — a desktop
+     * player never sees them.
+     */
+    this.touchActive = false;
+    /** Live stick deflection, -1..1, for `ui` to draw the thumb position. */
+    this.touchStick = { x: 0, y: 0, active: false, ox: 0, oy: 0 };
+    this._touchMove = -1; // pointerId driving the stick
+    this._touchLook = -1; // pointerId driving the camera
+    this._touchLookX = 0;
+    this._touchLookY = 0;
+    this._touchBtn = new Map(); // pointerId -> button code
+
     this._bound = {
       keydown: this._onKeyDown.bind(this),
       keyup: this._onKeyUp.bind(this),
@@ -61,6 +104,9 @@ export class Input {
       lockchange: this._onLockChange.bind(this),
       blur: this._onBlur.bind(this),
       contextmenu: (e) => e.preventDefault(),
+      touchstart: this._onTouchStart.bind(this),
+      touchmove: this._onTouchMove.bind(this),
+      touchend: this._onTouchEnd.bind(this),
     };
   }
 
@@ -74,6 +120,122 @@ export class Input {
     addEventListener('blur', this._bound.blur);
     document.addEventListener('pointerlockchange', this._bound.lockchange);
     this.canvas.addEventListener('contextmenu', this._bound.contextmenu);
+    // `passive: false` because the handlers preventDefault to stop the page
+    // scrolling, pinch-zooming and firing synthetic mouse events under us.
+    this.canvas.addEventListener('touchstart', this._bound.touchstart, { passive: false });
+    this.canvas.addEventListener('touchmove', this._bound.touchmove, { passive: false });
+    this.canvas.addEventListener('touchend', this._bound.touchend, { passive: false });
+    this.canvas.addEventListener('touchcancel', this._bound.touchend, { passive: false });
+  }
+
+  /* ====================================================================== */
+  /*  touch                                                                 */
+  /* ====================================================================== */
+
+  /** Screen-space radius of a button, in pixels. */
+  _btnR(b) {
+    return b.r * Math.min(innerWidth, innerHeight);
+  }
+
+  /** Which on-screen button, if any, is under this point. */
+  _hitButton(px, py) {
+    for (let i = 0; i < TOUCH_BUTTONS.length; i++) {
+      const b = TOUCH_BUTTONS[i];
+      const bx = b.x * innerWidth;
+      const by = b.y * innerHeight;
+      const r = this._btnR(b);
+      if ((px - bx) ** 2 + (py - by) ** 2 <= r * r) return b;
+    }
+    return null;
+  }
+
+  _onTouchStart(e) {
+    if (!this.enabled) return;
+    e.preventDefault();
+    // Anything gated on pointer lock (the menu's click-to-play, mouse-look
+    // guards) should behave as "we have control" once a finger is down.
+    this.touchActive = true;
+    this.pointerLocked = true;
+    for (const t of e.changedTouches) {
+      const btn = this._hitButton(t.clientX, t.clientY);
+      if (btn) {
+        this._touchBtn.set(t.identifier, btn.code);
+        this._pendingDown.add(btn.code);
+        this.down.add(btn.code);
+        continue;
+      }
+      if (t.clientX < innerWidth * TOUCH_STICK_ZONE) {
+        if (this._touchMove !== -1) continue;
+        this._touchMove = t.identifier;
+        this.touchStick.active = true;
+        this.touchStick.ox = t.clientX;
+        this.touchStick.oy = t.clientY;
+        this.touchStick.x = 0;
+        this.touchStick.y = 0;
+      } else if (this._touchLook === -1) {
+        this._touchLook = t.identifier;
+        this._touchLookX = t.clientX;
+        this._touchLookY = t.clientY;
+      }
+    }
+  }
+
+  _onTouchMove(e) {
+    if (!this.enabled) return;
+    e.preventDefault();
+    const range = TOUCH_STICK_RANGE * Math.min(innerWidth, innerHeight);
+    for (const t of e.changedTouches) {
+      if (t.identifier === this._touchMove) {
+        let dx = (t.clientX - this.touchStick.ox) / range;
+        let dy = (t.clientY - this.touchStick.oy) / range;
+        const len = Math.hypot(dx, dy);
+        if (len > 1) {
+          dx /= len;
+          dy /= len;
+        }
+        this.touchStick.x = dx;
+        this.touchStick.y = dy;
+        // `stick` is the gamepad channel; moveVector already blends it with the
+        // keys, so touch needs no separate path. moveY is forward-positive.
+        this.stick.moveX = dx;
+        this.stick.moveY = -dy;
+        // Push the stick most of the way and you run. Avoids a sprint button.
+        const sprint = Math.hypot(dx, dy) > 0.85;
+        if (sprint) this.down.add('ShiftLeft');
+        else this.down.delete('ShiftLeft');
+      } else if (t.identifier === this._touchLook) {
+        // Feed the same accumulator mouse movement uses, so sensitivity,
+        // inversion and the per-frame reset all apply unchanged.
+        this._rawLook.x += (t.clientX - this._touchLookX) * TOUCH_LOOK_SCALE;
+        this._rawLook.y += (t.clientY - this._touchLookY) * TOUCH_LOOK_SCALE;
+        this._touchLookX = t.clientX;
+        this._touchLookY = t.clientY;
+      }
+    }
+  }
+
+  _onTouchEnd(e) {
+    e.preventDefault();
+    for (const t of e.changedTouches) {
+      const code = this._touchBtn.get(t.identifier);
+      if (code !== undefined) {
+        this._touchBtn.delete(t.identifier);
+        this._pendingUp.add(code);
+        this.down.delete(code);
+        continue;
+      }
+      if (t.identifier === this._touchMove) {
+        this._touchMove = -1;
+        this.touchStick.active = false;
+        this.touchStick.x = 0;
+        this.touchStick.y = 0;
+        this.stick.moveX = 0;
+        this.stick.moveY = 0;
+        this.down.delete('ShiftLeft');
+      } else if (t.identifier === this._touchLook) {
+        this._touchLook = -1;
+      }
+    }
   }
 
   detach() {
@@ -86,6 +248,10 @@ export class Input {
     removeEventListener('blur', this._bound.blur);
     document.removeEventListener('pointerlockchange', this._bound.lockchange);
     this.canvas.removeEventListener('contextmenu', this._bound.contextmenu);
+    this.canvas.removeEventListener('touchstart', this._bound.touchstart);
+    this.canvas.removeEventListener('touchmove', this._bound.touchmove);
+    this.canvas.removeEventListener('touchend', this._bound.touchend);
+    this.canvas.removeEventListener('touchcancel', this._bound.touchend);
   }
 
   requestPointerLock() {

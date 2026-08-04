@@ -26,10 +26,37 @@ const capture = params.get('capture') === '1';
 // free-run. See the long comment in src/dev/shots.js.
 const lockstep = capture && params.get('lockstep') === '1';
 
+/**
+ * Pick a starting quality preset for the hardware we are actually on.
+ *
+ * This used to be `params.get('q') ?? 'ultra'` unconditionally, so a phone
+ * booted into the same preset as a desktop GPU — TAA, GTAO, SSR, volumetrics,
+ * motion blur and 4096 shadow maps. An explicit ?q= still wins, and the capture
+ * harness is untouched.
+ *
+ * Coarse detection on purpose. A touch-primary pointer plus either few cores or
+ * little memory is a phone or a cheap tablet; that is exactly the population
+ * that needs the `mobile` floor. Desktop machines with touchscreens report a
+ * fine pointer, so they do not get caught by this.
+ */
+function detectQuality() {
+  const forced = params.get('q');
+  if (forced) return forced;
+  if (typeof navigator === 'undefined' || typeof matchMedia === 'undefined') return 'ultra';
+  const coarse = matchMedia('(pointer: coarse)').matches;
+  const noHover = matchMedia('(hover: none)').matches;
+  const cores = navigator.hardwareConcurrency ?? 8;
+  const mem = navigator.deviceMemory ?? 8;
+  if ((coarse || noHover) && (cores <= 8 || mem <= 6)) return 'mobile';
+  if (cores <= 4 || mem <= 4) return 'low';
+  return 'ultra';
+}
+
 const config = createConfig({
-  quality: params.get('q') ?? 'ultra',
+  quality: detectQuality(),
   deterministic: capture,
 });
+console.info(`[boot] quality preset: ${config.quality}`);
 
 const canvas = document.getElementById('game');
 

@@ -19,6 +19,35 @@ export const UNITS = {
 };
 
 export const QUALITY_PRESETS = {
+  /**
+   * MOBILE — the floor. Aimed at a basic Android phone, not a flagship.
+   *
+   * Everything optional is off: no TAA, GTAO, SSR, volumetrics, motion blur or
+   * bloom, one shadow cascade at 512 and a short shadow distance, and a render
+   * scale that resolves well under the panel. `low` still ran bloom, 1024 maps
+   * and three cascades, which is more than weak hardware will hold.
+   *
+   * `aiMax` and `navCell` are read by `ai`: the cast is capped and the
+   * navigation grid coarsened, because on this street the nav build and the
+   * per-agent animation work cost more than the pixels do.
+   */
+  mobile: {
+    renderScale: 0.55,
+    shadowMapSize: 512,
+    cascades: 1,
+    shadowDistance: 26,
+    taa: false,
+    gtao: false,
+    ssr: false,
+    volumetrics: false,
+    motionBlur: false,
+    bloom: false,
+    anisotropy: 1,
+    particleBudget: 400,
+    decalBudget: 16,
+    aiMax: 5,
+    navCell: 1.3,
+  },
   low: {
     renderScale: 0.72,
     shadowMapSize: 1024,
@@ -33,6 +62,8 @@ export const QUALITY_PRESETS = {
     anisotropy: 4,
     particleBudget: 2000,
     decalBudget: 64,
+    aiMax: 32,
+    navCell: 0.8,
   },
   medium: {
     renderScale: 0.85,
@@ -48,6 +79,8 @@ export const QUALITY_PRESETS = {
     anisotropy: 8,
     particleBudget: 6000,
     decalBudget: 128,
+    aiMax: 32,
+    navCell: 0.8,
   },
   high: {
     renderScale: 1.0,
@@ -63,6 +96,8 @@ export const QUALITY_PRESETS = {
     anisotropy: 16,
     particleBudget: 12000,
     decalBudget: 256,
+    aiMax: 32,
+    navCell: 0.8,
   },
   ultra: {
     renderScale: 1.0,
@@ -78,6 +113,8 @@ export const QUALITY_PRESETS = {
     anisotropy: 16,
     particleBudget: 24000,
     decalBudget: 512,
+    aiMax: 32,
+    navCell: 0.8,
   },
 };
 
