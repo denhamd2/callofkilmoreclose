@@ -107,6 +107,10 @@ func _physics_process(delta: float) -> void:
 	_apply_gravity(delta)
 	_apply_movement(delta)
 	move_and_slide()
+	if is_on_floor() and not driving:
+		var planar := Vector3(velocity.x, 0.0, velocity.z).length()
+		var sprinting := PlayerInput.sprinting() and planar > WALK_SPEED * 0.85
+		StreetAudio.step_cadence(planar, delta, sprinting)
 
 
 func _apply_gravity(delta: float) -> void:

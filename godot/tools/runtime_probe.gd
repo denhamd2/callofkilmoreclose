@@ -41,6 +41,7 @@ func _physics_process(_delta: float) -> void:
 			_check_spawn()
 			_check_street()
 			_check_daylight()
+			_check_audio()
 			_check_touch_layer()
 			_start_pos = _david.global_position
 			PlayerInput.set_touch_move(Vector2(0.0, 1.0))
@@ -133,6 +134,15 @@ func _check_daylight() -> void:
 	_report["sun_shadows"] = _sun.shadow_enabled if _sun else false
 	_report["daylight_ok"] = _sun != null and _sun.light_energy > 1.0 and _sun.shadow_enabled
 	if not _report["daylight_ok"]:
+		_fail = true
+
+
+func _check_audio() -> void:
+	_report["audio_autoload"] = StreetAudio != null
+	# Probe runs headless: audio must disable itself, not crash or block startup.
+	_report["audio_enabled"] = StreetAudio.enabled if StreetAudio != null else false
+	_report["audio_ok"] = _report["audio_autoload"] and not _report["audio_enabled"]
+	if not _report["audio_ok"]:
 		_fail = true
 
 

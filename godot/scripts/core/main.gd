@@ -76,6 +76,7 @@ func _spawn_cast() -> void:
 func _on_melee_hit(target: Node3D) -> void:
 	if target == null or not target.is_in_group("cast"):
 		return
+	StreetAudio.play_melee_thud()
 	# Report-only: David's punch connected with a named neighbour. No damage model.
 	var label := target.get_node_or_null("NameLabel") as Label3D
 	if label != null:

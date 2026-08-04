@@ -1,12 +1,11 @@
 # Call of Kilmore Close — Godot 4.7 port
 
-**Phase 2 complete and frozen** (`godot-phase-2`). This branch is closed to
-further feature work. If development continues, start a new phase on a new
-branch with a new scope.
+**Phase 3 complete** (`godot-phase-3`): procedural ambient bed, footstep cadence,
+and melee thud — no imported audio files, no music or VO.
 
-Phase 1 proved the core loop (walk, camera, car, touch, fixed daylight).
-Phase 2 extended the playable street to the full measured row (52 houses) and
-staged the named cast as idle doorstep presence — no combat AI or missions.
+**Phase 2 complete and frozen** (`godot-phase-2`). Phase 1 proved the core loop;
+phase 2 extended the street and cast. If development continues beyond phase 3,
+start a new phase on a new branch with a new scope.
 
 This directory is a **complete, self-contained Godot project**. It does not
 share code with the Three.js prototype in `../src`, and nothing here imports
@@ -137,6 +136,7 @@ that side is a punch. `GET IN` and `JUMP` are buttons, bottom right.
 | Camera | Over-the-shoulder spring-arm boom with wall collision |
 | Car | Parked at the kerb outside 18; enter, drive, exit |
 | Cast | MickMcCabe, Deco McCabe, Oysters, Angela Carpenter, Paddy Mason — idle at their front doors, named labels, no combat AI |
+| Audio | Looping street ambience, cadence footsteps, melee thud (procedural, no asset files) |
 | Addresses | Numbered gate piers on every house, so you can see you are outside 18 — and no. 18 has its own door colour |
 | Lighting | Fixed bright daylight. No day/night cycle, ever |
 | Mobile | Touch control layer, GL Compatibility renderer, Android + macOS export presets |
@@ -144,8 +144,8 @@ that side is a punch. `GET IN` and `JUMP` are buttons, bottom right.
 ### What it deliberately does **not** contain
 
 Stated plainly so nobody goes looking: no combat AI, no weapons beyond melee,
-no interiors, no audio, no mission logic, no damage model, no skeletal
-animation. Cast members are street presence only. Those are later phases.
+no interiors, no mission logic, no damage model, no skeletal animation, no
+music or voice acting. Cast members are street presence only.
 
 ---
 
@@ -166,6 +166,8 @@ godot/
     vehicle/car.tscn       The car's meshes and collider.
     ui/touch_controls.tscn Touch HUD.
   scripts/
+    audio/street_audio.gd    Autoload: ambience, footsteps, melee thud.
+    audio/procedural_sounds.gd  Generated WAV buffers (no imported files).
     core/player_input.gd   Autoload. Merges keyboard/mouse/pad/touch.
     core/main.gd           Places actors and cast from the street data.
     world/street_builder.gd  Generates the whole slice at load time.
