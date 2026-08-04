@@ -93,6 +93,8 @@ export class Input {
     this._touchLookX = 0;
     this._touchLookY = 0;
     this._touchBtn = new Map(); // pointerId -> button code
+    /** Set once if the gamepad API is forbidden here; stops all polling. */
+    this._padBlocked = false;
 
     this._bound = {
       keydown: this._onKeyDown.bind(this),
@@ -346,10 +348,36 @@ export class Input {
   endFrame() {}
 
   _pollGamepad() {
-    const pads = navigator.getGamepads?.() ?? [];
+    /**
+     * `navigator.getGamepads()` THROWS in a context whose permissions policy
+     * disallows the gamepad feature — it does not return null, and optional
+     * chaining does not help because the method exists. Sandboxed iframes do
+     * exactly this.
+     *
+     * Unguarded, that threw once per frame from inside the update loop, which
+     * aborted the frame before anything rendered: a black canvas with a working
+     * DOM HUD, on hardware that was otherwise perfectly capable. Measured on a
+     * Mali-G57 phone at 327 identical exceptions.
+     *
+     * One probe decides it. If the API is unavailable or forbidden, polling is
+     * switched off permanently rather than throwing (or paying a try/catch)
+     * every frame thereafter.
+     */
+    if (this._padBlocked) return;
+    let pads;
+    try {
+      pads = navigator.getGamepads?.() ?? [];
+    } catch {
+      this._padBlocked = true;
+      return;
+    }
     const pad = pads[this.gamepadIndex ?? 0] ?? pads.find(Boolean);
     if (!pad) {
-      this.stick.moveX = this.stick.moveY = this.stick.lookX = this.stick.lookY = 0;
+      // Do NOT zero the stick while touch is driving it — touch feeds this same
+      // channel, so clearing it here would cancel every finger movement.
+      if (!this.touchActive) {
+        this.stick.moveX = this.stick.moveY = this.stick.lookX = this.stick.lookY = 0;
+      }
       return;
     }
     const dz = (v) => (Math.abs(v) < 0.16 ? 0 : (v - Math.sign(v) * 0.16) / 0.84);
