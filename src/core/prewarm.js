@@ -98,6 +98,15 @@ const SELF_WARMING = new Set(['fx']);
 const RENDER_SHADOW_WARM = false;
 
 export async function prewarm(engine, { onProgress = () => {}, transients = false, drawFrames = false } = {}) {
+  /**
+   * Quality presets can opt out entirely. Pre-warm trades boot time for the
+   * absence of compile hitches later; on low-end mobile the boot cost is what
+   * stops the game starting at all, so the trade is inverted there.
+   */
+  if (engine?.ctx?.config?.q?.prewarm === false) {
+    onProgress?.({ phase: 'skipped' });
+    return { ok: true, skipped: true, reason: 'quality preset opted out' };
+  }
   const t0 = performance.now();
   const render = engine.ctx.peek('render');
   const renderer = render?.renderer;

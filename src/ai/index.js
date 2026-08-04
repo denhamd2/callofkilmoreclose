@@ -126,7 +126,7 @@ export class AiSystem {
 
     const t0 = performance.now();
     this.materials = new SoldierMaterials(this.rng.fork(), {
-      size: 512,
+      size: ctx.config?.q?.charTex ?? 512,
       anisotropy: ctx.config.q.anisotropy ?? 8,
       camo: ['arid', 'woodland', 'urban'],
     });
@@ -234,7 +234,10 @@ export class AiSystem {
     // unchanged. `update()` keeps the same code as a fallback for the case where
     // the collision world is not registered yet.
     this._bootNav(ctx);
-    await this.prewarmMaterials();
+    // Pre-warm is the single largest item in boot (measured at 51 s of 141 s
+    // under software rasterisation). The mobile preset opts out — see
+    // QUALITY_PRESETS.mobile.prewarm.
+    if (ctx.config?.q?.prewarm !== false) await this.prewarmMaterials();
   }
 
   /**

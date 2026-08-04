@@ -47,6 +47,16 @@ export const QUALITY_PRESETS = {
     decalBudget: 16,
     aiMax: 5,
     navCell: 1.3,
+    /**
+     * Skip shader pre-warm. Measured on this build: `ai.prewarmMaterials`
+     * alone was 51 s of a 141 s boot. Pre-warm exists to trade boot time for
+     * no compile hitches during play — on a phone that trade is backwards,
+     * because the alternative is a tab the browser kills before it ever draws.
+     * Expect some hitching the first time each material is seen.
+     */
+    prewarm: false,
+    /** Character texture bake size. 512 cost ~4 s of boot on its own. */
+    charTex: 256,
   },
   low: {
     renderScale: 0.72,
@@ -64,6 +74,8 @@ export const QUALITY_PRESETS = {
     decalBudget: 64,
     aiMax: 32,
     navCell: 0.8,
+    prewarm: true,
+    charTex: 512,
   },
   medium: {
     renderScale: 0.85,
@@ -81,6 +93,8 @@ export const QUALITY_PRESETS = {
     decalBudget: 128,
     aiMax: 32,
     navCell: 0.8,
+    prewarm: true,
+    charTex: 512,
   },
   high: {
     renderScale: 1.0,
@@ -98,6 +112,8 @@ export const QUALITY_PRESETS = {
     decalBudget: 256,
     aiMax: 32,
     navCell: 0.8,
+    prewarm: true,
+    charTex: 512,
   },
   ultra: {
     renderScale: 1.0,
@@ -115,6 +131,8 @@ export const QUALITY_PRESETS = {
     decalBudget: 512,
     aiMax: 32,
     navCell: 0.8,
+    prewarm: true,
+    charTex: 512,
   },
 };
 
