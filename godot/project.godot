@@ -19,6 +19,7 @@ config/features=PackedStringArray("4.7", "GL Compatibility")
 
 PlayerInput="*res://scripts/core/player_input.gd"
 StreetAudio="*res://scripts/audio/street_audio.gd"
+SimpleGrass="*res://addons/simplegrasstextured/singleton.tscn"
 
 [display]
 
@@ -34,6 +35,10 @@ pointing/emulate_touch_from_mouse=true
 [physics]
 
 3d/default_gravity=20.6
+
+[editor_plugins]
+
+enabled=PackedStringArray("res://addons/simplegrasstextured/plugin.cfg")
 
 [rendering]
 

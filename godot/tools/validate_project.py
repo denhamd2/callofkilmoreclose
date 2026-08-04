@@ -202,8 +202,10 @@ def check_project() -> None:
 
 def main() -> int:
     check_project()
-    scenes = sorted(ROOT.rglob("*.tscn"))
-    scripts = sorted(ROOT.rglob("*.gd"))
+    # Third-party addons are vendored; do not fail the project on their
+    # internal scene/script quirks. Our gameplay content lives outside addons/.
+    scenes = sorted(p for p in ROOT.rglob("*.tscn") if "addons" not in p.parts)
+    scripts = sorted(p for p in ROOT.rglob("*.gd") if "addons" not in p.parts)
     for s in scenes:
         check_scene(s)
     for s in scripts:

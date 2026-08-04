@@ -51,6 +51,10 @@ const _DIGIT_SEG: Dictionary = {
 }
 
 var _tree_spots: Array = []
+# Remnant lawn / verge centres collected during build for selective blade scatter (P2).
+var _lawn_spots: Array = []  # Vector3 centres of remnant lawns
+var _lawn_sizes: Array = []  # Vector2(len_x, width_z) per lawn
+var _verge_y: float = 0.0
 
 
 func _ready() -> void:
@@ -68,6 +72,7 @@ func _ready() -> void:
 	_flush_batches()
 	_spawn_static_cars()
 	_spawn_static_trees()
+	_spawn_detail_grass()
 	built.emit()
 
 
@@ -131,10 +136,17 @@ func _build_materials() -> void:
 		"res://assets/textures/drive.png", 0.45, Color(1, 1, 1))
 	_mat["kerb"] = _dress(_flat(Color(1, 1, 1), 0.92),
 		"res://assets/textures/kerb.png", 0.9, Color(0.82, 0.82, 0.80))
-	_mat["grass"] = _dress(_flat(Color(1, 1, 1), 0.98),
-		"res://assets/textures/grass.png", 0.35, Color(0.92, 0.98, 0.88))
+	# P0: split grass reads — hinterland, verge, and remnant lawns differ.
+	_mat["grass_far"] = _dress(_flat(Color(1, 1, 1), 0.98),
+		"res://assets/textures/grass.png", 0.22, Color(0.70, 0.76, 0.58))
+	_mat["grass_verge"] = _dress(_flat(Color(1, 1, 1), 0.98),
+		"res://assets/textures/grass.png", 0.48, Color(0.66, 0.72, 0.50))
+	_mat["grass_lawn"] = _dress(_flat(Color(1, 1, 1), 0.98),
+		"res://assets/textures/grass_lawn.png", 0.34, Color(0.88, 0.92, 0.78))
+	# Soft soil/grit at lawn–drive and lawn–path joints.
+	_mat["soil"] = _flat(Color(0.32, 0.26, 0.18), 0.96)
 	_mat["hedge"] = _dress(_flat(Color(1, 1, 1), 0.98),
-		"res://assets/textures/hedge.png", 0.6, Color(0.95, 1.0, 0.92))
+		"res://assets/textures/hedge.png", 0.55, Color(0.78, 0.86, 0.62))
 	# Front boundary walls, coping, gutters, pipes, gates.
 	_mat["block_wall"] = _dress(_flat(Color(1, 1, 1), 0.96),
 		"res://assets/textures/block_wall.png", 0.72, Color(0.92, 0.92, 0.90))
@@ -252,8 +264,8 @@ func _build_ground() -> void:
 	var footpath_w := KilmoreClose.KERB - KilmoreClose.HALF_WIDTH   # 2.0 m
 
 	# Base plate: everything beyond the gardens. Sits just under the road so
-	# there is never a gap at the seams.
-	_mesh_box("grass", Vector3(140.0, 0.4, z_len + 60.0),
+	# there is never a gap at the seams. Far grass stays flat (no blade scatter).
+	_mesh_box("grass_far", Vector3(140.0, 0.4, z_len + 60.0),
 		Vector3(0.0, -0.22, z_mid))
 
 	# Carriageway — 7.63 m kerb to kerb, which is the measured width and is
@@ -261,6 +273,7 @@ func _build_ground() -> void:
 	_mesh_box("tarmac", Vector3(KilmoreClose.HALF_WIDTH * 2.0, 0.2, z_len),
 		Vector3(0.0, -0.1, z_mid))
 
+	_verge_y = walk_h - 0.14
 	for side in [KilmoreClose.SIDE_NEAR, KilmoreClose.SIDE_FAR]:
 		var s := float(side)
 		# Footpath, raised by the kerb upstand.
@@ -272,12 +285,13 @@ func _build_ground() -> void:
 		_mesh_box("kerb", Vector3(0.14, 0.2, z_len),
 			Vector3(s * (KilmoreClose.HALF_WIDTH + 0.07), walk_h - 0.1, z_mid))
 		# Roadside verge — narrow grass between kerb and carriageway.
-		_mesh_box("grass", Vector3(0.55, 0.12, z_len),
-			Vector3(s * (KilmoreClose.HALF_WIDTH + 0.38), walk_h - 0.14, z_mid))
-		# Front gardens: kerb line out to the house faces.
-		_mesh_box("grass", Vector3(KilmoreClose.SETBACK, 0.2, z_len),
+		_mesh_box("grass_verge", Vector3(0.55, 0.12, z_len),
+			Vector3(s * (KilmoreClose.HALF_WIDTH + 0.38), _verge_y, z_mid))
+		# Front-plot underlay: muted far grass (not a golf-lawn carpet).
+		# Remnant lawns + drives sit on top via _add_house_plot.
+		_mesh_box("grass_far", Vector3(KilmoreClose.SETBACK, 0.18, z_len),
 			Vector3(s * (KilmoreClose.KERB + KilmoreClose.SETBACK * 0.5),
-				walk_h - 0.1, z_mid))
+				walk_h - 0.12, z_mid))
 		_build_boundary(side, zr)
 
 	# One ground collider for the whole slice. Flat street, so a single box is
@@ -358,17 +372,49 @@ func _add_house_plot(h: Dictionary, walk_h: float) -> void:
 	var drive_cx := kerb_x - out * drive_len * 0.5
 	_push("driveway", "drive", "box", Vector3(drive_len, 0.06, drive_w),
 		Vector3(drive_cx, walk_h - 0.07, g_z))
+	# Soil wear strips along drive edges (reference grit at hard/soft joints).
+	_push("soil_edge", "soil", "box", Vector3(drive_len, 0.04, 0.18),
+		Vector3(drive_cx, walk_h - 0.06, g_z - drive_w * 0.5 - 0.05))
+	_push("soil_edge", "soil", "box", Vector3(drive_len, 0.04, 0.18),
+		Vector3(drive_cx, walk_h - 0.06, g_z + drive_w * 0.5 + 0.05))
+
 	var door_z := float(h["z"]) + KilmoreClose.door_along(bool(h["mirror"]))
 	var lawn_z := (gz + door_z) * 0.5
 	var lawn_w := KilmoreClose.HOUSE_W * 0.42
 	var lawn_len := KilmoreClose.SETBACK * 0.55
 	var lawn_cx := kerb_x - out * lawn_len * 0.5
-	_push("lawn_patch", "grass", "box", Vector3(lawn_len, 0.05, lawn_w),
-		Vector3(lawn_cx, walk_h - 0.08, lawn_z))
+	_push("lawn_patch", "grass_lawn", "box", Vector3(lawn_len, 0.05, lawn_w),
+		Vector3(lawn_cx, walk_h - 0.05, lawn_z))
+	# Thin soil band where lawn meets the garden path / wall.
+	_push("soil_edge", "soil", "box", Vector3(0.22, 0.035, lawn_w * 0.92),
+		Vector3(kerb_x - out * 0.35, walk_h - 0.04, lawn_z))
+
+	_lawn_spots.append(Vector3(lawn_cx, walk_h - 0.02, lawn_z))
+	_lawn_sizes.append(Vector2(lawn_len * 0.85, lawn_w * 0.85))
+
+	# P1: sparse multi-part shrubs (not a single cube).
 	if int(h["number"]) % 3 == 0:
-		_push("shrub", "hedge", "box", Vector3(0.7, 0.45, 0.7),
-			Vector3(kerb_x - out * (KilmoreClose.SETBACK * 0.82),
-				walk_h + 0.22, door_z))
+		_add_shrub(kerb_x - out * (KilmoreClose.SETBACK * 0.82), walk_h, door_z)
+	# Occasional thin bed under the front window bay.
+	if int(h["number"]) % 4 == 1:
+		var face_x: float = float(h["face_x"])
+		var bed_z := door_z + (1.1 if bool(h["mirror"]) else -1.1)
+		_push("soil_bed", "soil", "box", Vector3(0.55, 0.06, 1.2),
+			Vector3(face_x - out * 0.35, walk_h - 0.02, bed_z))
+		_push("shrub_low", "hedge", "box", Vector3(0.35, 0.22, 0.40),
+			Vector3(face_x - out * 0.35, walk_h + 0.12, bed_z - 0.25))
+		_push("shrub_low", "hedge", "box", Vector3(0.30, 0.18, 0.35),
+			Vector3(face_x - out * 0.35, walk_h + 0.10, bed_z + 0.28))
+
+
+func _add_shrub(x: float, walk_h: float, z: float) -> void:
+	# Two–three stacked rounded volumes read as a bush at street distance.
+	_push("shrub_core", "hedge", "box", Vector3(0.55, 0.38, 0.50),
+		Vector3(x, walk_h + 0.22, z))
+	_push("shrub_lobe", "hedge", "box", Vector3(0.42, 0.32, 0.40),
+		Vector3(x + 0.18, walk_h + 0.28, z + 0.12))
+	_push("shrub_lobe", "hedge", "box", Vector3(0.36, 0.28, 0.38),
+		Vector3(x - 0.14, walk_h + 0.30, z - 0.10))
 
 
 ## Gate piers with a dark plaque and 7-segment house number facing the pavement.
@@ -485,6 +531,85 @@ func _spawn_static_trees() -> void:
 		MeshDress.dress_tree(tree)
 		_disable_shadows(tree)
 		add_child(tree)
+
+
+## P2 — selective SimpleGrassTextured blades on remnant lawns + verges only.
+## Caps density hard; shadows off; interactive mode off (mobile-safe).
+## Hinterland grass stays flat materials from P0.
+func _spawn_detail_grass() -> void:
+	var grass_script: Script = load("res://addons/simplegrasstextured/grass.gd") as Script
+	if grass_script == null:
+		push_warning("SimpleGrassTextured missing — skipping blade scatter")
+		return
+
+	var lawn_node: MultiMeshInstance3D = grass_script.new() as MultiMeshInstance3D
+	lawn_node.name = "LawnBlades"
+	lawn_node.set("interactive", false)
+	add_child(lawn_node)
+	_configure_sgt(lawn_node, Color(0.72, 0.80, 0.55), 0.50, 0.65)
+
+	var verge_node: MultiMeshInstance3D = grass_script.new() as MultiMeshInstance3D
+	verge_node.name = "VergeBlades"
+	verge_node.set("interactive", false)
+	add_child(verge_node)
+	_configure_sgt(verge_node, Color(0.62, 0.70, 0.48), 0.38, 0.55)
+
+	var up := Vector3.UP
+	# ~10 blades per remnant lawn × 52 ≈ 520 — modest MultiMesh count.
+	for i in _lawn_spots.size():
+		var centre: Vector3 = _lawn_spots[i]
+		var sz: Vector2 = _lawn_sizes[i]
+		var seed_i := i * 17 + 3
+		for k in 10:
+			var fx := _hash01(seed_i + k * 3) - 0.5
+			var fz := _hash01(seed_i + k * 3 + 1) - 0.5
+			var pos := centre + Vector3(fx * sz.x, 0.0, fz * sz.y)
+			var sc := 0.75 + _hash01(seed_i + k * 3 + 2) * 0.35
+			lawn_node.call("add_grass", pos, up, Vector3(sc, sc, sc),
+				_hash01(seed_i + k) * TAU)
+
+	# Verge scatter: both sides, every ~2.8 m, 2 blades — ~200 total.
+	var zr := KilmoreClose.road_z_range()
+	var z := zr.x + 4.0
+	var vi := 0
+	while z < zr.y - 4.0:
+		for side in [KilmoreClose.SIDE_NEAR, KilmoreClose.SIDE_FAR]:
+			var s := float(side)
+			var vx := s * (KilmoreClose.HALF_WIDTH + 0.38)
+			for k in 2:
+				var oz := (_hash01(vi * 11 + k) - 0.5) * 0.35
+				var ox := (_hash01(vi * 11 + k + 5) - 0.5) * 0.18
+				var pos := Vector3(vx + ox, _verge_y + 0.08, z + oz)
+				var sc := 0.55 + _hash01(vi + k) * 0.25
+				verge_node.call("add_grass", pos, up, Vector3(sc, sc, sc),
+					_hash01(vi * 7 + k) * TAU)
+			vi += 1
+		z += 2.8
+
+	# Runtime: grass.gd disables _process, so flush buffers explicitly.
+	lawn_node.call("_update_multimesh")
+	verge_node.call("_update_multimesh")
+
+
+func _configure_sgt(node: MultiMeshInstance3D, albedo: Color, h: float, w: float) -> void:
+	node.set("interactive", false)
+	node.set("optimization_by_distance", true)
+	node.set("optimization_dist_min", 14.0)
+	node.set("optimization_dist_max", 48.0)
+	node.set("optimization_level", 7.0)
+	node.set("scale_h", h)
+	node.set("scale_w", w)
+	node.set("scale_var", -0.2)
+	node.set("grass_strength", 0.75)
+	node.set("albedo", albedo)
+	node.set("sgt_dist_min", 0.28)
+	node.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+
+
+func _hash01(n: int) -> float:
+	# Deterministic 0..1 — no Math.random / no ctx.rng in this Godot port file.
+	var x := (n * 1103515245 + 12345) & 0x7fffffff
+	return float(x) / 2147483647.0
 
 
 func _spawn_static_cars() -> void:

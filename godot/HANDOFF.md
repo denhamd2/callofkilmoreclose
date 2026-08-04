@@ -1,12 +1,12 @@
-# Kilmore Close — Godot handoff (frozen)
+# Kilmore Close — Godot handoff
 
-**Status:** Phases 1–7 complete. **This branch is stopped.** Do not add features, art, or tuning here unless a real bug is found.
+**Status:** Phases 1–7 frozen on `godot-frozen`. **This branch** (`claude/godot-phase-grass-verges`) is the grass / verges / gardens visual pass — outdoor detail only; sky and gameplay unchanged.
 
 | Item | Value |
 |---|---|
 | Engine | Godot **4.7.1** (4.7.x stable) |
-| Frozen branch | `claude/godot-phase-7-reference-fidelity` |
-| Frozen tags | `godot-phase-7` (art baseline) · `godot-frozen` (handoff + verified) |
+| Base | `godot-frozen` (`d4a58a5`) |
+| Grass branch | `claude/godot-phase-grass-verges` |
 | Project root | `godot/project.godot` |
 | Reference plates | `godot/assets/reference/` (four Street View screenshots) |
 | Three.js prototype | `../src/` — **not used by Godot; do not wire back** |
@@ -24,6 +24,7 @@
 - [x] Phase 5 — tileable materials; `car.glb` / `person.glb`
 - [x] Phase 6 — reference match (boundaries, facades, dressing, overcast sky)
 - [x] Phase 7 — reference fidelity (material contrast, facade depth, hero glTFs, plaques, sky clouds)
+- [x] Phase grass/verges — split lawn/verge/far materials, remnant plots + soil edges, multi-part shrubs, selective SimpleGrassTextured blades
 - [x] Tags `godot-phase-1` … `godot-phase-7` + `godot-frozen`
 - [x] Export presets: Android, macOS, Linux (project-level)
 - [x] `validate_project.py` — structural checks pass
@@ -118,8 +119,20 @@ Compared against the four Street View plates in `godot/assets/reference/`:
 - One fixed DirectionalLight3D — **no day/night cycle** (overcast grade is still permanent)
 - Street built from `data/kilmore_close.gd` via MultiMesh batching
 - Kinematic car (not `VehicleBody3D`)
-- No third-party addons
+- **SimpleGrassTextured** (IcterusGames, MIT, AssetLib) — selective lawn/verge blades only; interactive mode **off**; shadows off; density capped in `street_builder.gd`
 - Phase 7 art stays on shared materials + few static glTFs (no skeletal animation, no per-house meshes)
+- **Sky** on this grass branch is unchanged from `godot-frozen`
+
+### Community addon (grass branch)
+
+| Addon | SimpleGrassTextured 2.1.0 |
+|---|---|
+| Author | IcterusGames |
+| License | MIT (`addons/simplegrasstextured/LICENSE`) |
+| Source | Godot Asset Store / AssetLib / [GitHub](https://github.com/IcterusGames/SimpleGrassTextured) |
+| Enabled | Project Settings → Plugins → SimpleGrassTextured |
+| Autoload | `SimpleGrass` → `addons/simplegrasstextured/singleton.tscn` |
+| Usage | Runtime scatter from `StreetBuilder._spawn_detail_grass()` on remnant lawns + kerb verges only — not hinterland, not drives/paths |
 
 ---
 

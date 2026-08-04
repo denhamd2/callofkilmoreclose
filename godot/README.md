@@ -1,8 +1,8 @@
 # Call of Kilmore Close — Godot 4.7 port
 
-**Phases 1–7 complete and frozen.** Reference branch: `claude/godot-phase-7-reference-fidelity`, tags `godot-phase-7` / `godot-frozen`.
+**Phases 1–7 frozen** (`godot-frozen`). Active outdoor-detail branch: `claude/godot-phase-grass-verges` (grass / verges / gardens only; sky locked).
 
-**Handoff:** read [HANDOFF.md](HANDOFF.md) — setup, validation gates, reference-match summary, platform notes, out-of-scope list. **Do not add features or art on this branch.**
+**Handoff:** read [HANDOFF.md](HANDOFF.md) — setup, validation gates, reference-match summary, platform notes.
 
 | Phase | Tag | Summary |
 |---|---|---|
@@ -13,6 +13,7 @@
 | 5 | `godot-phase-5` | Street materials + car/person glTF visual polish |
 | 6 | `godot-phase-6` | Reference match: walls, driveways, facade trim, street dressing, overcast sky |
 | 7 | `godot-phase-7` | Reference fidelity: contrast textures, facade depth, hero glTFs, plaques, cloudy sky |
+| grass | (this branch) | Lawns/verges/gardens: materials, shrubs, selective SimpleGrassTextured |
 
 This directory is a **complete, self-contained Godot project**. It does not
 share code with the Three.js prototype in `../src`, and nothing here imports
@@ -231,6 +232,13 @@ stable at any timestep and behaves identically on both platforms.
 **There is only one camera.** Driving does not hand over to a vehicle camera;
 it moves David into the driver's seat each physics step, so his own camera
 comes along. No rig to keep in sync, no blend.
+
+**SimpleGrassTextured (community addon).** Vendored under
+`addons/simplegrasstextured` (IcterusGames, MIT, AssetLib). Enable it via
+**Project Settings → Plugins**. Used only for short blades on remnant front
+lawns and kerb verges — shadows off, interactive player mode off, density
+capped in `street_builder.gd`. Flat MultiMesh grass materials still carry the
+hinterland and underlay so Android fill-rate stays plausible.
 
 **The lighting never changes.** One DirectionalLight3D at a fixed midday
 angle, neutral white, plus sky-sourced ambient. No day/night cycle, no sunset,
