@@ -67,6 +67,9 @@ func _ready() -> void:
 	var jump := get_node_or_null("JumpButton") as Button
 	if jump != null:
 		jump.pressed.connect(PlayerInput.touch_jump)
+	var fire := get_node_or_null("FireButton") as Button
+	if fire != null:
+		fire.pressed.connect(PlayerInput.touch_fire)
 
 
 ## True if `pos` falls on one of the action buttons. The look/tap handler must
@@ -112,12 +115,10 @@ func _on_touch(e: InputEventScreenTouch) -> void:
 			PlayerInput.set_touch_sprint(false)
 			queue_redraw()
 		elif e.index == _look_touch:
-			# A short, still touch on the right of the screen is a tap, and a
-			# tap is melee. Getting this from the look surface rather than a
-			# dedicated button keeps the HUD clear.
+			# Short still touch on the right of the screen is fire.
 			var moved := e.position.distance_to(_look_start)
 			if moved < TAP_SLOP and _look_time < TAP_TIME:
-				PlayerInput.touch_melee()
+				PlayerInput.touch_fire()
 			_look_touch = -1
 
 

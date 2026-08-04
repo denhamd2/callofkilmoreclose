@@ -1,0 +1,12 @@
+[gd_scene format=3 uid="uid://bnjb48cqq0xux"]
+
+[ext_resource type="Script" uid="uid://bbquv47xdmpvh" path="res://Scripts/Pogo/suspension_pogo.gd" id="1_63b6w"]
+[ext_resource type="PackedScene" uid="uid://b3otggvb447xl" path="res://Scenes/wheel.tscn" id="1_p1yu5"]
+
+[node name="SuspensionPogo" type="Node3D" unique_id=707994692]
+script = ExtResource("1_63b6w")
+
+[node name="RayCast3D" type="RayCast3D" parent="." unique_id=1436998131]
+enabled = false
+
+[node name="Wheel" parent="." unique_id=1715958198 instance=ExtResource("1_p1yu5")]

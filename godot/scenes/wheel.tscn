@@ -1,0 +1,75 @@
+[gd_scene format=3 uid="uid://b3otggvb447xl"]
+
+[ext_resource type="Script" uid="uid://b1fgks2d05q3g" path="res://Scripts/wheel.gd" id="1_y7iat"]
+[ext_resource type="Material" uid="uid://bxewrlaei40w0" path="res://Materials/Dark Gray.tres" id="2_u5up5"]
+[ext_resource type="Texture2D" uid="uid://dtqy6yo80m0eg" path="res://Textures/Kenney Particles/Rotated/smoke_04_b.png" id="4_lshy5"]
+
+[sub_resource type="Curve" id="Curve_eexu6"]
+_data = [Vector2(0, 0), 0.0, -0.06760563, 0, 0, Vector2(0.12433724, 1), -2.7523632, -2.7523632, 0, 0, Vector2(1, 0), 0.0, 0.0, 0, 0]
+point_count = 3
+
+[sub_resource type="CurveTexture" id="CurveTexture_n56es"]
+curve = SubResource("Curve_eexu6")
+
+[sub_resource type="Curve" id="Curve_jjr76"]
+_data = [Vector2(0, 0.28656113), 0.0, 0.70845735, 0, 0, Vector2(1, 1), 0.7270957, 0.0, 0, 0]
+point_count = 2
+
+[sub_resource type="CurveTexture" id="CurveTexture_0858n"]
+curve = SubResource("Curve_jjr76")
+
+[sub_resource type="ParticleProcessMaterial" id="ParticleProcessMaterial_27ba7"]
+lifetime_randomness = 0.3
+angle_min = 1.0728835e-05
+angle_max = 360.00003
+direction = Vector3(0, 1, 0)
+spread = 20.0
+initial_velocity_min = 1.0
+initial_velocity_max = 1.0
+angular_velocity_min = -45.000015
+angular_velocity_max = 44.999985
+gravity = Vector3(0, 0.4, 0)
+scale_min = 4.0
+scale_max = 6.0
+scale_curve = SubResource("CurveTexture_0858n")
+alpha_curve = SubResource("CurveTexture_n56es")
+turbulence_enabled = true
+turbulence_noise_strength = 0.41
+turbulence_noise_scale = 4.64
+turbulence_influence_min = 0.0
+turbulence_influence_max = 0.020000001
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_sycgu"]
+transparency = 1
+vertex_color_use_as_albedo = true
+albedo_texture = ExtResource("4_lshy5")
+metallic_specular = 0.0
+billboard_mode = 3
+billboard_keep_scale = true
+particles_anim_h_frames = 1
+particles_anim_v_frames = 1
+particles_anim_loop = false
+
+[sub_resource type="QuadMesh" id="QuadMesh_6xykl"]
+material = SubResource("StandardMaterial3D_sycgu")
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_jc6qf"]
+height = 0.3
+
+[node name="Wheel" type="RigidBody3D" unique_id=1715958198]
+custom_integrator = true
+script = ExtResource("1_y7iat")
+
+[node name="Smoke" type="GPUParticles3D" parent="." unique_id=1111276369]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.4243654, 0)
+amount = 300
+amount_ratio = 0.0
+lifetime = 8.0
+fixed_fps = 0
+process_material = SubResource("ParticleProcessMaterial_27ba7")
+draw_pass_1 = SubResource("QuadMesh_6xykl")
+
+[node name="MeshInstance3D2" type="MeshInstance3D" parent="." unique_id=2135977264]
+transform = Transform3D(1, 0, 0, 0, -4.371139e-08, -1, 0, 1, -4.371139e-08, 0, 0, 0)
+material_override = ExtResource("2_u5up5")
+mesh = SubResource("CylinderMesh_jc6qf")

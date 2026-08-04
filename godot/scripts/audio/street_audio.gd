@@ -17,6 +17,7 @@ var enabled: bool = false
 var _ambient: AudioStreamPlayer
 var _foot: AudioStreamPlayer
 var _melee: AudioStreamPlayer
+var _gun: AudioStreamPlayer
 var _step_accum := 0.0
 var _foot_variants: Array[AudioStream] = []
 
@@ -29,6 +30,7 @@ func _ready() -> void:
 	_ambient = _make_player(BUS_AMBIENCE, -20.0)
 	_foot = _make_player(BUS_FOLEY, -8.0)
 	_melee = _make_player(BUS_FOLEY, -4.0)
+	_gun = _make_player(BUS_FOLEY, -6.0)
 	_ambient.stream = ProceduralSounds.ambient_loop()
 	_ambient.autoplay = true
 	for i in 3:
@@ -52,6 +54,13 @@ func play_melee_thud() -> void:
 		return
 	_melee.stream = ProceduralSounds.melee_thud()
 	_melee.play()
+
+
+func play_gun_crack() -> void:
+	if not enabled or _gun == null:
+		return
+	_gun.stream = ProceduralSounds.gun_crack()
+	_gun.play()
 
 
 func _play_footstep() -> void:

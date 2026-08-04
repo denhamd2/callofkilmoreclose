@@ -36,6 +36,27 @@ static func _part_name(node: Node) -> String:
 	return n
 
 
+static func dress_mannequin(root: Node3D, main_colour: Color = JACKET) -> void:
+	for child in root.find_children("*", "MeshInstance3D", true, false):
+		var mi := child as MeshInstance3D
+		if mi == null:
+			continue
+		var mesh: Mesh = mi.mesh
+		if mesh == null:
+			continue
+		for i in mesh.get_surface_count():
+			var active: Material = mi.get_active_material(i)
+			var name_hint := ""
+			if active != null:
+				name_hint = active.resource_name
+			var colour := main_colour
+			var rough := 0.55
+			if "Joint" in name_hint:
+				colour = main_colour.darkened(0.35)
+				rough = 0.45
+			mi.set_surface_override_material(i, _mat(colour, rough, 0.08))
+
+
 static func dress_person(root: Node3D, jacket: Color = JACKET) -> void:
 	for mi in root.find_children("*", "MeshInstance3D", true, false):
 		var part := _part_name(mi)
@@ -49,23 +70,56 @@ static func dress_person(root: Node3D, jacket: Color = JACKET) -> void:
 		mi.material_override = _mat(colour, 0.88)
 
 
+static func _car_surface_kind(part: String) -> StringName:
+	var p := part.to_lower()
+	if "glass" in p or "window" in p or "bulb" in p:
+		return &"glass"
+	if "tyre" in p or "wheel" in p or "alloy" in p or "disc" in p or "brake" in p or "nut" in p:
+		return &"rubber"
+	if "bumper" in p or "mirror" in p or "trim" in p or "logo" in p or "handle" in p \
+			or "indicator" in p or "casing" in p or "plate" in p or "lock" in p or "ariel" in p:
+		return &"trim"
+	return &"paint"
+
+
 static func dress_car(root: Node3D, paint: Color = Color(0.78, 0.80, 0.84)) -> void:
 	for mi in root.find_children("*", "MeshInstance3D", true, false):
 		var part := _part_name(mi)
-		if part.begins_with("Glass"):
+		var kind := _car_surface_kind(part)
+		if kind == &"glass":
 			mi.material_override = _mat(GLASS, 0.10, 0.05)
-		elif part.begins_with("Wheel"):
+		elif kind == &"rubber":
 			mi.material_override = _mat(RUBBER, 0.94)
-		elif part.begins_with("Bumper") or part.begins_with("Mirror"):
+		elif kind == &"trim":
 			mi.material_override = _mat(TRIM, 0.42, 0.25)
 		else:
 			mi.material_override = _mat(paint, 0.32, 0.18)
 
 
+static func _plant_surface_kind(part: String) -> StringName:
+	var p := part.to_lower()
+	if "trunk" in p or "bark" in p or "stem" in p or p == "tree":
+		return &"bark"
+	if "leaf" in p or "leaves" in p or "canopy" in p or "branch" in p:
+		return &"canopy"
+	return &"canopy"
+
+
 static func dress_tree(root: Node3D) -> void:
 	for mi in root.find_children("*", "MeshInstance3D", true, false):
 		var part := _part_name(mi)
-		if part.begins_with("Trunk"):
+		var kind := _plant_surface_kind(part)
+		if kind == &"bark":
 			mi.material_override = _mat(BARK, 0.96)
-		elif part.begins_with("Canopy"):
+		else:
 			mi.material_override = _mat(CANOPY, 0.90)
+
+
+static func dress_bush(root: Node3D) -> void:
+	for mi in root.find_children("*", "MeshInstance3D", true, false):
+		var part := _part_name(mi)
+		var kind := _plant_surface_kind(part)
+		if kind == &"bark":
+			mi.material_override = _mat(BARK, 0.94)
+		else:
+			mi.material_override = _mat(CANOPY, 0.88)

@@ -1,8 +1,10 @@
-[gd_scene load_steps=6 format=3]
+[gd_scene load_steps=8 format=3]
 
 [ext_resource type="Script" path="res://scripts/player/david_controller.gd" id="1_david"]
 [ext_resource type="Script" path="res://scripts/player/third_person_camera.gd" id="2_cam"]
-[ext_resource type="PackedScene" path="res://assets/models/person.glb" id="3_person"]
+[ext_resource type="PackedScene" path="res://scenes/characters/quaternius_mannequin.tscn" id="3_mannequin"]
+[ext_resource type="Script" path="res://scripts/characters/quaternius_anim_driver.gd" id="4_anim"]
+[ext_resource type="Script" path="res://scripts/combat/weapon_holder.gd" id="5_weapon"]
 
 [sub_resource type="CapsuleShape3D" id="ShapeBody"]
 radius = 0.3
@@ -20,14 +22,23 @@ script = ExtResource("1_david")
 position = Vector3(0, 0.89, 0)
 shape = SubResource("ShapeBody")
 
-[node name="Body" parent="." instance=ExtResource("3_person")]
+[node name="Body" parent="." instance=ExtResource("3_mannequin")]
+
+[node name="WeaponMount" type="Node3D" parent="Body"]
+script = ExtResource("5_weapon")
+
+[node name="QuaterniusAnim" type="Node" parent="."]
+script = ExtResource("4_anim")
+
+[node name="MuzzleFlash" type="Marker3D" parent="."]
+position = Vector3(0.25, 1.35, 0.35)
 
 [node name="CamYaw" type="Node3D" parent="."]
 script = ExtResource("2_cam")
 
 [node name="SpringArm3D" type="SpringArm3D" parent="CamYaw"]
 shape = SubResource("ShapeProbe")
-spring_length = 3.1
+spring_length = 3.45
 margin = 0.12
 collision_mask = 1
 

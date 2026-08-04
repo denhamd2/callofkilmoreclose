@@ -59,6 +59,20 @@ static func melee_thud() -> AudioStreamWAV:
 	return _one_shot(pcm)
 
 
+static func gun_crack() -> AudioStreamWAV:
+	var frames := int(SAMPLE_RATE * 0.09)
+	var pcm := PackedByteArray()
+	pcm.resize(frames * 2)
+	for i in frames:
+		var t := float(i) / float(SAMPLE_RATE)
+		var env := exp(-t * 42.0)
+		var snap := sin(t * TAU * 420.0) * 0.35 + sin(t * TAU * 180.0) * 0.2
+		var n := randf_range(-1.0, 1.0) * 0.28
+		var s := (snap + n) * env * 0.55
+		_write_i16(pcm, i * 2, int(clampf(s, -1.0, 1.0) * 32767.0))
+	return _one_shot(pcm)
+
+
 static func _one_shot(pcm: PackedByteArray) -> AudioStreamWAV:
 	var stream := AudioStreamWAV.new()
 	stream.format = AudioStreamWAV.FORMAT_16_BITS

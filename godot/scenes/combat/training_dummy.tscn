@@ -1,0 +1,40 @@
+[gd_scene load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://scripts/combat/training_dummy.gd" id="1_dummy"]
+[ext_resource type="PackedScene" path="res://scenes/characters/quaternius_mannequin.tscn" id="2_mannequin"]
+[ext_resource type="Script" path="res://scripts/characters/quaternius_anim_driver.gd" id="3_anim"]
+[ext_resource type="Script" path="res://scripts/combat/weapon_holder.gd" id="4_weapon"]
+
+[sub_resource type="CapsuleShape3D" id="ShapeBody"]
+radius = 0.28
+height = 1.72
+
+[node name="TrainingDummy" type="StaticBody3D"]
+collision_layer = 1
+collision_mask = 0
+script = ExtResource("1_dummy")
+
+[node name="Collision" type="CollisionShape3D" parent="."]
+position = Vector3(0, 0.86, 0)
+shape = SubResource("ShapeBody")
+
+[node name="Body" parent="." instance=ExtResource("2_mannequin")]
+
+[node name="WeaponMount" type="Node3D" parent="Body"]
+script = ExtResource("4_weapon")
+
+[node name="QuaterniusAnim" type="Node" parent="."]
+script = ExtResource("3_anim")
+
+[node name="StatusLabel" type="Label3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.1, 0)
+billboard = 1
+text = "TARGET"
+font_size = 48
+outline_size = 8
+modulate = Color(1, 0.82, 0.45, 0.95)
+outline_modulate = Color(0.12, 0.08, 0.05, 0.9)
+
+[node name="ResetTimer" type="Timer" parent="."]
+one_shot = true
+wait_time = 3.0

@@ -22,6 +22,7 @@ extends Node
 ## Emitted on the frame the action is triggered, from key OR touch button.
 signal interact_pressed
 signal melee_pressed
+signal fire_pressed
 signal jump_pressed
 
 ## Keyboard bindings. action -> array of physical keycodes.
@@ -36,6 +37,7 @@ const _ACTIONS := {
 	"kc_jump": [KEY_SPACE],
 	"kc_interact": [KEY_F, KEY_E],
 	"kc_melee": [KEY_V, KEY_Q],
+	"kc_fire": [KEY_J],
 	"kc_handbrake": [KEY_SPACE],
 	"kc_free_cursor": [KEY_ESCAPE],
 }
@@ -97,16 +99,22 @@ func _register_actions() -> void:
 			var ev := InputEventKey.new()
 			ev.physical_keycode = code
 			InputMap.action_add_event(id, ev)
-	# Melee also on left mouse button — it is the button a player's hand is
-	# already on, and David has no gun to fire with it.
-	var click := InputEventMouseButton.new()
-	click.button_index = MOUSE_BUTTON_LEFT
-	InputMap.action_add_event(&"kc_melee", click)
+	var fire := InputEventMouseButton.new()
+	fire.button_index = MOUSE_BUTTON_LEFT
+	InputMap.action_add_event(&"kc_fire", fire)
+	# RVCE Pogo reads these; KilmoreDriveAgent bridges from PlayerInput instead.
+	for rvce_action in ["reset", "throttle", "brake", "steer_left", "steer_right", "clutch", "gear up", "gear down"]:
+		if not InputMap.has_action(rvce_action):
+			InputMap.add_action(rvce_action)
+
+
+func _mouse_captured() -> bool:
+	return Input.mouse_mode != Input.MOUSE_MODE_VISIBLE
 
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouseMotion:
-		if Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
+		if _mouse_captured():
 			_mouse_look += event.relative
 		return
 	if event.is_action_pressed(&"kc_free_cursor"):
@@ -114,19 +122,23 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	# Clicking back into the window re-captures the cursor on desktop.
 	if event is InputEventMouseButton and event.pressed and not touch_ui:
-		if Input.mouse_mode != Input.MOUSE_MODE_CAPTURED:
+		if not _mouse_captured():
 			_capture_mouse(true)
 			return
 	if event.is_action_pressed(&"kc_interact"):
 		interact_pressed.emit()
 	elif event.is_action_pressed(&"kc_melee"):
 		melee_pressed.emit()
+	elif event.is_action_pressed(&"kc_fire"):
+		fire_pressed.emit()
 	elif event.is_action_pressed(&"kc_jump"):
 		jump_pressed.emit()
 
 
 func _capture_mouse(on: bool) -> void:
-	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED if on else Input.MOUSE_MODE_VISIBLE
+	# CONFINED_HIDDEN keeps the cursor off-screen but does not warp clicks to the
+	# window centre, so HUD buttons (punch / fire) still receive mouse hits.
+	Input.mouse_mode = Input.MOUSE_MODE_CONFINED_HIDDEN if on else Input.MOUSE_MODE_VISIBLE
 
 
 # ------------------------------------------------------------------- polling
@@ -188,6 +200,10 @@ func touch_interact() -> void:
 
 func touch_melee() -> void:
 	melee_pressed.emit()
+
+
+func touch_fire() -> void:
+	fire_pressed.emit()
 
 
 func touch_jump() -> void:

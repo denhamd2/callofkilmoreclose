@@ -19,13 +19,13 @@
 class_name ThirdPersonCamera
 extends Node3D
 
-const DISTANCE := 3.1
+const DISTANCE := 3.45
 const DRIVE_DISTANCE := 6.2
 ## Positive is camera-right, so the character sits left of centre.
-const SHOULDER := 0.62
+const SHOULDER := 0.52
 const DRIVE_SHOULDER := 0.0
 ## Height of the pivot above the character's feet.
-const PIVOT_HEIGHT := 1.5
+const PIVOT_HEIGHT := 1.38
 const DRIVE_PIVOT_HEIGHT := 1.9
 ## Sphere radius of the boom's collision probe, and how far it holds off a
 ## surface it hits so the near plane never clips through.
@@ -93,6 +93,15 @@ func _process(delta: float) -> void:
 ## from the camera" is what forward means.
 func yaw() -> float:
 	return _yaw
+
+
+## World-space direction the camera is looking (includes pitch).
+func aim_direction() -> Vector3:
+	var cam := $SpringArm3D/CamOffset/Camera3D as Camera3D
+	if cam != null:
+		return -cam.global_transform.basis.z.normalized()
+	var dir := Vector3(-sin(_yaw), sin(_pitch), -cos(_yaw) * cos(_pitch))
+	return dir.normalized()
 
 
 ## Switch between on-foot and driving framing.

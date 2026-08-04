@@ -1,78 +1,68 @@
 ## DAVID — the player character.
 ##
-## Third-person, and UNARMED BY DEFAULT. That default is a design fact about
-## this game rather than a stage of implementation: David starts on his own
-## road with his hands empty, and melee is what he has. There is a `Loadout`
-## enum with exactly one member today so that adding a weapon later is an
-## additive change to a stated concept, not a retrofit of one.
-##
-## MOVEMENT TUNING is carried over from the prototype's `src/player/tuning.js`,
-## which was calibrated against Modern Warfare's numbers (authored in inches at
-## 20 units = 1 ft, converted to metres). Keeping the numbers means the character
-## keeps his weight and pace across the engine change, which is the part players
-## actually notice:
-##
-##   walk        4.57 m/s      sprint      7.01 m/s
-##   gravity    20.6 m/s^2     jump apex   0.60 m
-##   turn rate   6.2 rad/s
-##
-## The state that is deliberately NOT ported yet: slide, mantle, lean, prone,
-## tactical sprint, ADS. Those belong to a shooter that this slice is not trying
-## to be yet, and every one of them is a place to get the feel subtly wrong
-## while there is nothing to shoot at to judge it against.
+## Third-person CharacterBody3D with Quaternius mannequin animations, melee, and a
+## simple raycast pistol. Movement tuning is carried over from the prototype's
+## `src/player/tuning.js` (Modern Warfare numbers, metres).
 
 class_name DavidController
 extends CharacterBody3D
 
 signal melee_swung
-## Emitted when David's melee sweep connects with something.
 signal melee_hit(target: Node3D)
+signal shot_fired
+signal shot_hit(target: Node3D)
+signal weapon_changed(id: StringName)
 
 enum Loadout {
-	## Hands empty, melee ready. The default and, for now, the only state.
 	UNARMED,
+	PISTOL,
+	RANGED,
 }
 
 const WALK_SPEED := 4.57
 const SPRINT_SPEED := 7.01
 const GRAVITY := 20.6
 const JUMP_APEX := 0.6
-## v = sqrt(2 g h), solved from the apex so tuning the apex stays meaningful.
 const JUMP_SPEED := 4.972
-## Ground response. 92 m/s^2 reaches walk speed in ~50 ms — effectively instant,
-## which is what makes the character feel tight rather than floaty.
 const GROUND_ACCEL := 92.0
 const GROUND_DECEL := 52.0
-## Air control is a quarter of ground authority and cannot add speed.
 const AIR_ACCEL_SCALE := 0.25
-## Radians/second the body turns toward its heading. Scaled up by how far there
-## is to turn, so an about-face does not crawl.
 const TURN_RATE := 6.2
-## Grace windows that hide input and timing error.
 const COYOTE_TIME := 0.09
 const JUMP_BUFFER := 0.13
 
 const MELEE_REACH := 1.9
 const MELEE_RADIUS := 0.55
 const MELEE_COOLDOWN := 0.55
-## Seconds into the swing at which the hitbox is tested.
+const MELEE_DAMAGE := 35.0
 const MELEE_CONTACT := 0.14
 
+const FIRE_RANGE := 40.0
+const FIRE_COOLDOWN := 0.35
+const FIRE_DAMAGE := 25.0
+
 var loadout: Loadout = Loadout.UNARMED
-## Set by the car while David is a passenger; movement and collision go quiet.
+var weapon_id: StringName = WeaponCatalog.UNARMED
 var driving: bool = false
 
 var _coyote := 0.0
 var _buffered_jump := 0.0
 var _melee_timer := 0.0
+var _fire_timer := 0.0
 var _swing := 0.0
 var _facing := 0.0
 
 @onready var _camera: ThirdPersonCamera = $CamYaw
 @onready var _body: Node3D = $Body
+@onready var _animator: QuaterniusAnimDriver = $QuaterniusAnim
+@onready var _muzzle_marker: Marker3D = $MuzzleFlash
+@onready var _weapon_holder: WeaponHolder = $Body/WeaponMount
 
 var _melee_query := PhysicsShapeQueryParameters3D.new()
 var _melee_shape := SphereShape3D.new()
+
+const _FLASH_TEX: Texture2D = preload("res://assets/generated/muzzle_flash_frame_0.png")
+const _SPARK_TEX: Texture2D = preload("res://assets/generated/spark_burst_frame_0.png")
 
 
 func _ready() -> void:
@@ -81,28 +71,54 @@ func _ready() -> void:
 	_melee_query.shape = _melee_shape
 	_melee_query.collide_with_bodies = true
 	_melee_query.collide_with_areas = false
-	# Never report ourselves as a melee hit.
 	var skip: Array[RID] = [get_rid()]
 	_melee_query.exclude = skip
 	PlayerInput.jump_pressed.connect(_on_jump)
 	PlayerInput.melee_pressed.connect(_on_melee)
-	if _body != null:
-		MeshDress.dress_person(_body)
+	PlayerInput.fire_pressed.connect(_on_fire)
+	if _animator != null:
+		_animator.setup(_body)
+	if _weapon_holder != null:
+		_weapon_holder.setup_on_body(_body)
+	equip_weapon(WeaponCatalog.UNARMED)
+
+
+func equip_weapon(id: StringName) -> void:
+	if weapon_id == id:
+		return
+	weapon_id = id
+	var entry := WeaponCatalog.get_entry(id)
+	loadout = Loadout.UNARMED
+	if bool(entry.get("ranged", false)):
+		loadout = Loadout.RANGED
+	if _weapon_holder != null:
+		_weapon_holder.set_weapon(id)
+	weapon_changed.emit(id)
+
+
+func get_fire_damage() -> float:
+	return float(WeaponCatalog.get_entry(weapon_id).get("fire_damage", FIRE_DAMAGE))
+
+
+func get_fire_cooldown() -> float:
+	return float(WeaponCatalog.get_entry(weapon_id).get("fire_cooldown", FIRE_COOLDOWN))
+
+
+func get_fire_range() -> float:
+	return float(WeaponCatalog.get_entry(weapon_id).get("fire_range", FIRE_RANGE))
 
 
 func _physics_process(delta: float) -> void:
 	_melee_timer = maxf(0.0, _melee_timer - delta)
+	_fire_timer = maxf(0.0, _fire_timer - delta)
 	if _swing > 0.0:
 		var before := _swing
 		_swing = maxf(0.0, _swing - delta)
-		# Test the sweep once, as it passes through the contact frame.
 		if before > MELEE_CONTACT and _swing <= MELEE_CONTACT:
 			_resolve_melee()
-	_animate_body(delta)
+	_update_animation()
 
 	if driving:
-		# The car owns our transform while we are in it. Zero the velocity so
-		# we do not resume a stale slide on the frame we get out.
 		velocity = Vector3.ZERO
 		return
 
@@ -118,8 +134,6 @@ func _physics_process(delta: float) -> void:
 func _apply_gravity(delta: float) -> void:
 	if is_on_floor():
 		_coyote = COYOTE_TIME
-		# A small downward bias keeps the controller pinned to the floor over
-		# seams between collision boxes instead of skipping along them.
 		if velocity.y < 0.0:
 			velocity.y = -2.0
 	else:
@@ -135,16 +149,12 @@ func _apply_gravity(delta: float) -> void:
 
 func _apply_movement(delta: float) -> void:
 	var stick := PlayerInput.move_axis()
-	# Movement is relative to where the CAMERA is looking, which is what makes
-	# a third-person controller feel like driving a character rather than a
-	# tank. The body then turns to follow, at a limited rate.
 	var yaw := _camera.yaw()
 	var forward := Vector3(-sin(yaw), 0.0, -cos(yaw))
 	var right := Vector3(cos(yaw), 0.0, -sin(yaw))
 	var wish := (right * stick.x + forward * stick.y).limit_length(1.0)
 
 	var speed := SPRINT_SPEED if (PlayerInput.sprinting() and stick.y > 0.4) else WALK_SPEED
-	# You cannot sprint mid-swing.
 	if _swing > 0.0:
 		speed = WALK_SPEED * 0.45
 
@@ -157,8 +167,6 @@ func _apply_movement(delta: float) -> void:
 	velocity.x = planar.x
 	velocity.z = planar.z
 
-	# Turn the body toward the direction of travel. Scaling the rate by the
-	# size of the turn stops a 180 from taking half a second.
 	if wish.length_squared() > 0.01:
 		var want := atan2(-wish.x, -wish.z)
 		var diff := wrapf(want - _facing, -PI, PI)
@@ -166,6 +174,18 @@ func _apply_movement(delta: float) -> void:
 		_facing = wrapf(_facing + clampf(diff, -TURN_RATE * scale * delta,
 			TURN_RATE * scale * delta), -PI, PI)
 	rotation.y = _facing
+
+
+func _update_animation() -> void:
+	if _animator == null:
+		return
+	_animator.set_driving(driving)
+	if driving:
+		return
+	var planar := Vector3(velocity.x, 0.0, velocity.z).length()
+	var sprinting := PlayerInput.sprinting() and planar > WALK_SPEED * 0.85
+	_animator.set_locomotion(planar, sprinting, is_on_floor() and not driving,
+		WALK_SPEED, SPRINT_SPEED)
 
 
 # ------------------------------------------------------------------ melee
@@ -181,56 +201,93 @@ func _on_melee() -> void:
 	_melee_timer = MELEE_COOLDOWN
 	_swing = MELEE_COOLDOWN * 0.55
 	melee_swung.emit()
+	if _animator != null:
+		_animator.play_melee(MELEE_COOLDOWN * 0.55)
 
 
-## Sweep a sphere out in front of David and report what it touches. Nothing in
-## the slice takes damage yet — there is no one on the street to hit — so this
-## deliberately stops at "report the hit" rather than inventing a damage model
-## that has no receiver.
 func _resolve_melee() -> void:
 	var space := get_world_3d().direct_space_state
-	var origin := global_position + Vector3(0.0, 1.25, 0.0) \
-		+ -global_transform.basis.z * MELEE_REACH
+	var dir := _camera.aim_direction()
+	dir.y = 0.0
+	if dir.length_squared() < 0.001:
+		dir = -global_transform.basis.z
+	dir = dir.normalized()
+	var origin := global_position + Vector3(0.0, 1.25, 0.0) + dir * MELEE_REACH
 	_melee_query.transform = Transform3D(Basis.IDENTITY, origin)
-	var hits := space.intersect_shape(_melee_query, 4)
+	var hits := space.intersect_shape(_melee_query, 8)
+	var fallback: Node3D = null
 	for hit in hits:
-		# Explicit cast: Dictionary.get() returns Variant, and with
-		# INFERRING_FROM_VARIANT treated as error, `:=` fails at compile.
 		var collider := hit.get("collider") as Node3D
-		if collider != null and collider != self:
+		if collider == null or collider == self:
+			continue
+		if collider.is_in_group("hittable"):
 			melee_hit.emit(collider)
 			return
+		if fallback == null:
+			fallback = collider
+	if fallback != null:
+		melee_hit.emit(fallback)
 
 
-# ---------------------------------------------------------------- body pose
-#
-# David's body is a handful of primitives (see david.tscn). There is no
-# skeleton and no imported animation in this slice: a rig is a large piece of
-# work whose quality is judged against how it moves, and there is nothing yet
-# for it to move around. What is here is enough to read direction, pace and the
-# fact of a swing at third-person distance.
+# ------------------------------------------------------------------ firearm
 
-func _animate_body(delta: float) -> void:
-	if _body == null:
+func _on_fire() -> void:
+	if driving or _fire_timer > 0.0 or loadout != Loadout.RANGED:
 		return
-	# Cast, not an `is` test: an `is` check does not narrow the static type, so
-	# the result stays `Node` and `Node.rotation` does not exist — a parse error.
-	var arm := _body.get_node_or_null("ArmR") as Node3D
-	if arm == null:
-		arm = _body.find_child("ArmR", true, false) as Node3D
-	if arm != null:
-		# Swing the right arm through the punch, then settle it back.
-		var t := 1.0 - (_swing / maxf(MELEE_COOLDOWN * 0.55, 0.001))
-		var throw := sin(clampf(t, 0.0, 1.0) * PI) if _swing > 0.0 else 0.0
-		arm.rotation.x = lerpf(arm.rotation.x, -throw * 2.2, 1.0 - exp(-24.0 * delta))
-
-	# A gentle bob keyed to ground speed, so walking reads as walking.
-	var planar := Vector3(velocity.x, 0.0, velocity.z).length()
-	var phase := Time.get_ticks_msec() * 0.001 * (planar * 1.6)
-	_body.position.y = sin(phase * 2.0) * 0.035 * clampf(planar / WALK_SPEED, 0.0, 1.0)
+	_fire_timer = get_fire_cooldown()
+	shot_fired.emit()
+	_spawn_flash()
+	if _animator != null:
+		_animator.play_shoot(get_fire_cooldown())
+	_resolve_fire()
 
 
-## Called by the car on exit, to hand control back cleanly.
+func _resolve_fire() -> void:
+	var space := get_world_3d().direct_space_state
+	var origin := global_position + Vector3(0.0, 1.35, 0.0)
+	var dir := _camera.aim_direction()
+	if dir.length_squared() < 0.001:
+		dir = -global_transform.basis.z
+	dir = dir.normalized()
+	var query := PhysicsRayQueryParameters3D.create(origin, origin + dir * get_fire_range())
+	query.collide_with_bodies = true
+	query.collide_with_areas = false
+	query.exclude = [get_rid()]
+	var hit := space.intersect_ray(query)
+	if hit.is_empty():
+		return
+	var collider := hit.get("collider") as Node3D
+	if collider != null and collider != self:
+		_spawn_spark(hit.get("position", origin + dir * FIRE_RANGE))
+		shot_hit.emit(collider)
+
+
+func _spawn_flash() -> void:
+	if _muzzle_marker == null:
+		return
+	var sprite := Sprite3D.new()
+	sprite.texture = _FLASH_TEX
+	sprite.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	sprite.position = _muzzle_marker.position
+	sprite.pixel_size = 0.025
+	add_child(sprite)
+	var tw := create_tween()
+	tw.tween_property(sprite, "modulate:a", 0.0, 0.12)
+	tw.tween_callback(sprite.queue_free)
+
+
+func _spawn_spark(at: Vector3) -> void:
+	var sprite := Sprite3D.new()
+	sprite.texture = _SPARK_TEX
+	sprite.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	sprite.position = to_local(at)
+	sprite.pixel_size = 0.02
+	add_child(sprite)
+	var tw := create_tween()
+	tw.tween_property(sprite, "modulate:a", 0.0, 0.28)
+	tw.tween_callback(sprite.queue_free)
+
+
 func teleport(to: Transform3D) -> void:
 	global_transform = to
 	velocity = Vector3.ZERO

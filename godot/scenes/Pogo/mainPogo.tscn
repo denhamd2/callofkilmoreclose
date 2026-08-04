@@ -1,0 +1,62 @@
+[gd_scene format=3 uid="uid://b1xn1sp4a5n8l"]
+
+[ext_resource type="PackedScene" uid="uid://csekrmpyinmq8" path="res://Scenes/Pogo/worldPogo.tscn" id="1_6spfj"]
+[ext_resource type="Script" uid="uid://dhncqrbapkuri" path="res://Scripts/Pogo/guiPogo.gd" id="2_vdryj"]
+[ext_resource type="Script" uid="uid://t1cah03o8ep" path="res://Scripts/Monitors/Particle1DMonitor.gd" id="4_f0i4m"]
+
+[node name="mainPogo" type="Node" unique_id=2113577768]
+
+[node name="World" parent="." unique_id=1666672076 instance=ExtResource("1_6spfj")]
+
+[node name="Control" type="Control" parent="." unique_id=1279303433]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("2_vdryj")
+
+[node name="MarginContainer" type="MarginContainer" parent="Control" unique_id=920214936]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 10
+
+[node name="HBoxContainer" type="HBoxContainer" parent="Control/MarginContainer" unique_id=1841732235]
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 8
+
+[node name="Label" type="Label" parent="Control/MarginContainer/HBoxContainer" unique_id=51700835]
+layout_mode = 2
+theme_override_font_sizes/font_size = 32
+
+[node name="Monitor3" type="PanelContainer" parent="Control" unique_id=1149290437]
+visible = false
+layout_mode = 0
+offset_left = 5.0
+offset_top = 295.0
+offset_right = 388.0
+offset_bottom = 575.0
+mouse_filter = 2
+script = ExtResource("4_f0i4m")
+metadata/_custom_type_script = "uid://t1cah03o8ep"
+
+[node name="Monitor2" type="PanelContainer" parent="Control" unique_id=1427469321]
+visible = false
+layout_mode = 0
+offset_left = 5.0
+offset_top = 8.0
+offset_right = 388.0
+offset_bottom = 288.0
+mouse_filter = 2
+script = ExtResource("4_f0i4m")
+metadata/_custom_type_script = "uid://t1cah03o8ep"

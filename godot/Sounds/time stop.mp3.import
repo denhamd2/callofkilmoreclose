@@ -1,0 +1,19 @@
+[remap]
+
+importer="mp3"
+type="AudioStreamMP3"
+uid="uid://dh3pxo4vxxvyg"
+path="res://.godot/imported/time stop.mp3-065e7bcc791511ca30bd0fe750b2c224.mp3str"
+
+[deps]
+
+source_file="res://Sounds/time stop.mp3"
+dest_files=["res://.godot/imported/time stop.mp3-065e7bcc791511ca30bd0fe750b2c224.mp3str"]
+
+[params]
+
+loop=false
+loop_offset=0
+bpm=0
+beat_count=0
+bar_beats=4

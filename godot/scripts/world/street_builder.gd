@@ -38,8 +38,15 @@ var _batch: Dictionary = {}
 
 var _collision: StaticBody3D
 
-const _CAR_MESH: PackedScene = preload("res://assets/models/car.glb")
-const _TREE_MESH: PackedScene = preload("res://assets/models/tree.glb")
+const _CAR_MESH: PackedScene = preload("res://assets/models/golf_mk4/golf_mk4_visual.tscn")
+const _TREE_VARIANTS: Array[PackedScene] = [
+	preload("res://assets/models/trees_bushes/tree_a_visual.tscn"),
+	preload("res://assets/models/trees_bushes/tree_b_visual.tscn"),
+	preload("res://assets/models/trees_bushes/tree_c_visual.tscn"),
+	preload("res://assets/models/trees_bushes/tree_d_visual.tscn"),
+	preload("res://assets/models/trees_bushes/tree_e_visual.tscn"),
+]
+const _BUSH_MESH: PackedScene = preload("res://assets/models/trees_bushes/bush_a_visual.tscn")
 
 # 7-segment digit patterns (segments: top, UR, LR, bottom, LL, UL, mid).
 const _DIGIT_SEG: Dictionary = {
@@ -72,6 +79,7 @@ func _ready() -> void:
 	_flush_batches()
 	_spawn_static_cars()
 	_spawn_static_trees()
+	_spawn_garden_bushes()
 	_spawn_detail_grass()
 	built.emit()
 
@@ -338,6 +346,7 @@ func _wall_run(x: float, walk_h: float, z0: float, z1: float) -> void:
 	var wall_h := 0.62
 	var centre := Vector3(x, walk_h + wall_h * 0.5, (z0 + z1) * 0.5)
 	_push("wall_boundary", "block_wall", "box", Vector3(0.22, wall_h, length), centre)
+	_static_box(Vector3(0.22, wall_h, length), centre)
 	_push("wall_coping", "coping", "box", Vector3(0.26, 0.06, length),
 		Vector3(x, walk_h + wall_h + 0.03, (z0 + z1) * 0.5))
 	if length > 2.8:
@@ -522,15 +531,44 @@ func _add_wheelie_bin(x: float, walk_h: float, z: float, mat_key: String) -> voi
 
 
 func _spawn_static_trees() -> void:
+	var spot_i := 0
 	for spot in _tree_spots:
-		var tree := _TREE_MESH.instantiate() as Node3D
+		if _TREE_VARIANTS.is_empty():
+			continue
+		var scene := _TREE_VARIANTS[spot_i % _TREE_VARIANTS.size()]
+		var tree := scene.instantiate() as Node3D
 		if tree == null:
 			continue
 		tree.name = "StreetTree"
 		tree.position = spot
+		tree.rotation.y = float(spot_i % 5) * 0.35 - 0.7
 		MeshDress.dress_tree(tree)
 		_disable_shadows(tree)
 		add_child(tree)
+		spot_i += 1
+
+
+func _spawn_garden_bushes() -> void:
+	if _BUSH_MESH == null:
+		return
+	for i in _lawn_spots.size():
+		if i % 3 != 1:
+			continue
+		var centre := _lawn_spots[i] as Vector3
+		var size := _lawn_sizes[i] as Vector2
+		var bush := _BUSH_MESH.instantiate() as Node3D
+		if bush == null:
+			continue
+		bush.name = "GardenBush"
+		var jitter_x := (float((i * 5) % 7) - 3.0) * size.x * 0.08
+		var jitter_z := (float((i * 3) % 5) - 2.0) * size.y * 0.08
+		bush.position = Vector3(centre.x + jitter_x, centre.y, centre.z + jitter_z)
+		bush.rotation.y = float(i % 8) * (TAU / 8.0)
+		var scale := 0.85 + float(i % 4) * 0.08
+		bush.scale = Vector3.ONE * scale
+		MeshDress.dress_bush(bush)
+		_disable_shadows(bush)
+		add_child(bush)
 
 
 ## P2 — selective SimpleGrassTextured blades on remnant lawns + verges only.

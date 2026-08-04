@@ -1,7 +1,7 @@
 ## CAST MEMBER — idle street presence at a front door.
 ##
-## No AI, no weapons, no pathfinding. A primitive body, a name label, and a
-## gentle turn toward the player when they are close enough to read as "noticed".
+## No AI, no weapons, no pathfinding. Quaternius mannequin with idle / talking
+## clips and a gentle turn toward the player when they are close enough.
 
 class_name CastMember
 extends StaticBody3D
@@ -16,12 +16,17 @@ const TURN_RATE := 4.0
 var _base_yaw := 0.0
 var _player: Node3D
 
+@onready var _body: Node3D = $Body
+@onready var _animator: QuaterniusAnimDriver = $QuaterniusAnim
+
 
 func _ready() -> void:
 	_base_yaw = rotation.y
 	add_to_group("cast")
 	_apply_colors()
 	_label_name()
+	if _animator != null:
+		_animator.setup(_body)
 
 
 func bind_player(player: Node3D) -> void:
@@ -37,13 +42,18 @@ func setup(entry: Dictionary) -> void:
 
 
 func _physics_process(delta: float) -> void:
-	if _player == null:
+	if _player == null or _animator == null:
 		return
 	var to_player := _player.global_position - global_position
 	to_player.y = 0.0
 	var d2 := to_player.length_squared()
 	if d2 > SLEEP_DIST * SLEEP_DIST:
+		_animator.set_talking(false)
+		_animator.set_locomotion(0.0, false, true, 4.57, 7.01)
 		return
+	var talking := d2 <= FACE_DIST * FACE_DIST
+	_animator.set_talking(talking)
+	_animator.set_locomotion(0.0, false, true, 4.57, 7.01)
 	if d2 > FACE_DIST * FACE_DIST:
 		rotation.y = lerp_angle(rotation.y, _base_yaw, 1.0 - exp(-TURN_RATE * delta))
 		return
@@ -52,10 +62,8 @@ func _physics_process(delta: float) -> void:
 
 
 func _apply_colors() -> void:
-	var body := get_node_or_null("Body") as Node3D
-	if body == null:
-		return
-	MeshDress.dress_person(body, jacket_color)
+	if _body != null:
+		MeshDress.dress_mannequin(_body, jacket_color)
 
 
 func _label_name() -> void:

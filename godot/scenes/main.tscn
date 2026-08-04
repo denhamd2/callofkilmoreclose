@@ -1,65 +1,28 @@
-[gd_scene load_steps=9 format=3]
+[gd_scene format=3 uid="uid://c8a5idhektmdk"]
 
-[ext_resource type="Script" path="res://scripts/core/main.gd" id="1_main"]
-[ext_resource type="Script" path="res://scripts/world/street_builder.gd" id="2_street"]
+[ext_resource type="Script" uid="uid://c2v4ptqopdtwk" path="res://scripts/core/main.gd" id="1_main"]
+[ext_resource type="Script" uid="uid://cmhjxtttgd1o" path="res://scripts/world/street_builder.gd" id="2_street"]
 [ext_resource type="PackedScene" path="res://scenes/player/david.tscn" id="3_david"]
 [ext_resource type="PackedScene" path="res://scenes/vehicle/car.tscn" id="4_car"]
 [ext_resource type="PackedScene" path="res://scenes/ui/touch_controls.tscn" id="5_touch"]
+[ext_resource type="PackedScene" path="res://scenes/sky_kilmore.tscn" id="6_sky"]
 
-[sub_resource type="ProceduralSkyMaterial" id="SkyMat"]
-sky_top_color = Color(0.62, 0.68, 0.74, 1)
-sky_horizon_color = Color(0.78, 0.82, 0.86, 1)
-sky_curve = 0.22
-sky_energy_multiplier = 1.0
-ground_bottom_color = Color(0.42, 0.44, 0.43, 1)
-ground_horizon_color = Color(0.72, 0.74, 0.73, 1)
-sun_angle_max = 12.0
-sky_cover = 0.55
-sky_cover_modulate = Color(0.92, 0.94, 0.96, 1)
-
-[sub_resource type="Sky" id="SkyRes"]
-sky_material = SubResource("SkyMat")
-
-[sub_resource type="Environment" id="EnvMain"]
-background_mode = 2
-sky = SubResource("SkyRes")
-ambient_light_source = 3
-ambient_light_sky_contribution = 1.0
-ambient_light_energy = 1.38
-tonemap_mode = 2
-tonemap_white = 5.8
-ssao_enabled = true
-ssao_radius = 0.35
-ssao_intensity = 0.6
-ssao_power = 1.2
-
-[node name="Main" type="Node3D"]
+[node name="Main" type="Node3D" unique_id=873795274]
 script = ExtResource("1_main")
 
-[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
-environment = SubResource("EnvMain")
+[node name="Sky3D" parent="." instance=ExtResource("6_sky")]
 
-[node name="Sun" type="DirectionalLight3D" parent="."]
-position = Vector3(0, 24, 0)
-rotation_degrees = Vector3(-58, -125, 0)
-light_color = Color(0.96, 0.97, 0.99, 1)
-light_energy = 1.08
-shadow_enabled = true
-directional_shadow_mode = 0
-directional_shadow_max_distance = 90.0
-light_angular_distance = 1.8
-shadow_opacity = 0.72
-
-[node name="Street" type="Node3D" parent="."]
+[node name="Street" type="Node3D" parent="." unique_id=895024271]
 script = ExtResource("2_street")
 
-[node name="David" parent="." instance=ExtResource("3_david")]
+[node name="David" parent="." unique_id=630629533 instance=ExtResource("3_david")]
 
-[node name="Car" parent="." instance=ExtResource("4_car")]
+[node name="Car" parent="." unique_id=324674153 instance=ExtResource("4_car")]
 
-[node name="HUD" type="CanvasLayer" parent="."]
+[node name="HUD" type="CanvasLayer" parent="." unique_id=1603704280]
 
-[node name="Prompt" type="Label" parent="HUD"]
+[node name="Prompt" type="Label" parent="HUD" unique_id=382731993]
+anchors_preset = 7
 anchor_left = 0.5
 anchor_top = 1.0
 anchor_right = 0.5
@@ -74,4 +37,6 @@ text = "Press F  —  Get in"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="TouchControls" parent="HUD" instance=ExtResource("5_touch")]
+[node name="TouchControls" parent="HUD" unique_id=830735249 instance=ExtResource("5_touch")]
+layout_mode = 3
+anchors_preset = 15

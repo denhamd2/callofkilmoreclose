@@ -1,0 +1,19 @@
+[remap]
+
+importer="mp3"
+type="AudioStreamMP3"
+uid="uid://bpcn1kvofv6fl"
+path="res://.godot/imported/time continue.mp3-e8358fb6b93998e8a421eb28dcd3b6da.mp3str"
+
+[deps]
+
+source_file="res://Sounds/time continue.mp3"
+dest_files=["res://.godot/imported/time continue.mp3-e8358fb6b93998e8a421eb28dcd3b6da.mp3str"]
+
+[params]
+
+loop=false
+loop_offset=0
+bpm=0
+beat_count=0
+bar_beats=4

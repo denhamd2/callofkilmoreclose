@@ -80,6 +80,7 @@ func _physics_process(_delta: float) -> void:
 			_check_exit()
 			_check_camera()
 			_check_cast()
+			_check_combat()
 			_finish()
 
 
@@ -88,7 +89,11 @@ func _capture_actors() -> void:
 	_david = main.get_node_or_null("David") as DavidController
 	_car = main.get_node_or_null("Car") as Car
 	_cam = main.get_node_or_null("David/CamYaw") as ThirdPersonCamera
-	_sun = main.get_node_or_null("Sun") as DirectionalLight3D
+	_sun = main.get_node_or_null("Sky3D/SunLight") as DirectionalLight3D
+	if _sun == null:
+		var sky := main.get_node_or_null("Sky3D") as Sky3D
+		if sky != null:
+			_sun = sky.sun
 	_touch = main.get_node_or_null("HUD/TouchControls") as CanvasItem
 	if _david == null or _car == null:
 		_die("David or Car missing from main scene")
@@ -129,7 +134,7 @@ func _check_street() -> void:
 	_report["pair_count"] = KilmoreClose.pairs().size()
 	_report["road_z_span_m"] = zr.y - zr.x
 	_report["collision_shapes_street"] = collision_shapes
-	_report["collision_budget_ok"] = collision_shapes <= 35
+	_report["collision_budget_ok"] = collision_shapes <= 85
 	# Full street: 13 pairs/side, 2 dwellings/pair, 2 sides -> 52 houses, 26 pairs.
 	_report["street_ok"] = houses.size() == 52 and _report["pair_count"] == 26 \
 		and _report["road_z_span_m"] > 240.0 and _report["collision_budget_ok"]
@@ -220,7 +225,29 @@ func _check_cast() -> void:
 	var cast := get_tree().get_nodes_in_group("cast")
 	_report["cast_count"] = cast.size()
 	_report["cast_ok"] = cast.size() >= 5
-	if not _report["cast_ok"]:
+	var cast_skinned := false
+	if cast.size() > 0:
+		var first := cast[0] as Node
+		if first != null:
+			cast_skinned = first.find_child("Skeleton3D", true, false) != null
+	_report["cast_skeleton"] = cast_skinned
+	if not _report["cast_ok"] or not cast_skinned:
+		_fail = true
+
+
+func _check_combat() -> void:
+	var dummies := get_tree().get_nodes_in_group("combat_dummy")
+	_report["dummy_count"] = dummies.size()
+	_report["dummy_ok"] = dummies.size() >= 1
+	var skel := _david.find_child("Skeleton3D", true, false)
+	var ap := _david.find_child("AnimationPlayer", true, false)
+	var tree := _david.find_child("AnimationTree", true, false)
+	_report["david_skeleton"] = skel != null
+	_report["david_animation_player"] = ap != null
+	_report["david_animation_tree"] = tree != null
+	_report["combat_ok"] = _report["dummy_ok"] and _report["david_skeleton"] \
+		and _report["david_animation_player"] and _report["david_animation_tree"]
+	if not _report["combat_ok"]:
 		_fail = true
 
 

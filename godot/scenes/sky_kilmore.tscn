@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/world/kilmore_sky.gd" id="1_sky"]
+
+[node name="Sky3D" type="WorldEnvironment"]
+script = ExtResource("1_sky")

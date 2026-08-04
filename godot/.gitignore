@@ -1,0 +1,7 @@
+# Godot 4+ specific ignores
+.godot/
+/android/
+/Scripts/Pogo/.obsidian
+/Models/ImportAssets/OlympicCity
+Scripts/Pogo/Наблюдения.md
+/Docs

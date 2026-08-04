@@ -1,0 +1,18 @@
+[gd_scene format=3 uid="uid://csekrmpyinmq8"]
+
+[ext_resource type="Script" uid="uid://d4k6nsqlwbljh" path="res://Scenes/world.gd" id="1_u6rp2"]
+[ext_resource type="PackedScene" uid="uid://cbibi87o1x432" path="res://Scenes/camera_manager.tscn" id="4_2yl41"]
+[ext_resource type="PackedScene" uid="uid://2v47ysyu8bym" path="res://Scenes/Pogo/CarPogo.tscn" id="6_u6rp2"]
+
+[node name="World" type="Node3D" unique_id=1666672076]
+script = ExtResource("1_u6rp2")
+
+[node name="Sun" type="DirectionalLight3D" parent="." unique_id=1793748134]
+transform = Transform3D(0.65485954, -0.60893244, -0.44761622, 0, -0.5922803, 0.805732, -0.7557506, -0.5276413, -0.38786042, 0, 23.046843, 0)
+shadow_enabled = true
+
+[node name="CarPogo" parent="." unique_id=102793676 instance=ExtResource("6_u6rp2")]
+transform = Transform3D(0.5007857, 0, 0.86557114, 0, 1, 0, -0.86557114, 0, 0.5007857, 127.92705, 82.83345, 69.61211)
+
+[node name="CameraManager" parent="." unique_id=2044462958 node_paths=PackedStringArray("node_to_follow") instance=ExtResource("4_2yl41")]
+node_to_follow = NodePath("../CarPogo")

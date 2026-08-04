@@ -1,19 +1,113 @@
-[gd_scene load_steps=4 format=3]
+[gd_scene load_steps=17 format=3]
 
+[ext_resource type="PackedScene" uid="uid://bnjb48cqq0xux" path="res://scenes/Pogo/SuspensionPogo.tscn" id="1_susp"]
 [ext_resource type="Script" path="res://scripts/vehicle/car.gd" id="1_car"]
-[ext_resource type="PackedScene" path="res://assets/models/car.glb" id="2_mesh"]
+[ext_resource type="Script" path="res://scripts/Pogo/chassis_pogo.gd" id="2_chassis"]
+[ext_resource type="Curve" uid="uid://bnapfb8fykl0q" path="res://Resources/Curves/Pogo Traction Curve.tres" id="3_traction"]
+[ext_resource type="Script" path="res://scripts/Pogo/engine_pogo.gd" id="3_engine"]
+[ext_resource type="Script" path="res://scripts/Pogo/transmission_pogo.gd" id="5_trans"]
+[ext_resource type="Script" path="res://scripts/Pogo/brakes_pogo.gd" id="6_brakes"]
+[ext_resource type="PackedScene" path="res://assets/models/golf_mk4/golf_mk4_visual.tscn" id="7_mesh"]
 
-[sub_resource type="BoxShape3D" id="ShapeCar"]
-size = Vector3(1.8, 1.35, 4.3)
+[sub_resource type="PhysicsMaterial" id="PhysicsMaterial_car"]
+friction = 0.0
+rough = true
+bounce = 1.0
+absorbent = true
 
-[node name="Car" type="CharacterBody3D"]
+[sub_resource type="Curve" id="Curve_bump"]
+_limits = [1.0, 4.0, 0.0, 10.0]
+_data = [Vector2(0, 1), 0.0, 1.2742194, 0, 0, Vector2(2.7115073, 3.4480095), 0.3089575, 0.3089575, 0, 0, Vector2(10, 4), 0.0, 0.0, 0, 0]
+point_count = 3
+metadata/_snap_count = 2
+
+[sub_resource type="Curve" id="Curve_drift_factor"]
+_limits = [0.0, 1.0, 0.0, 300.0]
+_data = [Vector2(0, 0.4999783), 0.0, 0.0, 0, 0, Vector2(72.872086, 0.8908113), 0.0046304115, 0.0046304115, 0, 0, Vector2(130.84906, 1), 0.0, 0.0, 0, 0, Vector2(300, 1), 0.0, 0.0, 0, 0]
+point_count = 4
+
+[sub_resource type="Curve" id="Curve_drift_angle"]
+_limits = [0.0, 1.0, 0.0, 90.0]
+_data = [Vector2(0, 0), 0.0, 0.0, 0, 0, Vector2(44.63985, 0.37345827), 0.0, 0.0, 0, 0, Vector2(90, 0), 0.0, 0.0, 0, 0]
+point_count = 3
+
+[sub_resource type="Curve" id="Curve_rear_falloff"]
+_limits = [0.0, 1.0, 0.0, 3.0]
+_data = [Vector2(0, 0.3145181), 0.0, 0.0, 0, 0]
+point_count = 1
+
+[sub_resource type="Curve" id="Curve_rear_falloff_speed"]
+_limits = [0.0, 1.0, 0.0, 300.0]
+_data = [Vector2(0, 1), 0.0, 0.0, 0, 0, Vector2(55.04949, 1), 0.0, 0.0, 0, 0, Vector2(145.3696, 0), 0.0, 0.0, 0, 0]
+point_count = 3
+
+[sub_resource type="Curve" id="Curve_torque"]
+_limits = [0.0, 350.0, 0.0, 7500.0]
+_data = [Vector2(808.6008, 242.2833), 0.0, 0.0, 0, 0, Vector2(3005.661, 320.93665), 0.04215398, 0.04215398, 0, 0, Vector2(5186.978, 350), 0.0, 0.0, 0, 0, Vector2(7500, 269.9656), 0.0, 0.0, 0, 0]
+point_count = 4
+
+[sub_resource type="ConvexPolygonShape3D" id="Convex_hull"]
+points = PackedVector3Array(0.8948958, 0.55947816, 1.4859676, 0.6841363, 0.68099326, 1.5033503, 0.69657505, 0.54410094, 1.8030953, 0.87982905, 0.37009498, 1.7416201, 0.8652878, 0.24129592, -1.7090516, 0.84005976, 0.5925451, -1.6725903, 0.63332975, 1.1109787, -0.3171662, 0.6531267, 1.0660031, 0.14283848, 0.33567345, 0.7170663, 1.5207331, 0.40452516, 0.52872366, 2.0032082, 0, 1.141502, 0.14877415, 0.652426, 0.35182726, 2.0210147, 0.8649374, 0.20591664, 1.7666342, 0.8253434, 0.061971545, -1.7090516, 0.71829927, 0.26025736, -1.9952296, 0.5600983, 0.5931232, -2.0244834, 0.57428896, 0.7421555, -1.8629518, 0.70060456, 0.7637762, -1.4957958, 0.6363081, 0.9588247, -1.0069613, 0, 1.1811591, -0.30868685, 0, 0.73637456, 1.5381157, 0, 0.5133464, 2.08249, 0.33287036, 0.3335595, 2.1236148, -0.6335049, 1.1109787, -0.3171662, -0.65330195, 1.0660031, 0.14283848, -0.68431145, 0.68099326, 1.5033503, -0.33584875, 0.7170663, 1.5207331, 0.69359684, 0.16614386, 1.9434285, 0.34548438, 0.13966721, 2.1257348, 0.81448126, 0.026592268, 1.7013433, 0, 0, -1.6670787, 0.6398119, 0.09434474, -1.950289, 0.36475587, 0.11434675, -2.083839, 0.4041747, 0.2735535, -2.1423464, 0, 0.5938169, -2.1139405, 0, 0.81719196, -1.9299386, 0, 1.0261147, -1.0039935, -0.63648325, 0.9588247, -1.0069613, -0.40470034, 0.52872366, 2.0032082, -0.3330456, 0.3335595, 2.1236148, 0, 0.3151762, 2.1677074, -0.840235, 0.5925451, -1.6725903, -0.8948958, 0.55947816, 1.4859676, -0.6967503, 0.54410094, 1.8030953, 0.62457, 0.031563867, 1.901032, 0, 0.13504247, 2.1579561, 0.30098486, 0.036535464, 2.039669, 0, 0, 1.7666342, -0.8255186, 0.061971545, -1.7090516, -0.6399871, 0.09434474, -1.950289, -0.3649311, 0.11434675, -2.083839, -0.8146565, 0.026592268, 1.7013433, 0, 0.12174634, -2.1101248, 0, 0.2766752, -2.1631207, -0.40434995, 0.2735535, -2.1423464, -0.5602734, 0.5931232, -2.0244834, -0.5744642, 0.7421555, -1.8629518, -0.7007798, 0.7637762, -1.4957958, -0.6526012, 0.35182726, 2.0210147, -0.3456596, 0.13966721, 2.1257348, -0.7184745, 0.26025736, -1.9952296, -0.865463, 0.24129592, -1.7090516, -0.8800042, 0.37009498, 1.7416201, -0.3011601, 0.036535464, 2.039669, 0, 0.04162268, 2.070619, -0.6247452, 0.031563867, 1.901032, -0.86511266, 0.20591664, 1.7666342, -0.69377196, 0.16614386, 1.9434285)
+
+[node name="Car" type="RigidBody3D"]
 collision_layer = 1
 collision_mask = 1
-floor_max_angle = 0.6
+mass = 1280.0
+physics_material_override = SubResource("PhysicsMaterial_car")
+gravity_scale = 1.5
+center_of_mass_mode = 1
+center_of_mass = Vector3(0.05, -0.3, 0)
+linear_damp_mode = 1
+linear_damp = 0.35
+angular_damp_mode = 1
+angular_damp = 1.0
 script = ExtResource("1_car")
+transmission_mode = 1
+load_transfer_factor = 1.5
+speed_threshold = 18.0
 
-[node name="Collision" type="CollisionShape3D" parent="."]
-position = Vector3(0, 0.68, 0)
-shape = SubResource("ShapeCar")
+[node name="Mesh" parent="." instance=ExtResource("7_mesh")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 0, 0, 0)
 
-[node name="Mesh" parent="." instance=ExtResource("2_mesh")]
+[node name="Chassis" type="Node3D" parent="."]
+script = ExtResource("2_chassis")
+bump_stop_curve = SubResource("Curve_bump")
+use_tahn_lateral = false
+front_traction_curve = ExtResource("3_traction")
+front_drift_factor_curve = SubResource("Curve_drift_factor")
+front_drift_angle_curve = SubResource("Curve_drift_angle")
+front_lateral_vchar = 0.05
+rear_lateral_vchar = 0.05
+rear_traction_curve = ExtResource("3_traction")
+rear_lateral_falloff_curve = SubResource("Curve_rear_falloff")
+rear_lateral_falloff_speed_curve = SubResource("Curve_rear_falloff_speed")
+drive_wheel_paths = Array[NodePath]([NodePath("SuspensionPogoRL"), NodePath("SuspensionPogoRR")])
+steer_wheel_paths = Array[NodePath]([NodePath("SuspensionPogoFL"), NodePath("SuspensionPogoFR")])
+
+[node name="SuspensionPogoFL" parent="Chassis" instance=ExtResource("1_susp")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.365, -0.378, -0.78)
+mirror_wheel = true
+
+[node name="SuspensionPogoFR" parent="Chassis" instance=ExtResource("1_susp")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.365, -0.378, 0.78)
+
+[node name="SuspensionPogoRL" parent="Chassis" instance=ExtResource("1_susp")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.292, -0.378, -0.78)
+mirror_wheel = true
+
+[node name="SuspensionPogoRR" parent="Chassis" instance=ExtResource("1_susp")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.292, -0.378, 0.78)
+
+[node name="Engine" type="Node" parent="."]
+script = ExtResource("3_engine")
+torque_curve = SubResource("Curve_torque")
+
+[node name="Transmission" type="Node" parent="."]
+script = ExtResource("5_trans")
+
+[node name="Brakes" type="Node" parent="."]
+script = ExtResource("6_brakes")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 0, -0.584, 0)
+shape = SubResource("Convex_hull")

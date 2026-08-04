@@ -1,0 +1,69 @@
+[gd_scene format=3 uid="uid://dg4y8doucphvi"]
+
+[ext_resource type="PackedScene" uid="uid://c1v6t7iol65ae" path="res://Scenes/floor.tscn" id="1_idwr1"]
+[ext_resource type="Script" uid="uid://dw2mhpqywkjm7" path="res://Scenes/following_floor.gd" id="2_i4r1p"]
+[ext_resource type="Script" uid="uid://cctg3pjeahe4o" path="res://Scripts/camera_handle.gd" id="3_pttrd"]
+[ext_resource type="PackedScene" uid="uid://2v47ysyu8bym" path="res://Scenes/Pogo/CarPogo.tscn" id="4_ovsny"]
+
+[sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_bj6i3"]
+
+[sub_resource type="Sky" id="Sky_5a7ea"]
+sky_material = SubResource("ProceduralSkyMaterial_bj6i3")
+
+[sub_resource type="Environment" id="Environment_fsjxt"]
+background_mode = 2
+sky = SubResource("Sky_5a7ea")
+ambient_light_source = 3
+reflected_light_source = 2
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_idwr1"]
+size = Vector3(2, 2, 2)
+
+[sub_resource type="BoxMesh" id="BoxMesh_i4r1p"]
+size = Vector3(2, 2, 2)
+
+[node name="TestPogo" type="Node3D" unique_id=1363911691]
+
+[node name="Floor" parent="." unique_id=109877889 node_paths=PackedStringArray("to_follow") instance=ExtResource("1_idwr1")]
+script = ExtResource("2_i4r1p")
+to_follow = NodePath("../CarPogo")
+size = 100.0
+
+[node name="Sun" type="DirectionalLight3D" parent="." unique_id=1732915239]
+transform = Transform3D(0.65485954, -0.60893244, -0.44761622, 0, -0.5922803, 0.805732, -0.7557506, -0.5276413, -0.38786042, 0, 23.046843, 0)
+shadow_enabled = true
+
+[node name="CameraPivot" type="Node3D" parent="." unique_id=1767542445 node_paths=PackedStringArray("node_to_follow")]
+transform = Transform3D(0.6626624, 0.29503632, 0.6883545, -0.40673664, 0.9135454, 0, -0.6288431, -0.279979, 0.72537434, -13.42297, 9.728743, -10.13163)
+script = ExtResource("3_pttrd")
+node_to_follow = NodePath("../CarPogo")
+
+[node name="Camera3D" type="Camera3D" parent="CameraPivot" unique_id=437427660]
+transform = Transform3D(-4.37114e-08, 0, -1.0000001, 0, 1.0000001, 0, 1.0000002, 0, -4.3711392e-08, -5, 0, 0)
+environment = SubResource("Environment_fsjxt")
+
+[node name="CarPogo" parent="." unique_id=102793676 instance=ExtResource("4_ovsny")]
+transform = Transform3D(0.5007857, 0, 0.86557114, 0, 1, 0, -0.86557114, 0, 0.5007857, -56.24508, 2.2359085, 69.61211)
+
+[node name="RigidBody3D" type="RigidBody3D" parent="." unique_id=713771208]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.9817204, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="RigidBody3D" unique_id=2118091368]
+shape = SubResource("BoxShape3D_idwr1")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="RigidBody3D" unique_id=250173910]
+mesh = SubResource("BoxMesh_i4r1p")
+
+[node name="RigidBody3D2" type="RigidBody3D" parent="." unique_id=732322330]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.4152195, 1.8461995, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="RigidBody3D2" unique_id=1022476017]
+shape = SubResource("BoxShape3D_idwr1")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="RigidBody3D2" unique_id=1397058447]
+mesh = SubResource("BoxMesh_i4r1p")
+
+[node name="Generic6DOFJoint3D" type="Generic6DOFJoint3D" parent="." unique_id=227740384]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.4152195, 1.8461995, 0)
+node_a = NodePath("../RigidBody3D")
+node_b = NodePath("../RigidBody3D2")

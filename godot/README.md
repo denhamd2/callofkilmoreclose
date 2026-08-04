@@ -32,6 +32,13 @@ Verified against the **Godot 4.7 stable** documentation (4.7.0 stable, June 2026
 On first import Godot writes a `.godot/` cache folder. That is generated, not
 source, and is git-ignored.
 
+### AI workflow (Ziva — opt-in)
+
+Godot work defaults to **Cursor**. Use **Ziva** only when you explicitly invoke it
+(e.g. `@ziva` in chat) — Ziva is freemium and consumes credits. See
+[`AGENTS.md`](AGENTS.md) for routing, provider setup, and frozen baseline rules.
+Install Ziva if missing: `bash tools/install_ziva.sh`.
+
 **Controls (desktop)**
 
 | | |
@@ -140,10 +147,10 @@ that side is a punch. `GET IN` and `JUMP` are buttons, bottom right.
 |---|---|
 | Street | Full Kilmore Close — 13 joined semi-detached pairs a side, 52 houses, at the measured spacing (~251 m housing run) |
 | House archetype | Cream pebbledash, salmon mid-panels, brown frames, lean-to porch roofs, gutters/downpipes, garage at driveway end |
-| David | Third-person, spawns outside no. 18, unarmed / melee-ready (static glTF body) |
+| David | Third-person Quaternius mannequin, skeletal locomotion (idle/walk/jog/sprint), melee + raycast pistol |
 | Camera | Over-the-shoulder spring-arm boom with wall collision |
 | Car | Parked at the kerb outside 18; enter, drive, exit (static glTF mesh, kinematic drive) |
-| Cast | MickMcCabe, Deco McCabe, Oysters, Angela Carpenter, Paddy Mason — idle at their front doors, named labels, jacket tints, no combat AI |
+| Cast | MickMcCabe, Deco McCabe, Oysters, Angela Carpenter, Paddy Mason — Quaternius mannequins at front doors, idle/talking anims, jacket tints, no combat AI |
 | Street dressing | Block boundary walls, driveways, trees, overhead wires, wheelie bins, kerbside parked cars |
 | Audio | Looping street ambience, cadence footsteps, melee thud (procedural, no asset files) |
 | Addresses | Numbered gate piers on every house, so you can see you are outside 18 — and no. 18 has its own door colour |
@@ -152,10 +159,9 @@ that side is a punch. `GET IN` and `JUMP` are buttons, bottom right.
 
 ### What it deliberately does **not** contain
 
-Stated plainly so nobody goes looking: no combat AI, no weapons beyond melee,
-no interiors, no mission logic, no damage model, no skeletal animation, no
-music or voice acting. Cast members are street presence only. Bodies are
-static glTF (no animation trees).
+Stated plainly so nobody goes looking: no combat AI, no interiors, no mission
+logic, no music or voice acting. Cast members are street presence only (idle /
+talking skeletal anims, not pathfinding).
 
 ---
 

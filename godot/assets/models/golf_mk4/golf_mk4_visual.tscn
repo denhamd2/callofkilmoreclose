@@ -1,0 +1,7 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="PackedScene" path="res://assets/models/golf_mk4/golf_mk4.glb" id="1_golf"]
+
+[node name="GolfMK4Visual" type="Node3D"]
+
+[node name="Model" parent="." instance=ExtResource("1_golf")]
