@@ -1,8 +1,16 @@
 # Call of Kilmore Close — Godot 4.7 port
 
-Phase 1 vertical slice. This directory is a **complete, self-contained Godot
-project**. It does not share code with the Three.js prototype in `../src`, and
-nothing here imports from it.
+**Phase 2 complete and frozen** (`godot-phase-2`). This branch is closed to
+further feature work. If development continues, start a new phase on a new
+branch with a new scope.
+
+Phase 1 proved the core loop (walk, camera, car, touch, fixed daylight).
+Phase 2 extended the playable street to the full measured row (52 houses) and
+staged the named cast as idle doorstep presence — no combat AI or missions.
+
+This directory is a **complete, self-contained Godot project**. It does not
+share code with the Three.js prototype in `../src`, and nothing here imports
+from it.
 
 Verified against the **Godot 4.7 stable** documentation (4.7.0 stable, June 2026; 4.7.1 current). Every engine API used has been checked against the 4.7 class reference.
 
