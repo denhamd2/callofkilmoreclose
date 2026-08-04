@@ -1,8 +1,13 @@
 ; Call of Kilmore Close — Godot project
 ;
 ; Engine configuration file.
-; Authored by hand against the Godot 4.6 stable documentation.
-; config_version=5 is the Godot 4.x project format.
+; Authored by hand against the Godot 4.7 stable documentation and verified
+; against the 4.7 class reference and ProjectSettings list.
+;
+; config_version=5 is correct for 4.7: CONFIG_VERSION is still 5 in
+; core/config/project_settings.h on the 4.7-stable branch. Godot refuses to
+; open a project whose config_version is HIGHER than the engine's, so this
+; value must not be guessed upward.
 
 config_version=5
 
@@ -11,7 +16,7 @@ config_version=5
 config/name="Call of Kilmore Close"
 config/description="Third-person vertical slice of Kilmore Close, Dublin. Migrated from the Three.js prototype."
 run/main_scene="res://scenes/main.tscn"
-config/features=PackedStringArray("4.6", "GL Compatibility")
+config/features=PackedStringArray("4.7", "GL Compatibility")
 
 [autoload]
 

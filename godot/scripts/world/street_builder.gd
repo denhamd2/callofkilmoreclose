@@ -82,6 +82,10 @@ func _build_materials() -> void:
 	_mat["glass"] = _flat(Color(0.115, 0.155, 0.185), 0.12, 0.0)
 	_mat["frame"] = _flat(Color(0.94, 0.94, 0.93), 0.75)
 	_mat["door"] = _flat(Color(0.21, 0.27, 0.38), 0.65)
+	# Number 18's door, in a different colour from every other door on the
+	# street. On a road where every house is deliberately the same archetype,
+	# something has to say "this one is his" from across the carriageway.
+	_mat["door_home"] = _flat(Color(0.36, 0.11, 0.13), 0.55)
 	_mat["garage_door"] = _flat(Color(0.62, 0.62, 0.63), 0.60, 0.0)
 	_mat["tarmac"] = _flat(Color(0.155, 0.155, 0.165), 0.97)
 	_mat["path"] = _flat(Color(0.505, 0.500, 0.485), 0.95)
@@ -233,8 +237,9 @@ func _build_boundary(side: int, zr: Vector2) -> void:
 	for h in KilmoreClose.houses():
 		if int(h["side"]) != side:
 			continue
-		var gz: float = float(h["z"]) + _door_along(bool(h["mirror"]))
+		var gz: float = KilmoreClose.gate_z(h)
 		gates.append(gz)
+		_add_gate_number(side, gz, int(h["number"]))
 		# Garden path, gate to porch front. Batched rather than added as its
 		# own MeshInstance3D — there is one per house, and twenty individual
 		# draw calls for twenty identical paving strips is exactly the sort of
@@ -253,6 +258,42 @@ func _build_boundary(side: int, zr: Vector2) -> void:
 		cursor = maxf(cursor, gz + gate_half)
 	if zr.y > cursor:
 		_hedge_run(hedge_x, walk_h, cursor, zr.y)
+
+
+## A pair of gate piers with the house number on them.
+##
+## This exists so that "David spawns outside 18 Kilmore Close" is something you
+## can VERIFY from inside the game rather than take on trust. The archetype is
+## the point of this street — every house is deliberately the same — which means
+## without a number on the gate there is no way to tell his from the nineteen
+## others, and the single most testable claim in the brief becomes unfalsifiable.
+##
+## The number is BILLBOARDED. A flat plaque would need its facing rotated per
+## side of the street, and Label3D's default orientation is exactly the kind of
+## detail that is wrong 50% of the time when you cannot open the editor to look.
+## A number you cannot read from the pavement is worse than no number. This is a
+## slice affordance; a real plaque mesh replaces it once the street is dressed.
+func _add_gate_number(side: int, gz: float, number: int) -> void:
+	var s := float(side)
+	var walk_h := KilmoreClose.WALK_H
+	var pier_h := 1.05
+	var pier_x := s * (KilmoreClose.KERB + 0.17)
+	for sgn in [-1.0, 1.0]:
+		_push("gate_pier", "kerb", "box", Vector3(0.34, pier_h, 0.34),
+			Vector3(pier_x, walk_h + pier_h * 0.5, gz + sgn * 0.87))
+
+	var label := Label3D.new()
+	label.name = "No%d" % number
+	label.text = str(number)
+	label.font_size = 96
+	label.pixel_size = 0.0032
+	label.modulate = Color(0.11, 0.11, 0.12)
+	label.outline_size = 14
+	label.outline_modulate = Color(0.95, 0.95, 0.93)
+	label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	label.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	label.position = Vector3(pier_x, walk_h + pier_h + 0.2, gz - 0.87)
+	add_child(label)
 
 
 func _hedge_run(x: float, walk_h: float, z0: float, z1: float) -> void:
@@ -326,7 +367,8 @@ func _add_house(h: Dictionary) -> void:
 		var i := (n - 1 - b) if mirror else b
 		var along := KilmoreClose.bay_centre(b)
 		if i == 0:
-			_add_door(face_x, out, z + along)
+			_add_door(face_x, out, z + along,
+				int(h["number"]) == KilmoreClose.DAVID_HOUSE)
 		elif i == 1:
 			_add_window(face_x, out, z + along, KilmoreClose.WIN_LO_SILL,
 				KilmoreClose.WIN_LO_W, KilmoreClose.WIN_LO_H)
@@ -342,19 +384,8 @@ func _add_house(h: Dictionary) -> void:
 		-(half - KilmoreClose.GARAGE_W * 0.5),
 		half - KilmoreClose.GARAGE_W * 0.5)
 
-	_add_porch(face_x, out, z + _door_along(mirror))
+	_add_porch(face_x, out, z + KilmoreClose.door_along(mirror))
 	_add_garage(face_x, out, z + garage_along)
-
-
-## Offset of the front door (and therefore the porch, and the garden gate) from
-## the centre of a dwelling's frontage. One definition, used by the porch, the
-## gate and the path, so the three can never drift apart.
-func _door_along(mirror: bool) -> float:
-	var n := KilmoreClose.bay_count()
-	var half := KilmoreClose.HOUSE_W * 0.5
-	var door_bay := (n - 1) if mirror else 0
-	var limit := half - KilmoreClose.PORCH_W * 0.5
-	return clampf(KilmoreClose.bay_centre(door_bay), -limit, limit)
 
 
 func _add_window(face_x: float, out: float, z: float, sill: float,
@@ -371,13 +402,17 @@ func _add_window(face_x: float, out: float, z: float, sill: float,
 		Vector3(face_x + out * 0.06, y, z))
 
 
-func _add_door(face_x: float, out: float, z: float) -> void:
+func _add_door(face_x: float, out: float, z: float, is_home: bool) -> void:
 	var dh := KilmoreClose.DOOR_H
 	var dw := KilmoreClose.DOOR_W
 	_push("door_frame", "frame", "box",
 		Vector3(0.06, dh + 0.14, dw + 0.14),
 		Vector3(face_x + out * 0.03, (dh + 0.14) * 0.5, z))
-	_push("door_leaf", "door", "box",
+	# Two batches, not one, so number 18 can carry its own door colour without
+	# breaking the single-draw-call-per-material rule the street relies on.
+	var key := "door_home" if is_home else "door_leaf"
+	var mat := "door_home" if is_home else "door"
+	_push(key, mat, "box",
 		Vector3(0.05, dh, dw),
 		Vector3(face_x + out * 0.06, dh * 0.5, z))
 

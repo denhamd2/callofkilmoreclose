@@ -1,16 +1,16 @@
-# Call of Kilmore Close — Godot port
+# Call of Kilmore Close — Godot 4.7 port
 
 Phase 1 vertical slice. This directory is a **complete, self-contained Godot
 project**. It does not share code with the Three.js prototype in `../src`, and
 nothing here imports from it.
 
-Verified against the **Godot 4.6 stable** documentation.
+Verified against the **Godot 4.7 stable** documentation (4.7.0 stable, June 2026; 4.7.1 current). Every engine API used has been checked against the 4.7 class reference.
 
 ---
 
 ## Run it on desktop (5 minutes)
 
-1. Open Godot 4.6.
+1. Open Godot 4.7.
 2. **Import** → browse to this `godot/` folder → pick `project.godot` → **Import & Edit**.
 3. Press **F5** (Run Project).
 
@@ -83,7 +83,7 @@ this repository, and why each person who builds has to do this once.
 ### Step 4 — Export templates and a debug key
 
 - **Editor → Manage Export Templates → Download and Install**
-- Godot 4.6 generates a debug keystore for you. If it does not, create one:
+- Godot 4.7 generates a debug keystore for you. If it does not, create one:
 
 ```sh
 keytool -v -genkey -keystore debug.keystore -alias androiddebugkey \
@@ -114,6 +114,8 @@ that side is a punch. `GET IN` and `JUMP` are buttons, bottom right.
 | David | Third-person, spawns outside no. 18, unarmed / melee-ready |
 | Camera | Over-the-shoulder spring-arm boom with wall collision |
 | Car | Parked at the kerb outside 18; enter, drive, exit |
+| Addresses | Numbered gate piers on every house, so you can see you are outside 18 — and no. 18 has its own door colour |
+| Lighting | Fixed bright daylight. No day/night cycle, ever |
 | Mobile | Touch control layer, GL Compatibility renderer, Android export preset |
 
 ### What it deliberately does **not** contain
@@ -182,6 +184,32 @@ stable at any timestep and behaves identically on both platforms.
 **There is only one camera.** Driving does not hand over to a vehicle camera;
 it moves David into the driver's seat each physics step, so his own camera
 comes along. No rig to keep in sync, no blend.
+
+**The lighting never changes.** One DirectionalLight3D at a fixed midday
+angle, neutral white, plus sky-sourced ambient. No day/night cycle, no sunset,
+no weather, no time-of-day scripting — deliberately, for the whole migration.
+A moving sun means you can never tell whether a change improved the work or
+just caught better light. It is also the cheapest option on a basic phone.
+
+---
+
+## Third-party addons: what was considered, and what was rejected
+
+Four things in this slice are the sort of thing people usually pull an addon
+for. Here is the decision on each, so nobody has to re-litigate it.
+
+| Need | Decision | Why |
+|---|---|---|
+| Third-person **controller** | **Custom** | The available addons are full *templates* — animation state machines, imported character models, inventory hooks. They bring far more than is needed and would actively fight the movement tuning ported from the prototype (4.57 m/s walk, 92 m/s² ground accel and the rest, calibrated against Modern Warfare). Keeping David's feel across the engine change is the point; an addon would silently replace it. ~220 lines custom. |
+| Third-person **camera** | **Custom, on the engine's own `SpringArm3D`** | Godot already ships the hard part — the shape-cast boom that keeps the camera out of walls. Any camera addon is a thin wrapper over the same node. ~110 lines. |
+| **Touch joystick** | **Custom — but this was the closest call** | A small virtual-joystick addon is a genuinely reasonable choice here, and if one is wanted later it should replace `scripts/ui/touch_controls.gd` wholesale and write into `PlayerInput.set_touch_move()` / `add_touch_look()`. The interface is deliberately narrow so that swap is cheap. It was not used for one blunt practical reason: **the sandbox this was built in cannot reach the Asset Library or GitHub**, so no addon could be vendored in and verified. Writing 145 lines I can read beat depending on code I could not fetch. |
+| **Input action bridge** | **Rejected — no addon needed** | Godot's `InputMap` *is* the bridge. `scripts/core/player_input.gd` registers actions at runtime and merges keyboard, mouse, gamepad and touch into one surface. An addon here would add a dependency to wrap a built-in. |
+
+The general rule applied: **use an addon where it removes real risk, not where
+it removes typing.** Nothing here was rejected out of preference for writing
+code — the controller and camera cases are about not inheriting a template's
+assumptions, and the joystick case is an honest environment limitation with a
+documented swap path.
 
 ---
 

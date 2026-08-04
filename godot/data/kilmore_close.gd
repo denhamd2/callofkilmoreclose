@@ -151,6 +151,28 @@ static func bay_centre(b: int) -> float:
 	return -HOUSE_W / 2.0 + (float(b) + 0.5) * (HOUSE_W / float(n))
 
 
+## Offset of the front door — and therefore the porch, the garden gate, the
+## garden path and the number on the pier — from the centre of a dwelling's
+## frontage.
+##
+## Lives here rather than in the builder because it is not only a rendering
+## detail: it is where the front of the house actually IS. Spawn positions are
+## derived from it too, and when this was defined only inside the builder,
+## David spawned at the centre of his frontage — 2.76 m up the street from his
+## own gate, standing in front of next door.
+static func door_along(mirror: bool) -> float:
+	var n := bay_count()
+	var half := HOUSE_W / 2.0
+	var door_bay := (n - 1) if mirror else 0
+	var limit := half - PORCH_W / 2.0
+	return clampf(bay_centre(door_bay), -limit, limit)
+
+
+## Street-axis position of a house's garden gate.
+static func gate_z(h: Dictionary) -> float:
+	return float(h["z"]) + door_along(bool(h["mirror"]))
+
+
 ## Street-axis (Z) centre of dwelling index `i` on a side, where `i` counts
 ## dwellings from the low-Z end: i == p * 2 + k for pair p, half k.
 static func dwelling_z(i: int) -> float:
@@ -242,8 +264,12 @@ static func david_spawn() -> Transform3D:
 	var side := int(h["side"])
 	# Mid-footpath: between the carriageway edge and the kerb line.
 	var x := float(side) * (HALF_WIDTH + KERB) * 0.5
-	var pos := Vector3(x, 0.0, float(h["z"]))
-	# Face the house — i.e. away from the road.
+	# Squarely outside his own GATE, not the centre of his frontage — those are
+	# 2.76 m apart, which is a whole house-width's worth of standing in front of
+	# the wrong door.
+	var pos := Vector3(x, 0.0, gate_z(h))
+	# Face the house — i.e. away from the road — so the number on the gate pier
+	# is the first thing on screen.
 	var look := Vector3(float(side), 0.0, 0.0)
 	return _looking_at(pos, look)
 
@@ -251,10 +277,15 @@ static func david_spawn() -> Transform3D:
 ## Where the car is parked: at the kerb outside 18, nose up the street (+Z).
 static func car_spawn() -> Transform3D:
 	var h := house_by_number(DAVID_HOUSE)
-	var z := (float(h["z"]) + 2.0) if not h.is_empty() else 84.0
-	var side := int(h["side"]) if not h.is_empty() else SIDE_NEAR
-	# Parked against the kerb: body half-width (~0.9 m) in from the
-	# carriageway edge, so the near flank sits on the channel line.
+	if h.is_empty():
+		return _looking_at(Vector3(HALF_WIDTH - 0.95, 0.0, 84.0),
+			Vector3(0.0, 0.0, 1.0))
+	var side := int(h["side"])
+	# Just up from his gate, so it is plainly "the car outside 18" and not
+	# ambiguous between two houses.
+	var z := gate_z(h) + 1.6
+	# Parked against the kerb: body half-width (~0.9 m) in from the carriageway
+	# edge, so the near flank sits on the channel line.
 	var x := float(side) * (HALF_WIDTH - 0.95)
 	return _looking_at(Vector3(x, 0.0, z), Vector3(0.0, 0.0, 1.0))
 
