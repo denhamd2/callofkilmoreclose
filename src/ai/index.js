@@ -154,6 +154,16 @@ export class AiSystem {
       flashScale: 0.8,
     };
     this._shellEvent = { position: new THREE.Vector3(), velocity: new THREE.Vector3() };
+    /** Reused payload for agent-on-agent hits — see `_testAgentHit`. */
+    this._agentHitPayload = {
+      target: null,
+      amount: 0,
+      headshot: false,
+      killed: false,
+      point: new THREE.Vector3(),
+      incident: new THREE.Vector3(),
+      source: null,
+    };
     this._tracerEvent = { from: this._tracerFrom, to: this._tracerTo, speed: 800 };
     this._grenades = [];
     this._grenadeGeo = null;
@@ -376,10 +386,16 @@ export class AiSystem {
       const a = e.target;
       if (!a.alive) return;
       const amount = e.amount * this._falloff(e.point);
-      // Credit the kill so the killfeed can name it. `damage:dealt` aimed at an
-      // Agent is the player's round connecting — `ai` emits its own rounds at
-      // the player, and `ui` filters those out before this path.
-      a.lastAttacker = PLAYER_ACTOR;
+      /**
+       * Credit the kill so the killfeed can name it.
+       *
+       * This used to assign PLAYER_ACTOR unconditionally, on the assumption
+       * that any `damage:dealt` aimed at an Agent must be the player's round.
+       * That stopped being true once agents could shoot each other: an AI-on-AI
+       * kill was credited to the player. `source` names the real attacker when
+       * there is one, and the player is the fallback.
+       */
+      a.lastAttacker = e.source && e.source !== a ? e.source : PLAYER_ACTOR;
       a.applyDamage(amount, e.headshot ? 'head' : e.part ?? 'torso', e.point ?? a.position, e.incident);
       if (!a.alive) e.killed = true;
     });
@@ -764,7 +780,10 @@ export class AiSystem {
     // physics has no player collider, so test the player capsule ourselves.
     // Staged agents shoot for the camera, not for blood: a capture must not be
     // graded through the player's low-health filter.
-    if (!agent.staged?.noDamage) this._testPlayerHit(agent, origin, dir, end);
+    if (!agent.staged?.noDamage) {
+      this._testPlayerHit(agent, origin, dir, end);
+      this._testAgentHit(agent, origin, dir, end);
+    }
 
     this._tracerFrom.copy(origin);
     if (end) this._tracerTo.copy(end);
@@ -799,6 +818,50 @@ export class AiSystem {
       from: this._v2,
       source: agent,
     });
+  }
+
+  /**
+   * Does this agent's round hit ANOTHER agent?
+   *
+   * Without this, agent fire was only ever tested against the player capsule,
+   * so Mick McCabe and Angela Carpenter — who target each other rather than
+   * David — shot at one another indefinitely and neither could ever die. Their
+   * duel was targeting only.
+   *
+   * Same cylinder test as `_testPlayerHit`, and damage goes out on the same
+   * `damage:dealt` event with `source` set, so `ai` applies it, the killfeed
+   * credits the right shooter, and nothing needs a parallel damage path.
+   */
+  _testAgentHit(agent, origin, dir, end) {
+    const maxT = end ? origin.distanceTo(end) : 200;
+    let best = null;
+    let bestT = Infinity;
+    let bestMiss = 0;
+    for (let i = 0; i < this.agents.length; i++) {
+      const o = this.agents[i];
+      if (o === agent || !o.alive) continue;
+      // Aim at centre mass, not the feet.
+      const px = o.position.x - origin.x;
+      const py = o.position.y + 1.0 - origin.y;
+      const pz = o.position.z - origin.z;
+      const t = px * dir.x + py * dir.y + pz * dir.z;
+      if (t < 0.5 || t > maxT || t >= bestT) continue;
+      const miss = Math.hypot(px - dir.x * t, py - dir.y * t, pz - dir.z * t);
+      if (miss > 0.42) continue;
+      best = o;
+      bestT = t;
+      bestMiss = miss;
+    }
+    if (!best) return;
+    const pay = this._agentHitPayload;
+    pay.target = best;
+    pay.amount = agent.weaponDamage * (bestMiss < 0.16 ? 1.25 : 1);
+    pay.headshot = false;
+    pay.killed = false;
+    pay.point.copy(best.position).setY(best.position.y + 1.0);
+    pay.incident.copy(dir);
+    pay.source = agent;
+    this.ctx.events.emit('damage:dealt', pay);
   }
 
   emitReload(agent) {

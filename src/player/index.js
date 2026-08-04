@@ -330,7 +330,11 @@ export class PlayerSystem {
     // is what movement and `weapons` aim along — is unchanged by it.
     this.aimOrigin.copy(ctx.camera.position);
     this._updateBody(dt, ctx);
-    this._applyBoom(ctx);
+    // Only drive the boom while we own the camera. `rig.applyTo` is already
+    // skipped when control is disabled, so running the boom regardless yanked
+    // the camera off whatever transform a cutscene or the shot harness had set,
+    // using a stale aimOrigin.
+    if (this.controlEnabled) this._applyBoom(ctx);
 
     this.lowHealthPass?.sync(this.health);
     this._syncHitbox();
@@ -630,7 +634,11 @@ export class PlayerSystem {
 
   _onExplosion(e) {
     if (!e?.position) return;
-    const eye = this.ctx.camera.position;
+    // `aimOrigin`, not `ctx.camera.position`. In third person the camera is the
+    // boom, up to 3.1 m BEHIND David, so measuring blast range and line of
+    // sight from it meant a grenade at his feet could read as occluded by
+    // whatever stood behind the camera.
+    const eye = this.aimOrigin;
     const r = e.radius ?? 5;
     const d = this._tmp.copy(e.position).distanceTo(eye);
     if (d > r * 1.6) return;
@@ -646,7 +654,11 @@ export class PlayerSystem {
 
   _onBulletImpact(e) {
     if (!e?.point || this.health.dead) return;
-    const eye = this.ctx.camera.position;
+    // `aimOrigin`, not `ctx.camera.position`. In third person the camera is the
+    // boom, up to 3.1 m BEHIND David, so measuring blast range and line of
+    // sight from it meant a grenade at his feet could read as occluded by
+    // whatever stood behind the camera.
+    const eye = this.aimOrigin;
     const dx = e.point.x - eye.x, dy = e.point.y - eye.y, dz = e.point.z - eye.z;
     const d2 = dx * dx + dy * dy + dz * dz;
     const R = HEALTH.suppression.radius;

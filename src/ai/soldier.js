@@ -162,7 +162,25 @@ export const VARIANTS = {
     faceWrap: false,
     kneePads: false,
     fullCarrier: false,
-    weapon: 'carbine',
+    /**
+     * NO WELDED WEAPON. David starts unarmed and his default combat state is
+     * punch and kick, but this variant carried a carbine bolted to HandR at
+     * build time — so selecting fists changed nothing on the body and you threw
+     * punches while holding a rifle in a shouldered stance. That was the most
+     * visible contradiction of the unarmed default in the build.
+     *
+     * Known follow-up: the body does not yet show the gun when the player DOES
+     * select one, because the third-person body has no weapon-swap path (the
+     * viewmodel that swaps is hidden in third person). Empty hands are correct
+     * for the default state and wrong for the armed one; a welded carbine was
+     * wrong for the default state, which is where the player spends most of
+     * their time.
+     *
+     * Also note the rig's bind pose is itself a rifle carry (see rig.js), so
+     * empty hands still read as holding an invisible weapon until the civilian
+     * clips land. That is a pose problem, not a geometry one.
+     */
+    weapon: null,
     bulk: 1.0,
     scale: 1.044, // 6'2"
   },

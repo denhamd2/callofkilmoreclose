@@ -89,8 +89,10 @@ export class Health {
     let angle = 0;
     if (from) {
       const yaw = opts.yaw ?? this.ctx.camera.rotation.y;
-      const dx = from.x - this.ctx.camera.position.x;
-      const dz = from.z - this.ctx.camera.position.z;
+      // The player's own eye, not the third-person boom behind him.
+      const eye = this.rig?.eyePosition ?? this.ctx.camera.position;
+      const dx = from.x - eye.x;
+      const dz = from.z - eye.z;
       // Forward at yaw is (-sin, -cos); right is (cos, -sin).
       const f = -Math.sin(yaw) * dx - Math.cos(yaw) * dz;
       const r = Math.cos(yaw) * dx - Math.sin(yaw) * dz;

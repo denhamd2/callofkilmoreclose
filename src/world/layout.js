@@ -19,12 +19,18 @@
  * WHY OSM WAS SET ASIDE. Earlier passes built this table from the 26 building
  * footprints tagged `addr:street=Kilmore Close` (Overpass exports still checked
  * in under `src/world/osm/` for reference). Those footprints do NOT describe a
- * straight road. Searching every street bearing in 0.25 degree steps, the best
- * two-band split of the 26 is 18/8, and the larger band still spreads across
- * 29 m of perpendicular drift — a curve, not a straight row seen off a wrong
- * axis. Whatever those polygons are, they are not the two rows fronting this
- * road, so no amount of re-fitting makes them agree with the map. They are kept
- * on disk as evidence, and used for nothing.
+ * straight road. Sweeping every street bearing in 0.25 degree steps and taking
+ * the best two-band split of the 26 gives 6 and 20 at about 168.5 degrees, with
+ * band spreads of 0.7 m and 4.4 m about 38 m apart — a short row facing a long
+ * one over a 206 m axis. That is the lane-plus-loop shape earlier passes read
+ * out of the same data, and it is not 13 pairs a side over a 251 m run however
+ * it is rotated. Whatever those polygons are, they are not the two rows
+ * fronting this road, so no amount of re-fitting makes them agree with the map.
+ * They are kept on disk as evidence, and used for nothing.
+ *
+ * (An earlier revision of this comment claimed the sweep gave "18/8 with 29 m
+ * of drift". It does not reproduce; the figures above do. The conclusion is
+ * unchanged, but the evidence for it is load-bearing and was wrong.)
  *
  * The measurements, by contrast, agree with each other and with the map:
  *
@@ -119,8 +125,9 @@ export const ALLEYS = [
  *
  * `w` is the X extent (plot depth, perpendicular to the street) and `d` the Z
  * extent (the frontage the street actually sees) — `sideLen()` in
- * buildings.js reads `d` for streetSide 1/3, which is every house here. Real
- * OSM footprints are kept; only the spacing between them is regularised.
+ * buildings.js reads `d` for streetSide 1/3, which is every house here.
+ * Footprints are GENERATED from the measured pair width, not taken from OSM;
+ * see the file header for why the OSM footprints were set aside.
  */
 const ARCHETYPE = {
   floors: 2,
@@ -140,7 +147,7 @@ const ARCHETYPE = {
 const PAIR_W = 16.55;
 /** One dwelling's frontage — half a pair, since the two are joined. */
 const HOUSE_W = PAIR_W / 2;
-/** Gap between adjacent pairs. This is where the side garages stand. */
+/** Gap between adjacent pairs. Reads as the side-passage/garage gap. */
 const PAIR_GAP = 3.0;
 /** Pair-to-pair pitch along the street. */
 const PITCH = PAIR_W + PAIR_GAP;
@@ -461,7 +468,7 @@ export const SET_PIECES = {
   binStores: [
     [-4.2, 43.1, 2.4, 34],
     [5.0, 82.5, 2.8, 40],
-    [-1.5, 136.9, 2.0, 26],
+    [-4.6, 136.9, 2.0, 26],
     [7.6, 174.2, 2.2, 28],
     [-5.0, 228.4, 1.6, 18],
   ],

@@ -1124,13 +1124,25 @@ function binClusters(A, rng) {
  * ~12 m of open ground, in place of the old sandbag emplacements.
  */
 function coverClusters(A, rng) {
+  /**
+   * Authored AI cover, re-spread across the housing run.
+   *
+   * Every one of these sat in z -33..27 — the old street's range. The housing
+   * run is now 0..251, so four of the six were off it entirely and one was
+   * beyond STREET.zMin, off the road. `scatterDebris`'s own comment rests on
+   * "AI cover comes from coverClusters, which is untouched"; being untouched
+   * was the defect.
+   *
+   * `x` is kept just outside the carriageway so a cover point is something you
+   * duck behind at the kerb, not an obstacle in the road.
+   */
   const spots = [
-    [0.6, 0.9, 0.35],
-    [-2.2, 8.6, 1.2],
-    [2.6, -6.4, -0.4],
-    [-3.0, -21.5, 0.6],
-    [2.2, -33.0, 1.9],
-    [-2.6, 27.5, 0.2],
+    [-4.6, 26.4, 0.35],
+    [4.6, 61.8, 1.2],
+    [-4.6, 97.3, -0.4],
+    [4.6, 132.7, 0.6],
+    [-4.6, 168.2, 1.9],
+    [4.6, 213.5, 0.2],
   ];
   for (const [x, z, ry] of spots) {
     const y = groundY(x, z);
@@ -1458,14 +1470,21 @@ function dressBuilding(A, rng, info) {
 
 /** Cables and washing lines strung across the alleys between buildings. */
 function alleyLines(A, rng, infos) {
-  const spans = [
-    [-6.6, 5.0, 21.0, -6.6, 5.4, 24.0],
-    [-6.6, 4.2, -9.0, -6.6, 4.6, -11.5],
-    [7.0, 4.6, 2.5, 7.0, 4.2, 6.6],
-    [7.0, 5.6, -16.0, 7.0, 5.2, -20.0],
-    [-8.0, 6.4, 20.6, -8.0, 6.0, 23.8],
-    [8.6, 6.2, 2.2, 8.6, 5.8, 7.2],
-  ];
+  /**
+   * Washing lines: EMPTY, and this is the real removal.
+   *
+   * layout.js has said laundry was "REMOVED, deliberately and permanently"
+   * since the dressing pass, but only `SET_PIECES.laundry` was emptied — these
+   * six hardcoded spans kept hanging cloth at x +/-6.6..8.6, which is inside the
+   * FRONT gardens facing the street, at z -20..24, which is the old street's
+   * coordinate range and is now off the housing run entirely.
+   *
+   * Nobody hangs washing in the front garden. The correct home is the rear
+   * garden and this map does not build one. Kept as an empty run rather than
+   * deleted so the loop below stays a single code path.
+   */
+  const spans = [];
+
   for (const [x0, y0, z0, x1, y1, z1] of spans) {
     const t = catenaryTube([x0, y0, z0], [x1, y1, z1], 0.5, 0.016, { seg: 10, radial: 4, jitter: 0.04 });
     A.addOnce('metal_dark', t, null, { masks: [0.4, 0.7, 0.2] });
