@@ -150,12 +150,16 @@ func _flush_batches() -> void:
 		var node := MultiMeshInstance3D.new()
 		node.name = key
 		node.multimesh = mm
-		# Small detail meshes do not need to cast shadows; walls and roofs do.
-		# Fewer shadow casters is the cheapest win available on a mobile GPU.
-		if key.begins_with("win") or key.begins_with("door"):
+		# Shadow pass is the main mobile GPU cost after draw calls. Keep it on
+		# wall and roof batches only; detail geometry reads fine in baked daylight.
+		if _shadows_off(key):
 			node.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		add_child(node)
 	_batch.clear()
+
+
+func _shadows_off(key: String) -> bool:
+	return not (key.begins_with("wall") or key.begins_with("roof"))
 
 
 func _static_box(size: Vector3, origin: Vector3) -> void:
@@ -302,7 +306,7 @@ func _hedge_run(x: float, walk_h: float, z0: float, z1: float) -> void:
 		return
 	var centre := Vector3(x, walk_h + 0.4, (z0 + z1) * 0.5)
 	_push("hedge", "hedge", "box", Vector3(0.5, 0.8, length), centre)
-	_static_box(Vector3(0.5, 0.8, length), centre)
+	# Visual only — low hedge does not need per-segment physics (profile cost).
 
 
 # ----------------------------------------------------- the pair, and the house
@@ -445,8 +449,8 @@ func _add_porch(face_x: float, out: float, z: float) -> void:
 	_push("porch_mullion", "frame", "box",
 		Vector3(0.09, glass_h, 0.07),
 		Vector3(face_x + out * (pd + 0.02), glass_h * 0.5 + 0.06, z))
-
-	_static_box(Vector3(pd, ph, pw), Vector3(cx, ph * 0.5, z))
+	# Visual only — porch collision duplicated the pair wall and added 52 extra
+	# broadphase boxes across the full street (profile: 185 shapes).
 
 
 ## Garage: single storey, flat roof, pebbledash to match the house, with a
@@ -466,5 +470,4 @@ func _add_garage(face_x: float, out: float, z: float) -> void:
 	_push("garage_door", "garage_door", "box",
 		Vector3(0.08, gh - 0.30, gw - 0.22),
 		Vector3(face_x + out * gd, (gh - 0.30) * 0.5, z))
-
-	_static_box(Vector3(gd, gh, gw), Vector3(cx, gh * 0.5, z))
+	# Visual only — pair wall collision blocks the dwelling; garage is set dressing.

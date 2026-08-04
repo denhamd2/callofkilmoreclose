@@ -118,12 +118,21 @@ func _check_spawn() -> void:
 func _check_street() -> void:
 	var houses := KilmoreClose.houses()
 	var zr := KilmoreClose.road_z_range()
+	var main := get_parent()
+	var street := main.get_node_or_null("Street") as Node3D
+	var collision_shapes := 0
+	if street != null:
+		for n in street.find_children("*", "", true, false):
+			if n is CollisionShape3D:
+				collision_shapes += 1
 	_report["house_count"] = houses.size()
 	_report["pair_count"] = KilmoreClose.pairs().size()
 	_report["road_z_span_m"] = zr.y - zr.x
+	_report["collision_shapes_street"] = collision_shapes
+	_report["collision_budget_ok"] = collision_shapes <= 35
 	# Full street: 13 pairs/side, 2 dwellings/pair, 2 sides -> 52 houses, 26 pairs.
 	_report["street_ok"] = houses.size() == 52 and _report["pair_count"] == 26 \
-		and _report["road_z_span_m"] > 240.0
+		and _report["road_z_span_m"] > 240.0 and _report["collision_budget_ok"]
 	if not _report["street_ok"]:
 		_fail = true
 

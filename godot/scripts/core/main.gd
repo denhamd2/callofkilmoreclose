@@ -59,6 +59,16 @@ func _ready() -> void:
 			probe.name = "RuntimeProbe"
 			add_child(probe)
 
+	# Performance profile path (measure before tuning).
+	#   godot --path godot --headless --quit-after 600 -- --profile
+	if OS.get_cmdline_user_args().has("--profile"):
+		var prof_script := load("res://tools/performance_profile.gd") as Script
+		if prof_script != null:
+			var prof := Node.new()
+			prof.set_script(prof_script)
+			prof.name = "PerformanceProfile"
+			add_child(prof)
+
 
 func _spawn_cast() -> void:
 	var root := Node3D.new()
@@ -71,6 +81,7 @@ func _spawn_cast() -> void:
 		root.add_child(member)
 		member.global_transform = KilmoreCast.doorstep(entry)
 		member.setup(entry)
+		member.bind_player(_david)
 
 
 func _on_melee_hit(target: Node3D) -> void:

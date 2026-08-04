@@ -1,12 +1,13 @@
 # Call of Kilmore Close — Godot 4.7 port
 
 **Phase 3 complete and frozen** (`godot-phase-3`): procedural ambient bed, footstep
-cadence, and melee thud — no imported audio files, no music or VO. This branch
-is closed to further feature work.
+cadence, and melee thud — no imported audio files, no music or VO.
 
-**Phase 2 complete and frozen** (`godot-phase-2`). Phase 1 proved the core loop;
-phase 2 extended the street and cast. If development continues, start a new
-phase on a new branch with a new scope.
+**Phase 4 complete** (`godot-phase-4`): profiled the full street and reduced
+collision/shadow cost without changing gameplay. Run `godot --path godot --headless -- --profile` to re-measure.
+
+**Phase 2 complete and frozen** (`godot-phase-2`). If development continues,
+start a new phase on a new branch with a new scope.
 
 This directory is a **complete, self-contained Godot project**. It does not
 share code with the Three.js prototype in `../src`, and nothing here imports
@@ -179,6 +180,8 @@ godot/
     ui/touch_controls.gd
   tools/
     validate_project.py    Structural checks on the scene/script files.
+    runtime_probe.gd       Regression gate (`--probe`).
+    performance_profile.gd Scene cost + frame sampling (`--profile`).
 ```
 
 ---

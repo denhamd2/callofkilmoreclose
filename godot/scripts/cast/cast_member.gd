@@ -7,6 +7,7 @@ class_name CastMember
 extends StaticBody3D
 
 const FACE_DIST := 6.0
+const SLEEP_DIST := 14.0
 const TURN_RATE := 4.0
 
 @export var display_name := "Neighbour"
@@ -23,6 +24,10 @@ func _ready() -> void:
 	_label_name()
 
 
+func bind_player(player: Node3D) -> void:
+	_player = player
+
+
 func setup(entry: Dictionary) -> void:
 	display_name = str(entry["name"])
 	if entry.has("jacket"):
@@ -33,12 +38,13 @@ func setup(entry: Dictionary) -> void:
 
 func _physics_process(delta: float) -> void:
 	if _player == null:
-		_player = get_tree().get_first_node_in_group("player") as Node3D
-	if _player == null:
 		return
 	var to_player := _player.global_position - global_position
 	to_player.y = 0.0
-	if to_player.length_squared() > FACE_DIST * FACE_DIST:
+	var d2 := to_player.length_squared()
+	if d2 > SLEEP_DIST * SLEEP_DIST:
+		return
+	if d2 > FACE_DIST * FACE_DIST:
 		rotation.y = lerp_angle(rotation.y, _base_yaw, 1.0 - exp(-TURN_RATE * delta))
 		return
 	var want := atan2(to_player.x, to_player.z)
