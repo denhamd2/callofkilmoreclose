@@ -1,6 +1,6 @@
 # Call of Kilmore Close — Godot 4.7 port
 
-**Phases 1–4 complete and frozen.** Reference branch: `claude/godot-phase-4-performance`, tag `godot-phase-4`.
+**Phases 1–5 complete and frozen.** Reference branch: `claude/godot-phase-5-visual-polish`, tag `godot-phase-5`.
 
 **Handoff:** read [HANDOFF.md](HANDOFF.md) for setup, validation gates, platform notes, and what is out of scope. Do not add features on the frozen branch.
 
@@ -10,6 +10,7 @@
 | 2 | `godot-phase-2` | Full street (52 houses) + idle cast |
 | 3 | `godot-phase-3` | Procedural ambience, footsteps, melee thud |
 | 4 | `godot-phase-4` | Performance profile; collision/shadow hardening |
+| 5 | `godot-phase-5` | Street materials + car/person glTF visual polish |
 
 This directory is a **complete, self-contained Godot project**. It does not
 share code with the Three.js prototype in `../src`, and nothing here imports
@@ -135,11 +136,11 @@ that side is a punch. `GET IN` and `JUMP` are buttons, bottom right.
 | | |
 |---|---|
 | Street | Full Kilmore Close — 13 joined semi-detached pairs a side, 52 houses, at the measured spacing (~251 m housing run) |
-| House archetype | White pebbledash, painted band, 2 upstairs windows, 1 downstairs + door, porch with glazed sliding door, single-storey side garage |
-| David | Third-person, spawns outside no. 18, unarmed / melee-ready |
+| House archetype | White pebbledash, painted band, 2 upstairs windows, 1 downstairs + door, porch with glazed sliding door, single-storey side garage (tileable materials) |
+| David | Third-person, spawns outside no. 18, unarmed / melee-ready (static glTF body) |
 | Camera | Over-the-shoulder spring-arm boom with wall collision |
-| Car | Parked at the kerb outside 18; enter, drive, exit |
-| Cast | MickMcCabe, Deco McCabe, Oysters, Angela Carpenter, Paddy Mason — idle at their front doors, named labels, no combat AI |
+| Car | Parked at the kerb outside 18; enter, drive, exit (static glTF mesh, kinematic drive) |
+| Cast | MickMcCabe, Deco McCabe, Oysters, Angela Carpenter, Paddy Mason — idle at their front doors, named labels, jacket tints, no combat AI |
 | Audio | Looping street ambience, cadence footsteps, melee thud (procedural, no asset files) |
 | Addresses | Numbered gate piers on every house, so you can see you are outside 18 — and no. 18 has its own door colour |
 | Lighting | Fixed bright daylight. No day/night cycle, ever |
@@ -149,7 +150,8 @@ that side is a punch. `GET IN` and `JUMP` are buttons, bottom right.
 
 Stated plainly so nobody goes looking: no combat AI, no weapons beyond melee,
 no interiors, no mission logic, no damage model, no skeletal animation, no
-music or voice acting. Cast members are street presence only.
+music or voice acting. Cast members are street presence only. Bodies are
+static glTF (no animation trees).
 
 ---
 
@@ -159,15 +161,20 @@ music or voice acting. Cast members are street presence only.
 godot/
   project.godot            Engine config. Renderer, display, autoloads.
   export_presets.cfg       Android, macOS, and Linux export presets.
+  HANDOFF.md               Frozen-phase handoff (setup, gates, out of scope).
   data/
     kilmore_close.gd       THE MEASURED STREET. Single source of truth for
                            every dimension on the map.
     cast.gd                Named residents and house numbers.
+  assets/
+    textures/              Tileable street albedos (VRAM-compressed on import).
+    models/car.glb         Low-poly hatchback visual.
+    models/person.glb      Static body parts for David and cast.
   scenes/
     main.tscn              Entry point: environment, sun, street, actors, HUD.
     player/david.tscn      David's body, collider and camera rig.
-    cast/cast_member.tscn  Idle neighbour primitive + name label.
-    vehicle/car.tscn       The car's meshes and collider.
+    cast/cast_member.tscn  Idle neighbour + name label.
+    vehicle/car.tscn       The car's mesh and collider.
     ui/touch_controls.tscn Touch HUD.
   scripts/
     audio/street_audio.gd    Autoload: ambience, footsteps, melee thud.

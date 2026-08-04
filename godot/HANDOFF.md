@@ -1,12 +1,12 @@
 # Kilmore Close — Godot handoff (frozen)
 
-**Status:** Phases 1–4 complete and frozen. **Do not add features on this branch.**
+**Status:** Phases 1–5 complete and frozen. **Do not add features on this branch.**
 
 | Item | Value |
 |---|---|
 | Engine | Godot **4.7.1** (4.7.x stable) |
-| Frozen branch | `claude/godot-phase-4-performance` |
-| Frozen commit | tag `godot-phase-4` |
+| Frozen branch | `claude/godot-phase-5-visual-polish` |
+| Frozen commit | tag `godot-phase-5` |
 | Project root | `godot/project.godot` |
 | Three.js prototype | `../src/` — **not used by Godot; do not wire back** |
 
@@ -18,7 +18,8 @@
 - [x] Phase 2 — full street (52 houses) + idle cast at doors
 - [x] Phase 3 — procedural audio (ambience, footsteps, melee thud)
 - [x] Phase 4 — performance profile + collision/shadow hardening
-- [x] Tags: `godot-phase-1` … `godot-phase-4` on remote
+- [x] Phase 5 — visual polish (street textures, car/person glTF; play loop unchanged)
+- [x] Tags: `godot-phase-1` … `godot-phase-5`
 - [x] Export presets: Android, macOS, Linux (project-level; SDK/templates per machine)
 - [ ] **You:** Install Godot 4.7.1 + export templates locally
 - [ ] **You:** Run validation gates below before any new work
@@ -37,7 +38,7 @@ safety (disabled headless), collision budget (≤ 35 shapes).
 
 ---
 
-## What phases 1–4 accomplished
+## What phases 1–5 accomplished
 
 | Phase | Tag | Delivered |
 |---|---|---|
@@ -45,6 +46,7 @@ safety (disabled headless), collision budget (≤ 35 shapes).
 | **2** | `godot-phase-2` | Full Kilmore Close row (13 pairs/side, 52 houses); cast at doors (MickMcCabe, Deco McCabe, Oysters, Angela Carpenter, Paddy Mason); macOS export preset |
 | **3** | `godot-phase-3` | `StreetAudio` autoload: looping ambience, cadence footsteps, melee thud — all procedural, no asset files |
 | **4** | `godot-phase-4` | Profiled street cost; collision shapes 185→27; MultiMesh shadows limited to wall/roof; probe collision budget |
+| **5** | `godot-phase-5` | Tileable street materials (triplanar MultiMesh dress); low-poly `car.glb` / `person.glb`; cast jacket tints preserved |
 
 ### Architecture decisions (frozen — do not reopen)
 
@@ -54,6 +56,7 @@ safety (disabled headless), collision budget (≤ 35 shapes).
 - Street built from `data/kilmore_close.gd` via MultiMesh batching
 - Kinematic car (not `VehicleBody3D`)
 - No third-party addons
+- Phase 5 art stays on shared materials + few static glTFs (no skeletal animation, no per-house meshes)
 
 ---
 
@@ -107,6 +110,7 @@ Full step-by-step: see [README.md](README.md) § “Run it on Android”.
 - Landscape, touch stick + drag-look + buttons
 - Same `gl_compatibility` renderer as desktop
 - Audio should play on boot (ambience), when walking (footsteps), on melee hit (thud)
+- Street textures and car/cast meshes should read under midday light without fill-rate stalls
 
 ---
 
@@ -117,7 +121,8 @@ Do **not** expect these on the frozen branch; they require a **new phase** and *
 - Combat AI, pathfinding, missions, police, duels
 - Weapons beyond unarmed melee
 - Interiors, enterable houses, damage/health systems
-- Skeletal animation, imported character meshes
+- Skeletal animation / animation trees
+- Full house glTF library, vegetation packs, plaque meshes for every gate
 - Music, voice acting, dialogue trees
 - Day/night, weather, crowds, traffic simulation
 - Map expansion beyond measured Kilmore Close data
@@ -131,7 +136,8 @@ Do **not** expect these on the frozen branch; they require a **new phase** and *
 
 | Branch | Role |
 |---|---|
-| `claude/godot-phase-4-performance` | **Frozen reference** (use this) |
+| `claude/godot-phase-5-visual-polish` | **Frozen reference** (use this) |
+| `claude/godot-phase-4-performance` | Phase 4 snapshot |
 | `claude/godot-phase-3-audio` | Phase 3 snapshot |
 | `claude/kilmore-close-restoration-672ceg` | Phase 1–2 Godot + early Three.js work history |
 | `main` | Upstream fork root (CLAUDE.md only; Godot lives on branches above) |
@@ -139,21 +145,22 @@ Do **not** expect these on the frozen branch; they require a **new phase** and *
 To resume development:
 
 ```sh
-git checkout claude/godot-phase-4-performance
-git checkout -b claude/godot-phase-5-<scope>
+git checkout claude/godot-phase-5-visual-polish
+git checkout -b claude/godot-phase-6-<scope>
 ```
 
 ---
 
-## Release notes (v0.2.0 — frozen)
+## Release notes (v0.3.0 — frozen)
 
-**Kilmore Close — Godot port, phases 1–4**
+**Kilmore Close — Godot port, phases 1–5**
 
 - Walk and drive a full measured Kilmore Close street in fixed bright daylight
 - David spawns outside number 18; car at the kerb
 - Five named neighbours idle at their doors
 - Procedural street audio
-- Optimised for mobile: MultiMesh street, 27 collision shapes, wall/roof shadows only
+- Street dressed with shared tileable materials; car and people are static glTF (not primitive boxes)
+- Optimised for mobile: MultiMesh street, 27 collision shapes, wall/roof shadows only, VRAM-compressed textures
 - macOS and Android export presets included
 
 **Known limitations:** No GPU frame-time capture in headless CI; validate on device before shipping APK. Android SDK paths are per-machine editor settings.
@@ -162,4 +169,4 @@ git checkout -b claude/godot-phase-5-<scope>
 
 ## Final freeze verdict
 
-This branch is **ready to stop**. It is the authoritative Godot artifact through phase 4. Any further work must branch from `godot-phase-4` with an explicit new scope — not incremental edits here.
+This branch is **ready to stop**. It is the authoritative Godot artifact through phase 5. Any further work must branch from `godot-phase-5` with an explicit new scope — not incremental edits here.

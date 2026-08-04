@@ -67,14 +67,35 @@ func _flat(colour: Color, rough: float = 0.9, metal: float = 0.0) -> StandardMat
 	return m
 
 
+## Dress a material with a shared tileable albedo. Triplanar world UVs keep
+## texel density stable across MultiMesh boxes of different sizes (unit mesh +
+## instance scale would otherwise stretch one UV face across a whole pair).
+## No normal maps — fill-rate budget on Android.
+func _dress(m: StandardMaterial3D, tex_path: String, world_scale: float,
+		tint: Color = Color(1, 1, 1)) -> StandardMaterial3D:
+	var tex := load(tex_path) as Texture2D
+	if tex != null:
+		m.albedo_texture = tex
+		m.uv1_triplanar = true
+		m.uv1_world_triplanar = true
+		m.uv1_scale = Vector3(world_scale, world_scale, world_scale)
+		m.texture_filter = BaseMaterial3D.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
+	m.albedo_color = tint
+	return m
+
+
 func _build_materials() -> void:
 	# The pebbledash is the single most identifying surface on the street:
 	# off-white, very rough, no sheen at all.
-	_mat["dash"] = _flat(Color(0.885, 0.875, 0.845), 0.98)
+	_mat["dash"] = _dress(_flat(Color(1, 1, 1), 0.98),
+		"res://assets/textures/pebbledash.png", 0.55, Color(0.95, 0.94, 0.91))
 	# The painted band around the base of the wall.
-	_mat["band"] = _flat(Color(0.66, 0.36, 0.30), 0.92)
-	_mat["roof"] = _flat(Color(0.255, 0.265, 0.295), 0.88)
-	_mat["chimney"] = _flat(Color(0.60, 0.55, 0.50), 0.95)
+	_mat["band"] = _dress(_flat(Color(1, 1, 1), 0.92),
+		"res://assets/textures/band.png", 0.7, Color(1.0, 0.98, 0.96))
+	_mat["roof"] = _dress(_flat(Color(1, 1, 1), 0.88),
+		"res://assets/textures/roof.png", 0.45, Color(0.95, 0.95, 0.97))
+	_mat["chimney"] = _dress(_flat(Color(1, 1, 1), 0.95),
+		"res://assets/textures/chimney.png", 0.8, Color(1, 1, 1))
 	# Glass is deliberately OPAQUE. A transparent material forces the whole
 	# surface into the alpha-blended pass, which is the most bandwidth-hungry
 	# thing you can do on a mobile tiler. A dark, low-roughness opaque panel
@@ -87,11 +108,16 @@ func _build_materials() -> void:
 	# something has to say "this one is his" from across the carriageway.
 	_mat["door_home"] = _flat(Color(0.36, 0.11, 0.13), 0.55)
 	_mat["garage_door"] = _flat(Color(0.62, 0.62, 0.63), 0.60, 0.0)
-	_mat["tarmac"] = _flat(Color(0.155, 0.155, 0.165), 0.97)
-	_mat["path"] = _flat(Color(0.505, 0.500, 0.485), 0.95)
-	_mat["kerb"] = _flat(Color(0.60, 0.60, 0.585), 0.92)
-	_mat["grass"] = _flat(Color(0.235, 0.335, 0.180), 0.98)
-	_mat["hedge"] = _flat(Color(0.165, 0.265, 0.140), 0.98)
+	_mat["tarmac"] = _dress(_flat(Color(1, 1, 1), 0.97),
+		"res://assets/textures/tarmac.png", 0.25, Color(0.92, 0.92, 0.94))
+	_mat["path"] = _dress(_flat(Color(1, 1, 1), 0.95),
+		"res://assets/textures/path.png", 0.5, Color(1, 1, 1))
+	_mat["kerb"] = _dress(_flat(Color(1, 1, 1), 0.92),
+		"res://assets/textures/kerb.png", 0.9, Color(1, 1, 1))
+	_mat["grass"] = _dress(_flat(Color(1, 1, 1), 0.98),
+		"res://assets/textures/grass.png", 0.35, Color(0.95, 1.0, 0.9))
+	_mat["hedge"] = _dress(_flat(Color(1, 1, 1), 0.98),
+		"res://assets/textures/hedge.png", 0.6, Color(1, 1, 1))
 
 
 # ------------------------------------------------------------------- batching

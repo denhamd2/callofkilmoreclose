@@ -55,13 +55,30 @@ func _apply_colors() -> void:
 	var body := get_node_or_null("Body") as Node3D
 	if body == null:
 		return
-	for child in body.get_children():
-		if child is MeshInstance3D and child.name == "Torso":
-			var mat := child.get_active_material(0) as StandardMaterial3D
-			if mat != null:
-				mat = mat.duplicate() as StandardMaterial3D
-				mat.albedo_color = jacket_color
-				child.material_override = mat
+	# Torso may be a direct MeshInstance3D or a glTF node that owns one.
+	var torso := body.find_child("Torso", true, false) as Node3D
+	if torso == null:
+		return
+	var meshes: Array[MeshInstance3D] = []
+	if torso is MeshInstance3D:
+		meshes.append(torso as MeshInstance3D)
+	for child in torso.get_children():
+		if child is MeshInstance3D:
+			meshes.append(child as MeshInstance3D)
+	for mi in meshes:
+		var mat := mi.get_active_material(0)
+		if mat == null:
+			mat = StandardMaterial3D.new()
+		else:
+			mat = mat.duplicate()
+		if mat is StandardMaterial3D:
+			var sm := mat as StandardMaterial3D
+			# Imported glTF uses vertex COLOR_0; turn that off so the roster
+			# jacket colour is the visible albedo, not a multiply on top.
+			sm.vertex_color_use_as_albedo = false
+			sm.albedo_color = jacket_color
+			sm.roughness = 0.9
+		mi.material_override = mat
 
 
 func _label_name() -> void:
