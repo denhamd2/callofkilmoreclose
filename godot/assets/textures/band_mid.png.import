@@ -3,15 +3,17 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://c1nrctj1hyekj"
-path="res://.godot/imported/band_mid.png-2407f34e28dea9e618af5dfb6aae67c4.ctex"
+path.s3tc="res://.godot/imported/band_mid.png-2407f34e28dea9e618af5dfb6aae67c4.s3tc.ctex"
+path.etc2="res://.godot/imported/band_mid.png-2407f34e28dea9e618af5dfb6aae67c4.etc2.ctex"
 metadata={
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
 "vram_texture": true
 }
 
 [deps]
 
 source_file="res://assets/textures/band_mid.png"
-dest_files=["res://.godot/imported/band_mid.png-2407f34e28dea9e618af5dfb6aae67c4.ctex"]
+dest_files=["res://.godot/imported/band_mid.png-2407f34e28dea9e618af5dfb6aae67c4.s3tc.ctex", "res://.godot/imported/band_mid.png-2407f34e28dea9e618af5dfb6aae67c4.etc2.ctex"]
 
 [params]
 

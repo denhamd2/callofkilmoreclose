@@ -3,15 +3,17 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://hbxh83k6qehd"
-path="res://.godot/imported/block_wall.png-09fec900f9c0bec0492b22dfc91c076e.ctex"
+path.s3tc="res://.godot/imported/block_wall.png-09fec900f9c0bec0492b22dfc91c076e.s3tc.ctex"
+path.etc2="res://.godot/imported/block_wall.png-09fec900f9c0bec0492b22dfc91c076e.etc2.ctex"
 metadata={
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
 "vram_texture": true
 }
 
 [deps]
 
 source_file="res://assets/textures/block_wall.png"
-dest_files=["res://.godot/imported/block_wall.png-09fec900f9c0bec0492b22dfc91c076e.ctex"]
+dest_files=["res://.godot/imported/block_wall.png-09fec900f9c0bec0492b22dfc91c076e.s3tc.ctex", "res://.godot/imported/block_wall.png-09fec900f9c0bec0492b22dfc91c076e.etc2.ctex"]
 
 [params]
 

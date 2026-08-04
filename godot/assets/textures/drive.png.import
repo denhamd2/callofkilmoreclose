@@ -3,15 +3,17 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://cp3c84tv7hjm3"
-path="res://.godot/imported/drive.png-6afb101873da76d8961409c615924a58.ctex"
+path.s3tc="res://.godot/imported/drive.png-6afb101873da76d8961409c615924a58.s3tc.ctex"
+path.etc2="res://.godot/imported/drive.png-6afb101873da76d8961409c615924a58.etc2.ctex"
 metadata={
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
 "vram_texture": true
 }
 
 [deps]
 
 source_file="res://assets/textures/drive.png"
-dest_files=["res://.godot/imported/drive.png-6afb101873da76d8961409c615924a58.ctex"]
+dest_files=["res://.godot/imported/drive.png-6afb101873da76d8961409c615924a58.s3tc.ctex", "res://.godot/imported/drive.png-6afb101873da76d8961409c615924a58.etc2.ctex"]
 
 [params]
 

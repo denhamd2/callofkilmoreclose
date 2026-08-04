@@ -1,8 +1,8 @@
 # Call of Kilmore Close — Godot 4.7 port
 
-**Phases 1–6 complete and frozen.** Reference branch: `claude/godot-phase-6-reference-match`, tag `godot-phase-6`.
+**Phases 1–6 complete and frozen.** Reference branch: `claude/godot-phase-6-reference-match`, tags `godot-phase-6` / `godot-frozen`.
 
-**Handoff:** read [HANDOFF.md](HANDOFF.md) for setup, validation gates, platform notes, and what is out of scope. Do not add features on the frozen branch.
+**Handoff:** read [HANDOFF.md](HANDOFF.md) — setup, validation gates, reference-match summary, platform notes, out-of-scope list. **Do not add features or art on this branch.**
 
 | Phase | Tag | Summary |
 |---|---|---|
