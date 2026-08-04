@@ -1,13 +1,15 @@
 # Call of Kilmore Close — Godot 4.7 port
 
-**Phase 3 complete and frozen** (`godot-phase-3`): procedural ambient bed, footstep
-cadence, and melee thud — no imported audio files, no music or VO.
+**Phases 1–4 complete and frozen.** Reference branch: `claude/godot-phase-4-performance`, tag `godot-phase-4`.
 
-**Phase 4 complete** (`godot-phase-4`): profiled the full street and reduced
-collision/shadow cost without changing gameplay. Run `godot --path godot --headless -- --profile` to re-measure.
+**Handoff:** read [HANDOFF.md](HANDOFF.md) for setup, validation gates, platform notes, and what is out of scope. Do not add features on the frozen branch.
 
-**Phase 2 complete and frozen** (`godot-phase-2`). If development continues,
-start a new phase on a new branch with a new scope.
+| Phase | Tag | Summary |
+|---|---|---|
+| 1 | `godot-phase-1` | Core loop: David, camera, car, touch, daylight |
+| 2 | `godot-phase-2` | Full street (52 houses) + idle cast |
+| 3 | `godot-phase-3` | Procedural ambience, footsteps, melee thud |
+| 4 | `godot-phase-4` | Performance profile; collision/shadow hardening |
 
 This directory is a **complete, self-contained Godot project**. It does not
 share code with the Three.js prototype in `../src`, and nothing here imports
@@ -248,8 +250,18 @@ documented swap path.
 
 ```sh
 python3 godot/tools/validate_project.py
+godot --path godot --headless -- --probe
+```
+
+Optional performance snapshot:
+
+```sh
+godot --path godot --headless -- --profile
 ```
 
 Catches broken resource references, missing files, load-order mistakes and
-malformed scene files. It **cannot** type-check GDScript or verify engine API
-usage — only opening the project in Godot does that.
+malformed scene files. `--probe` is the gameplay regression gate. It **cannot**
+type-check GDScript or verify engine API usage — only opening the project in
+Godot does that.
+
+See [HANDOFF.md](HANDOFF.md) for the full checklist and platform export notes.
