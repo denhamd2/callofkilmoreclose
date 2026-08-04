@@ -130,9 +130,10 @@ func _drive(delta: float) -> void:
 	velocity.y = 0.0 if is_on_floor() else velocity.y - GRAVITY * delta
 	move_and_slide()
 
-	# Anything solid in the way scrubs speed off rather than stopping dead —
-	# clipping a kerb should cost momentum, not act like a wall.
-	if get_slide_collision_count() > 0:
+	# Scrub speed on walls only. Floor contacts also appear in the slide list
+	# (especially box-on-box edge normals), and treating those as obstacles
+	# left the car unable to pull away from the kerb.
+	if is_on_wall():
 		speed *= 0.55
 
 	_seat_driver()

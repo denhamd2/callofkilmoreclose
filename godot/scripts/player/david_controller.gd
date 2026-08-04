@@ -188,8 +188,10 @@ func _resolve_melee() -> void:
 	_melee_query.transform = Transform3D(Basis.IDENTITY, origin)
 	var hits := space.intersect_shape(_melee_query, 4)
 	for hit in hits:
-		var collider := hit.get("collider")
-		if collider is Node3D and collider != self:
+		# Explicit cast: Dictionary.get() returns Variant, and with
+		# INFERRING_FROM_VARIANT treated as error, `:=` fails at compile.
+		var collider := hit.get("collider") as Node3D
+		if collider != null and collider != self:
 			melee_hit.emit(collider)
 			return
 

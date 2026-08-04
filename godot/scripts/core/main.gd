@@ -43,3 +43,13 @@ func _ready() -> void:
 
 	if _prompt != null:
 		_prompt.visible = false
+
+	# Headless verification path used by the engine tune-up pass.
+	#   godot --path godot --headless -- --probe
+	if OS.get_cmdline_user_args().has("--probe"):
+		var probe_script := load("res://tools/runtime_probe.gd") as Script
+		if probe_script != null:
+			var probe := Node.new()
+			probe.set_script(probe_script)
+			probe.name = "RuntimeProbe"
+			add_child(probe)
