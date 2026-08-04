@@ -1,0 +1,71 @@
+; Call of Kilmore Close — Godot project
+;
+; Engine configuration file.
+; Authored by hand against the Godot 4.6 stable documentation.
+; config_version=5 is the Godot 4.x project format.
+
+config_version=5
+
+[application]
+
+config/name="Call of Kilmore Close"
+config/description="Third-person vertical slice of Kilmore Close, Dublin. Migrated from the Three.js prototype."
+run/main_scene="res://scenes/main.tscn"
+config/features=PackedStringArray("4.6", "GL Compatibility")
+
+[autoload]
+
+PlayerInput="*res://scripts/core/player_input.gd"
+
+[display]
+
+; 720p design resolution. `canvas_items` stretch + `expand` keeps the touch HUD
+; readable on a phone without forcing a fixed aspect on desktop.
+window/size/viewport_width=1280
+window/size/viewport_height=720
+window/stretch/mode="canvas_items"
+window/stretch/aspect="expand"
+; 0 == DisplayServer.SCREEN_LANDSCAPE. A driving/third-person game is landscape.
+window/handheld/orientation=0
+; Basic phones do not benefit from >60 Hz and it costs battery/thermals.
+window/vsync/vsync_mode=1
+
+[input_devices]
+
+; Lets the on-screen touch HUD be exercised with a mouse on desktop, so the
+; mobile control path is testable without a device.
+pointing/emulate_touch_from_mouse=true
+
+[physics]
+
+common/physics_ticks_per_second=60
+3d/default_gravity=20.6
+
+[rendering]
+
+; --------------------------------------------------------------------------
+; MOBILE-FIRST RENDERER CHOICE
+; --------------------------------------------------------------------------
+; Godot 4 ships three renderers: Forward+, Mobile, and Compatibility.
+; Forward+ and Mobile both require Vulkan/D3D12/Metal via RenderingDevice.
+; Compatibility runs on OpenGL ES 3.0 and the stable docs list it as the one
+; for "older or low-end" hardware — which is the stated Android target here.
+; It is set for BOTH desktop and mobile so what you see on desktop is what the
+; phone renders; there is no second visual path to keep in sync.
+renderer/rendering_method="gl_compatibility"
+renderer/rendering_method.mobile="gl_compatibility"
+
+; ETC2/ASTC is the Android-compatible VRAM texture compression family.
+; Harmless now (the slice ships no imported textures) and required the moment
+; any real texture is added, so it is on from the start.
+textures/vram_compression/import_etc2_astc=true
+
+; One directional shadow, small map, no MSAA. A basic phone has neither the
+; fill rate nor the bandwidth for more.
+lights_and_shadows/directional_shadow/size=2048
+lights_and_shadows/directional_shadow/size.mobile=1024
+lights_and_shadows/directional_shadow/soft_shadow_filter_quality=0
+lights_and_shadows/directional_shadow/soft_shadow_filter_quality.mobile=0
+anti_aliasing/quality/msaa_3d=0
+anti_aliasing/quality/screen_space_aa=0
+scaling_3d/mode=0

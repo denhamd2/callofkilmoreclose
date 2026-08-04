@@ -1,0 +1,37 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/touch_controls.gd" id="1_touch"]
+
+[node name="TouchControls" type="Control"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("1_touch")
+
+[node name="InteractButton" type="Button" parent="."]
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -150.0
+offset_top = -180.0
+offset_right = -30.0
+offset_bottom = -100.0
+grow_horizontal = 0
+grow_vertical = 0
+text = "GET IN"
+
+[node name="JumpButton" type="Button" parent="."]
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -290.0
+offset_top = -180.0
+offset_right = -170.0
+offset_bottom = -100.0
+grow_horizontal = 0
+grow_vertical = 0
+text = "JUMP"

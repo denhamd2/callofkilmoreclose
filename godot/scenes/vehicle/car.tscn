@@ -1,0 +1,90 @@
+[gd_scene load_steps=11 format=3]
+
+[ext_resource type="Script" path="res://scripts/vehicle/car.gd" id="1_car"]
+
+[sub_resource type="StandardMaterial3D" id="MatPaint"]
+albedo_color = Color(0.482, 0.086, 0.11, 1)
+metallic = 0.35
+roughness = 0.32
+
+[sub_resource type="StandardMaterial3D" id="MatGlass"]
+albedo_color = Color(0.09, 0.113, 0.133, 1)
+metallic = 0.1
+roughness = 0.12
+
+[sub_resource type="StandardMaterial3D" id="MatTyre"]
+albedo_color = Color(0.055, 0.055, 0.06, 1)
+roughness = 0.98
+
+[sub_resource type="StandardMaterial3D" id="MatLamp"]
+albedo_color = Color(0.898, 0.882, 0.804, 1)
+roughness = 0.2
+
+[sub_resource type="BoxShape3D" id="ShapeCar"]
+size = Vector3(1.8, 1.35, 4.3)
+
+[sub_resource type="BoxMesh" id="MeshHull"]
+material = SubResource("MatPaint")
+size = Vector3(1.78, 0.74, 4.3)
+
+[sub_resource type="BoxMesh" id="MeshCabin"]
+material = SubResource("MatGlass")
+size = Vector3(1.64, 0.62, 2.1)
+
+[sub_resource type="CylinderMesh" id="MeshWheel"]
+material = SubResource("MatTyre")
+top_radius = 0.32
+bottom_radius = 0.32
+height = 0.21
+radial_segments = 14
+rings = 1
+
+[sub_resource type="BoxMesh" id="MeshLamp"]
+material = SubResource("MatLamp")
+size = Vector3(0.34, 0.16, 0.08)
+
+[node name="Car" type="CharacterBody3D"]
+collision_layer = 1
+collision_mask = 1
+floor_max_angle = 0.6
+script = ExtResource("1_car")
+
+[node name="Collision" type="CollisionShape3D" parent="."]
+position = Vector3(0, 0.68, 0)
+shape = SubResource("ShapeCar")
+
+[node name="Hull" type="MeshInstance3D" parent="."]
+position = Vector3(0, 0.62, 0)
+mesh = SubResource("MeshHull")
+
+[node name="Cabin" type="MeshInstance3D" parent="."]
+position = Vector3(0, 1.28, -0.12)
+mesh = SubResource("MeshCabin")
+
+[node name="WheelFL" type="MeshInstance3D" parent="."]
+position = Vector3(-0.86, 0.32, -1.31)
+rotation_degrees = Vector3(0, 0, 90)
+mesh = SubResource("MeshWheel")
+
+[node name="WheelFR" type="MeshInstance3D" parent="."]
+position = Vector3(0.86, 0.32, -1.31)
+rotation_degrees = Vector3(0, 0, 90)
+mesh = SubResource("MeshWheel")
+
+[node name="WheelRL" type="MeshInstance3D" parent="."]
+position = Vector3(-0.86, 0.32, 1.31)
+rotation_degrees = Vector3(0, 0, 90)
+mesh = SubResource("MeshWheel")
+
+[node name="WheelRR" type="MeshInstance3D" parent="."]
+position = Vector3(0.86, 0.32, 1.31)
+rotation_degrees = Vector3(0, 0, 90)
+mesh = SubResource("MeshWheel")
+
+[node name="LampL" type="MeshInstance3D" parent="."]
+position = Vector3(-0.6, 0.72, -2.16)
+mesh = SubResource("MeshLamp")
+
+[node name="LampR" type="MeshInstance3D" parent="."]
+position = Vector3(0.6, 0.72, -2.16)
+mesh = SubResource("MeshLamp")

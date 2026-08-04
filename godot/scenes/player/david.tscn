@@ -1,0 +1,102 @@
+[gd_scene load_steps=12 format=3]
+
+[ext_resource type="Script" path="res://scripts/player/david_controller.gd" id="1_david"]
+[ext_resource type="Script" path="res://scripts/player/third_person_camera.gd" id="2_cam"]
+
+[sub_resource type="StandardMaterial3D" id="MatJacket"]
+albedo_color = Color(0.192, 0.243, 0.325, 1)
+roughness = 0.9
+
+[sub_resource type="StandardMaterial3D" id="MatSkin"]
+albedo_color = Color(0.788, 0.627, 0.529, 1)
+roughness = 0.75
+
+[sub_resource type="StandardMaterial3D" id="MatJeans"]
+albedo_color = Color(0.208, 0.235, 0.286, 1)
+roughness = 0.95
+
+[sub_resource type="CapsuleShape3D" id="ShapeBody"]
+radius = 0.3
+height = 1.78
+
+[sub_resource type="CapsuleMesh" id="MeshTorso"]
+material = SubResource("MatJacket")
+radius = 0.22
+height = 0.95
+
+[sub_resource type="SphereMesh" id="MeshHead"]
+material = SubResource("MatSkin")
+radius = 0.125
+height = 0.25
+radial_segments = 12
+rings = 6
+
+[sub_resource type="BoxMesh" id="MeshArm"]
+material = SubResource("MatJacket")
+size = Vector3(0.13, 0.62, 0.13)
+
+[sub_resource type="BoxMesh" id="MeshLeg"]
+material = SubResource("MatJeans")
+size = Vector3(0.16, 0.86, 0.16)
+
+[sub_resource type="SphereShape3D" id="ShapeProbe"]
+radius = 0.22
+
+[node name="David" type="CharacterBody3D" groups=["player"]]
+collision_layer = 2
+collision_mask = 1
+script = ExtResource("1_david")
+
+[node name="Collision" type="CollisionShape3D" parent="."]
+position = Vector3(0, 0.89, 0)
+shape = SubResource("ShapeBody")
+
+[node name="Body" type="Node3D" parent="."]
+
+[node name="Torso" type="MeshInstance3D" parent="Body"]
+position = Vector3(0, 1.24, 0)
+mesh = SubResource("MeshTorso")
+
+[node name="Head" type="MeshInstance3D" parent="Body"]
+position = Vector3(0, 1.78, 0)
+mesh = SubResource("MeshHead")
+
+[node name="ArmL" type="Node3D" parent="Body"]
+position = Vector3(-0.3, 1.5, 0)
+
+[node name="ArmLMesh" type="MeshInstance3D" parent="Body/ArmL"]
+position = Vector3(0, -0.31, 0)
+mesh = SubResource("MeshArm")
+
+[node name="ArmR" type="Node3D" parent="Body"]
+position = Vector3(0.3, 1.5, 0)
+
+[node name="ArmRMesh" type="MeshInstance3D" parent="Body/ArmR"]
+position = Vector3(0, -0.31, 0)
+mesh = SubResource("MeshArm")
+
+[node name="LegL" type="MeshInstance3D" parent="Body"]
+position = Vector3(-0.13, 0.43, 0)
+mesh = SubResource("MeshLeg")
+
+[node name="LegR" type="MeshInstance3D" parent="Body"]
+position = Vector3(0.13, 0.43, 0)
+mesh = SubResource("MeshLeg")
+
+[node name="CamYaw" type="Node3D" parent="."]
+script = ExtResource("2_cam")
+
+[node name="SpringArm3D" type="SpringArm3D" parent="CamYaw"]
+shape = SubResource("ShapeProbe")
+spring_length = 3.1
+margin = 0.12
+collision_mask = 1
+
+[node name="CamOffset" type="Node3D" parent="CamYaw/SpringArm3D"]
+position = Vector3(0.62, 0, 0)
+
+[node name="Camera3D" type="Camera3D" parent="CamYaw/SpringArm3D/CamOffset"]
+current = true
+fov = 75.0
+near = 0.1
+far = 260.0

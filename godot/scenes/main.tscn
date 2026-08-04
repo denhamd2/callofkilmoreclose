@@ -1,0 +1,66 @@
+[gd_scene load_steps=9 format=3]
+
+[ext_resource type="Script" path="res://scripts/core/main.gd" id="1_main"]
+[ext_resource type="Script" path="res://scripts/world/street_builder.gd" id="2_street"]
+[ext_resource type="PackedScene" path="res://scenes/player/david.tscn" id="3_david"]
+[ext_resource type="PackedScene" path="res://scenes/vehicle/car.tscn" id="4_car"]
+[ext_resource type="PackedScene" path="res://scenes/ui/touch_controls.tscn" id="5_touch"]
+
+[sub_resource type="ProceduralSkyMaterial" id="SkyMat"]
+sky_top_color = Color(0.361, 0.478, 0.639, 1)
+sky_horizon_color = Color(0.702, 0.741, 0.769, 1)
+sky_curve = 0.15
+ground_bottom_color = Color(0.196, 0.212, 0.216, 1)
+ground_horizon_color = Color(0.612, 0.631, 0.627, 1)
+sun_angle_max = 12.0
+
+[sub_resource type="Sky" id="SkyRes"]
+sky_material = SubResource("SkyMat")
+
+[sub_resource type="Environment" id="EnvMain"]
+background_mode = 2
+sky = SubResource("SkyRes")
+ambient_light_source = 3
+ambient_light_sky_contribution = 1.0
+tonemap_mode = 2
+tonemap_white = 6.0
+
+[node name="Main" type="Node3D"]
+script = ExtResource("1_main")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("EnvMain")
+
+[node name="Sun" type="DirectionalLight3D" parent="."]
+position = Vector3(0, 24, 0)
+rotation_degrees = Vector3(-50, -125, 0)
+light_energy = 1.1
+shadow_enabled = true
+directional_shadow_mode = 0
+directional_shadow_max_distance = 90.0
+
+[node name="Street" type="Node3D" parent="."]
+script = ExtResource("2_street")
+
+[node name="David" parent="." instance=ExtResource("3_david")]
+
+[node name="Car" parent="." instance=ExtResource("4_car")]
+
+[node name="HUD" type="CanvasLayer" parent="."]
+
+[node name="Prompt" type="Label" parent="HUD"]
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -140.0
+offset_top = -140.0
+offset_right = 140.0
+offset_bottom = -108.0
+grow_horizontal = 2
+grow_vertical = 0
+text = "Press F  —  Get in"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="TouchControls" parent="HUD" instance=ExtResource("5_touch")]

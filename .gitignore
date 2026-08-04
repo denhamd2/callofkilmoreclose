@@ -14,3 +14,11 @@ demo/
 .tmp-demo/
 .tmp-rend/
 revcrops/
+
+# Godot port (godot/)
+godot/.godot/
+godot/build/
+godot/android/
+godot/export_presets.cfg.local
+*.keystore
+*.jks
