@@ -58,11 +58,14 @@ func _ready() -> void:
 	for child in get_children():
 		if child is Button:
 			_buttons.append(child)
-	var interact := get_node_or_null("InteractButton")
-	if interact is Button:
+	# Cast rather than `is`-test: the static type of a `get_node_or_null()`
+	# result is `Node`, which has no `pressed` signal, and GDScript does not
+	# narrow it from an `is` check. Without the cast this is a parse error.
+	var interact := get_node_or_null("InteractButton") as Button
+	if interact != null:
 		interact.pressed.connect(PlayerInput.touch_interact)
-	var jump := get_node_or_null("JumpButton")
-	if jump is Button:
+	var jump := get_node_or_null("JumpButton") as Button
+	if jump != null:
 		jump.pressed.connect(PlayerInput.touch_jump)
 
 

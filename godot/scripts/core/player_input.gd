@@ -66,7 +66,21 @@ func _ready() -> void:
 	# Treat a touchscreen device as touch-first. `is_touchscreen_available()`
 	# is also true for touch-capable laptops, so the OS check keeps a desktop
 	# with a touch monitor on mouse-and-keyboard.
-	touch_ui = DisplayServer.is_touchscreen_available() and OS.has_feature("mobile")
+	#
+	# `--touch` forces the mobile control path on regardless. project.godot
+	# turns on `pointing/emulate_touch_from_mouse` so the on-screen stick can be
+	# driven with a mouse, but that setting is useless on its own: without an
+	# override the HUD hides itself on every desktop, so the one control path
+	# that cannot be tested is the one most likely to be broken. Run it with:
+	#
+	#     godot --path godot -- --touch
+	#
+	# User args (after the bare `--`) are used so this can never collide with an
+	# engine flag.
+	touch_ui = (DisplayServer.is_touchscreen_available() and OS.has_feature("mobile")) \
+		or OS.get_cmdline_user_args().has("--touch")
+	# The touch HUD needs a visible cursor to be driven by the mouse, so the
+	# capture is skipped whenever the touch path is active — on device or forced.
 	if not touch_ui:
 		_capture_mouse(true)
 	# Keep running when the window loses focus? No — a phone backgrounding the

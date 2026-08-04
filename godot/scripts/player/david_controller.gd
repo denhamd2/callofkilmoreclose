@@ -205,8 +205,10 @@ func _resolve_melee() -> void:
 func _animate_body(delta: float) -> void:
 	if _body == null:
 		return
-	var arm := _body.get_node_or_null("ArmR")
-	if arm is Node3D:
+	# Cast, not an `is` test: an `is` check does not narrow the static type, so
+	# the result stays `Node` and `Node.rotation` does not exist — a parse error.
+	var arm := _body.get_node_or_null("ArmR") as Node3D
+	if arm != null:
 		# Swing the right arm through the punch, then settle it back.
 		var t := 1.0 - (_swing / maxf(MELEE_COOLDOWN * 0.55, 0.001))
 		var throw := sin(clampf(t, 0.0, 1.0) * PI) if _swing > 0.0 else 0.0

@@ -33,6 +33,20 @@ David starts on the footpath outside **18 Kilmore Close**, facing his own front
 door. The car is at the kerb a couple of metres up the road. Walk to it and the
 prompt appears.
 
+**Testing the touch controls without a phone**
+
+The touch HUD hides itself on desktop, so it is off by default when you press
+F5. To exercise the mobile control path with a mouse, run with `--touch`:
+
+```sh
+godot --path godot -- --touch
+```
+
+The bare `--` matters: everything after it is passed to the game rather than to
+the engine. `pointing/emulate_touch_from_mouse` is already on in
+`project.godot`, so the mouse then drives the on-screen stick, the drag-to-look
+surface and the buttons exactly as a thumb would.
+
 ---
 
 ## Run it on Android

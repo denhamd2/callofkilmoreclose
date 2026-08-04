@@ -195,8 +195,12 @@ func _enter(david: DavidController) -> void:
 	david.set_collision_layer_value(2, false)
 	david.set_collision_mask_value(1, false)
 	_seat_driver()
-	var cam := david.get_node_or_null("CamYaw")
-	if cam is ThirdPersonCamera:
+	# Cast rather than `is`-test: GDScript's analyser does not narrow a type
+	# from an `is` check, so a bare `get_node_or_null()` result stays statically
+	# `Node` and `Node.set_driving()` does not exist. This is a parse error, not
+	# a runtime one — the project will not load with it.
+	var cam := david.get_node_or_null("CamYaw") as ThirdPersonCamera
+	if cam != null:
 		cam.set_driving(true, get_rid())
 	if _prompt != null:
 		_prompt.visible = false
@@ -231,7 +235,7 @@ func _exit() -> void:
 	david.set_collision_layer_value(2, true)
 	david.set_collision_mask_value(1, true)
 	david.teleport(Transform3D(global_transform.basis, chosen.origin))
-	var cam := david.get_node_or_null("CamYaw")
-	if cam is ThirdPersonCamera:
+	var cam := david.get_node_or_null("CamYaw") as ThirdPersonCamera
+	if cam != null:
 		cam.set_driving(false)
 	exited.emit()
