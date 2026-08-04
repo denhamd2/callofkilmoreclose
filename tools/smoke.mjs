@@ -93,7 +93,7 @@ page.on('console', (m) => {
 const fail = [];
 let info = null;
 try {
-  await page.goto(`http://127.0.0.1:${PORT}/`, { waitUntil: 'domcontentloaded', timeout: 60000 });
+  await page.goto(`http://127.0.0.1:${PORT}/${args.q ? '?q=' + args.q : ''}`, { waitUntil: 'domcontentloaded', timeout: 60000 });
   await page.waitForFunction('window.__READY__ === true', null, { timeout: TIMEOUT });
   // A few frames so the first-frame state is not what gets judged.
   await page.waitForTimeout(3000);

@@ -99,16 +99,6 @@ export class Animator {
     this.time = 0;
 
     // one-shot timers (negative = inactive)
-    /** Hoisted IK weight tables — see `_aimIk` / `_lookAt`. */
-    this._aimSpread = [
-      [this.iSpine, 0.12],
-      [this.iSpine1, 0.34],
-      [this.iSpine2, 0.54],
-    ];
-    this._lookChain = [
-      [this.iNeck, 0.4],
-      [this.iHead, 0.6],
-    ];
     this.recoilT = -1;
     this.meleeT = -1;
     this.meleeKick = false;
@@ -134,6 +124,24 @@ export class Animator {
     this.iNeck = rig.index('Neck');
     this.iHead = rig.index('Head');
     this.iHandR = rig.index('HandR');
+
+    /**
+     * Hoisted IK weight tables — see `_aimIk` / `_lookAt`.
+     *
+     * MUST be built after the bone indices above. Built before them, every
+     * entry captured `undefined`, `this.bones[undefined]` was undefined, and
+     * `_aimIk` threw on `b.parent` for every actor on the first frame — which
+     * boots the game to a black screen.
+     */
+    this._aimSpread = [
+      [this.iSpine, 0.12],
+      [this.iSpine1, 0.34],
+      [this.iSpine2, 0.54],
+    ];
+    this._lookChain = [
+      [this.iNeck, 0.4],
+      [this.iHead, 0.6],
+    ];
     this.armL = [rig.index('UpperArmL'), rig.index('ForearmL'), rig.index('HandL')];
     this.armR = [rig.index('UpperArmR'), rig.index('ForearmR'), rig.index('HandR')];
     this.legs = [

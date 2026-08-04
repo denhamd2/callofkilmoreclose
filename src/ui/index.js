@@ -531,11 +531,11 @@ export class UiSystem {
     // `weapons` owns the wheel's contents and selection; this only draws them.
     const wpn = this.ctx.peek('weapons');
     if (wpn?.wheel) this.weaponWheel.setState(wpn.wheel);
+    const driving = this.ctx.peek('vehicle')?.driving === true;
     // No reticle with your fists up or behind the wheel of a car — it read as a
     // floating crosshair on the windscreen. `hidden` was already honoured by
     // Crosshair and simply never set by anything.
     this.state.hidden = this.state.melee === true || driving;
-    const driving = this.ctx.peek('vehicle')?.driving === true;
     this.controls.setContext(driving ? 'drive' : 'foot');
     this.touch.update(this.ctx.input);
     // The keyboard hint list is meaningless on a phone and eats a corner of a
