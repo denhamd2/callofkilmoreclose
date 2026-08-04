@@ -78,16 +78,13 @@ const HOUSING_RUN := (PAIRS_PER_SIDE - 1) * PITCH + PAIR_W
 
 # ----------------------------------------------------------------- the slice
 #
-# Phase 1 does NOT build all 13 pairs a side. It builds a representative
-# stretch centred on number 18, which is where David spawns and where the car
-# is parked. The spacing, widths and setbacks are the real ones, so the stretch
-# is a true sample of the street rather than a stylised version of it — the
-# rest of the road is more of the same rhythm, and extending the range below is
-# the only change needed to build it.
+# Phase 2 builds the full measured street: all 13 joined pairs per side (52
+# dwellings). David still spawns outside number 18; spacing and setbacks are
+# unchanged from phase 1 — only the pair range widens.
 
-## First and last pair index (0-based) included in the vertical slice.
-const SLICE_FIRST_PAIR := 3
-const SLICE_LAST_PAIR := 7
+## First and last pair index (0-based) included in the built street.
+const SLICE_FIRST_PAIR := 0
+const SLICE_LAST_PAIR := 12
 ## How far the drawn carriageway runs past the end of the slice's houses.
 const SLICE_ROAD_MARGIN := 12.0
 

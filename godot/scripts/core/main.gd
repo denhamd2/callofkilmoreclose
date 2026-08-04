@@ -31,6 +31,8 @@ const SETTLE := 0.3
 @onready var _car: Car = $Car
 @onready var _prompt: Label = $HUD/Prompt
 
+const _CAST_SCENE: PackedScene = preload("res://scenes/cast/cast_member.tscn")
+
 
 func _ready() -> void:
 	var spawn := KilmoreClose.david_spawn()
@@ -40,6 +42,9 @@ func _ready() -> void:
 	var park := KilmoreClose.car_spawn()
 	park.origin.y = 0.12
 	_car.place(park)
+
+	_spawn_cast()
+	_david.melee_hit.connect(_on_melee_hit)
 
 	if _prompt != null:
 		_prompt.visible = false
@@ -53,3 +58,25 @@ func _ready() -> void:
 			probe.set_script(probe_script)
 			probe.name = "RuntimeProbe"
 			add_child(probe)
+
+
+func _spawn_cast() -> void:
+	var root := Node3D.new()
+	root.name = "Cast"
+	add_child(root)
+	for entry in KilmoreCast.members():
+		var member := _CAST_SCENE.instantiate() as CastMember
+		if member == null:
+			continue
+		root.add_child(member)
+		member.global_transform = KilmoreCast.doorstep(entry)
+		member.setup(entry)
+
+
+func _on_melee_hit(target: Node3D) -> void:
+	if target == null or not target.is_in_group("cast"):
+		return
+	# Report-only: David's punch connected with a named neighbour. No damage model.
+	var label := target.get_node_or_null("NameLabel") as Label3D
+	if label != null:
+		label.modulate = Color(1.0, 0.92, 0.55, 1.0)

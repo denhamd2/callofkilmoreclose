@@ -1,0 +1,59 @@
+[gd_scene load_steps=8 format=3]
+
+[ext_resource type="Script" path="res://scripts/cast/cast_member.gd" id="1_cast"]
+
+[sub_resource type="StandardMaterial3D" id="MatJacket"]
+albedo_color = Color(0.25, 0.3, 0.35, 1)
+roughness = 0.9
+
+[sub_resource type="StandardMaterial3D" id="MatSkin"]
+albedo_color = Color(0.788, 0.627, 0.529, 1)
+roughness = 0.75
+
+[sub_resource type="StandardMaterial3D" id="MatJeans"]
+albedo_color = Color(0.208, 0.235, 0.286, 1)
+roughness = 0.95
+
+[sub_resource type="CapsuleShape3D" id="ShapeBody"]
+radius = 0.28
+height = 1.72
+
+[sub_resource type="CapsuleMesh" id="MeshTorso"]
+material = SubResource("MatJacket")
+radius = 0.2
+height = 0.9
+
+[sub_resource type="SphereMesh" id="MeshHead"]
+material = SubResource("MatSkin")
+radius = 0.12
+height = 0.24
+radial_segments = 10
+rings = 5
+
+[node name="CastMember" type="StaticBody3D"]
+collision_layer = 1
+collision_mask = 0
+script = ExtResource("1_cast")
+
+[node name="Collision" type="CollisionShape3D" parent="."]
+position = Vector3(0, 0.86, 0)
+shape = SubResource("ShapeBody")
+
+[node name="Body" type="Node3D" parent="."]
+
+[node name="Torso" type="MeshInstance3D" parent="Body"]
+position = Vector3(0, 1.2, 0)
+mesh = SubResource("MeshTorso")
+
+[node name="Head" type="MeshInstance3D" parent="Body"]
+position = Vector3(0, 1.72, 0)
+mesh = SubResource("MeshHead")
+
+[node name="NameLabel" type="Label3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.05, 0)
+billboard = 1
+text = "Neighbour"
+font_size = 48
+outline_size = 8
+modulate = Color(1, 1, 1, 0.95)
+outline_modulate = Color(0.05, 0.08, 0.12, 0.9)

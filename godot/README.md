@@ -123,21 +123,21 @@ that side is a punch. `GET IN` and `JUMP` are buttons, bottom right.
 
 | | |
 |---|---|
-| Street | A representative stretch of Kilmore Close — 5 joined semi-detached pairs a side, 20 houses, at the real measured spacing |
+| Street | Full Kilmore Close — 13 joined semi-detached pairs a side, 52 houses, at the measured spacing (~251 m housing run) |
 | House archetype | White pebbledash, painted band, 2 upstairs windows, 1 downstairs + door, porch with glazed sliding door, single-storey side garage |
 | David | Third-person, spawns outside no. 18, unarmed / melee-ready |
 | Camera | Over-the-shoulder spring-arm boom with wall collision |
 | Car | Parked at the kerb outside 18; enter, drive, exit |
+| Cast | MickMcCabe, Deco McCabe, Oysters, Angela Carpenter, Paddy Mason — idle at their front doors, named labels, no combat AI |
 | Addresses | Numbered gate piers on every house, so you can see you are outside 18 — and no. 18 has its own door colour |
 | Lighting | Fixed bright daylight. No day/night cycle, ever |
-| Mobile | Touch control layer, GL Compatibility renderer, Android export preset |
+| Mobile | Touch control layer, GL Compatibility renderer, Android + macOS export presets |
 
 ### What it deliberately does **not** contain
 
-Stated plainly so nobody goes looking: no AI or other characters, no weapons,
+Stated plainly so nobody goes looking: no combat AI, no weapons beyond melee,
 no interiors, no audio, no mission logic, no damage model, no skeletal
-animation. Those are later phases. Pass 1 is about proving the shape of the
-thing in Godot, not reproducing the prototype.
+animation. Cast members are street presence only. Those are later phases.
 
 ---
 
@@ -146,19 +146,22 @@ thing in Godot, not reproducing the prototype.
 ```
 godot/
   project.godot            Engine config. Renderer, display, autoloads.
-  export_presets.cfg       Android + Linux export presets.
+  export_presets.cfg       Android, macOS, and Linux export presets.
   data/
     kilmore_close.gd       THE MEASURED STREET. Single source of truth for
                            every dimension on the map.
+    cast.gd                Named residents and house numbers.
   scenes/
     main.tscn              Entry point: environment, sun, street, actors, HUD.
     player/david.tscn      David's body, collider and camera rig.
+    cast/cast_member.tscn  Idle neighbour primitive + name label.
     vehicle/car.tscn       The car's meshes and collider.
     ui/touch_controls.tscn Touch HUD.
   scripts/
     core/player_input.gd   Autoload. Merges keyboard/mouse/pad/touch.
-    core/main.gd           Places actors from the street data.
+    core/main.gd           Places actors and cast from the street data.
     world/street_builder.gd  Generates the whole slice at load time.
+    cast/cast_member.gd    Idle doorstep presence, face-near-player.
     player/david_controller.gd
     player/third_person_camera.gd
     vehicle/car.gd

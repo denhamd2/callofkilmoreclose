@@ -39,6 +39,7 @@ func _physics_process(_delta: float) -> void:
 			if _david == null:
 				return
 			_check_spawn()
+			_check_street()
 			_check_daylight()
 			_check_touch_layer()
 			_start_pos = _david.global_position
@@ -77,6 +78,7 @@ func _physics_process(_delta: float) -> void:
 				return
 			_check_exit()
 			_check_camera()
+			_check_cast()
 			_finish()
 
 
@@ -109,6 +111,19 @@ func _check_spawn() -> void:
 	_report["david_pos"] = [_david.global_position.x, _david.global_position.y, _david.global_position.z]
 	_report["spawn_ok"] = dist < 1.5 and _report["spawn_xy_to_gate_m"] < 1.0
 	if not _report["spawn_ok"]:
+		_fail = true
+
+
+func _check_street() -> void:
+	var houses := KilmoreClose.houses()
+	var zr := KilmoreClose.road_z_range()
+	_report["house_count"] = houses.size()
+	_report["pair_count"] = KilmoreClose.pairs().size()
+	_report["road_z_span_m"] = zr.y - zr.x
+	# Full street: 13 pairs/side, 2 dwellings/pair, 2 sides -> 52 houses, 26 pairs.
+	_report["street_ok"] = houses.size() == 52 and _report["pair_count"] == 26 \
+		and _report["road_z_span_m"] > 240.0
+	if not _report["street_ok"]:
 		_fail = true
 
 
@@ -179,6 +194,14 @@ func _check_camera() -> void:
 		_report["camera_follow_ok"] = false
 		_fail = true
 	if not _report.get("camera_follow_ok", false):
+		_fail = true
+
+
+func _check_cast() -> void:
+	var cast := get_tree().get_nodes_in_group("cast")
+	_report["cast_count"] = cast.size()
+	_report["cast_ok"] = cast.size() >= 5
+	if not _report["cast_ok"]:
 		_fail = true
 
 
