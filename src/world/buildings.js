@@ -342,8 +342,42 @@ function buildAttachments(A, rng, spec, wallKey, streetSide) {
     const boxD = alongX ? depth : w;
     const key = at.wallKey ?? wallKey;
 
-    A.add(key, BOX(A), LL(IDENT, cx, h / 2, cz, 0, boxW, h, boxD), { masks: [0.5, 0.5, 0.2] });
-    A.box('concrete', cx, h / 2, cz, boxW, h, boxD);
+    if (isGarage) {
+      // A garage is a solid mass — you never walk into it.
+      A.add(key, BOX(A), LL(IDENT, cx, h / 2, cz, 0, boxW, h, boxD), { masks: [0.5, 0.5, 0.2] });
+      A.box('concrete', cx, h / 2, cz, boxW, h, boxD);
+    } else {
+      /**
+       * A porch is a HOLLOW shell: two side walls under the roof cap, open at
+       * the front where the glazed slider goes and open at the back where the
+       * house wall already is.
+       *
+       * It used to be one solid box, geometry and collision, centred on the
+       * door bay — so every front door on the street was sealed behind 1.5 m of
+       * concrete, including the three enterable houses. Nobody could get in.
+       *
+       * The glazing added further down sits on the outward face and carries no
+       * collider, so the slider reads as glass and walks through as a doorway.
+       */
+      const jamb = 0.14;
+      const sideW = alongX ? jamb : depth;
+      const sideD = alongX ? depth : jamb;
+      for (const sgn of [-1, 1]) {
+        const ox = alongX ? sgn * (w / 2 - jamb / 2) : 0;
+        const oz = alongX ? 0 : sgn * (w / 2 - jamb / 2);
+        A.add(key, BOX(A), LL(IDENT, cx + ox, h / 2, cz + oz, 0, sideW, h, sideD), {
+          masks: [0.5, 0.5, 0.2],
+        });
+        A.box('concrete', cx + ox, h / 2, cz + oz, sideW, h, sideD);
+      }
+      // Head beam over the opening, so the roof cap has something to sit on and
+      // the player cannot walk out through the top of the doorway.
+      const headH = Math.max(0.12, h - 2.12);
+      A.add(key, BOX(A), LL(IDENT, cx, h - headH / 2, cz, 0, boxW, headH, boxD), {
+        masks: [0.5, 0.5, 0.2],
+      });
+      A.box('concrete', cx, h - headH / 2, cz, boxW, headH, boxD);
+    }
     // flat capped roof, thin fascia overhang
     const capW = alongX ? w + 0.16 : depth + 0.16;
     const capD = alongX ? depth + 0.16 : w + 0.16;

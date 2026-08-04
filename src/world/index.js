@@ -488,6 +488,32 @@ export class WorldSystem {
     return this._housesByNo.get(no) ?? null;
   }
 
+  /**
+   * A parking space at the kerb outside a house: world position, and a yaw that
+   * points ALONG the street rather than across it.
+   *
+   * This exists because doing the offset outside `world` gets it wrong.
+   * `doorstep().position` is already world space, and the street is rotated by
+   * LEVEL_YAW, so anything that adds a setback along world +X lands several
+   * metres off and broadside. Computing it in level space here and converting
+   * once is the only way it stays correct if the street is re-laid.
+   */
+  kerbside(no) {
+    const h = this._housesByNo.get(no);
+    if (!h) return null;
+    const b = BUILDINGS.find((x) => x.no === no);
+    if (!b) return null;
+    const sgn = b.streetSide === 1 ? -1 : 1;
+    // Just inside the carriageway edge on that house's side, so the car sits at
+    // the kerb rather than on the footpath or in the middle of the road.
+    const lx = sgn * (STREET.halfWidth - 1.05);
+    return {
+      position: this.A.toWorld(lx, 0, b.z),
+      // Level yaw 0 is +Z, which is up the street; +LEVEL_YAW puts it in world.
+      yaw: LEVEL_YAW,
+    };
+  }
+
   levelToWorld(x, y, z, out = new THREE.Vector3()) {
     return out.set(x, y, z).applyMatrix4(this.A.xform);
   }

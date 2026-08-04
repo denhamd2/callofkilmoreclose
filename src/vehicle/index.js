@@ -46,6 +46,15 @@ const ENTER_DIST = 3.6;
 /** m/s below which the car cannot knock anyone down. Walking pace. */
 const KNOCKDOWN_SPEED = 2.2;
 
+/** Chassis footprint corners (+ centre) in the car's own frame, unit scale. */
+const CORNERS = [
+  [0, 0],
+  [-1, -1],
+  [1, -1],
+  [-1, 1],
+  [1, 1],
+];
+
 const MAX_SPEED = 22;
 const MAX_REVERSE = -6;
 const ACCEL = 9.5;
@@ -58,7 +67,7 @@ const MAX_STEER = 0.52;
 
 export class VehicleSystem {
   static id = 'vehicle';
-  static deps = ['world', 'player', 'ui'];
+  static deps = ['world', 'player', 'ui', 'physics'];
 
   async init(ctx) {
     this.ctx = ctx;
@@ -92,23 +101,22 @@ export class VehicleSystem {
     ctx.scene.add(this.root);
 
     // Park it at the kerb outside its house, nose up the street.
-    const house = world.doorstep?.(PARKED_AT) ?? null;
-    const g = world.groundHeight?.(house?.position.x ?? 0, house?.position.z ?? 0) ?? 0;
-    if (house) {
-      // Out of the garden and onto the carriageway edge: the doorstep sits
-      // 2.2 m off the front face, the kerb is another setback away.
-      const S = world.STREET ?? { kerb: 5.815, setback: 8.71 };
-      const inward = house.streetSide === 1 ? 1 : -1;
-      this._v.copy(house.position);
-      this.root.position.set(
-        this._v.x + inward * (S.setback - 1.9),
-        world.groundHeight?.(this._v.x + inward * (S.setback - 1.9), this._v.z) ?? g,
-        this._v.z
-      );
+    //
+    // This asks `world` for the point rather than computing it here. Doing the
+    // setback offset locally added it along world +X while the street is
+    // rotated by LEVEL_YAW — about 3.9 m of error — and taking the heading from
+    // the doorstep yaw, which faces the carriageway, parked it broadside across
+    // the road.
+    const spot = world.kerbside?.(PARKED_AT) ?? null;
+    if (spot) {
+      this.root.position.copy(spot.position);
+      this.root.position.y = world.groundHeight?.(spot.position.x, spot.position.z) ?? 0;
+      this.heading = spot.yaw;
     } else {
-      this.root.position.set(0, g, 0);
+      const house = world.doorstep?.(PARKED_AT) ?? null;
+      this.root.position.copy(house?.position ?? this._v.set(0, 0, 0));
+      this.heading = house?.yaw ?? 0;
     }
-    this.heading = house?.yaw ?? 0;
     this.root.rotation.y = this.heading;
     this.parkedY = this.root.position.y;
 
@@ -311,8 +319,33 @@ export class VehicleSystem {
 
     const dx = Math.sin(this.heading) * this.speed * dt;
     const dz = Math.cos(this.heading) * this.speed * dt;
-    this.root.position.x += dx;
-    this.root.position.z += dz;
+
+    /**
+     * Collision. There was none at all: the car drove through the houses, the
+     * kerbs and off the map.
+     *
+     * This is a cheap swept test rather than a rigid-body solve — sample the
+     * four corners of the chassis at the proposed position and reject the step
+     * if any of them lands somewhere a character could not stand. `world.isOpen`
+     * takes world coordinates and is exactly the query the AI navigation uses,
+     * so the car is blocked by the same geometry that blocks people.
+     *
+     * On a block, forward motion is killed rather than reflected: a saloon that
+     * bounces off a garden wall reads worse than one that simply stops.
+     */
+    const nx = this.root.position.x + dx;
+    const nz = this.root.position.z + dz;
+    if (this._clear(nx, nz)) {
+      this.root.position.x = nx;
+      this.root.position.z = nz;
+    } else if (this._clear(this.root.position.x + dx * 0.35, this.root.position.z + dz * 0.35)) {
+      // Half-step: lets the car creep out of a scrape instead of sticking.
+      this.root.position.x += dx * 0.35;
+      this.root.position.z += dz * 0.35;
+      this.speed *= 0.45;
+    } else {
+      this.speed = 0;
+    }
 
     const world = ctx.peek('world');
     const g = world?.groundHeight?.(this.root.position.x, this.root.position.z);
@@ -341,6 +374,28 @@ export class VehicleSystem {
   }
 
   /**
+   * True when the chassis footprint at (x, z) is clear of world geometry.
+   * Four corners plus the centre, in the car's own frame.
+   */
+  _clear(x, z) {
+    const world = this.ctx.peek('world');
+    if (!world?.isOpen) return true;
+    const c = Math.cos(this.heading);
+    const s = Math.sin(this.heading);
+    const HX = 0.86; // half-width, a little inside the bodywork
+    const HZ = 2.05; // half-length
+    for (let i = 0; i < CORNERS.length; i++) {
+      const lx = CORNERS[i][0] * HX;
+      const lz = CORNERS[i][1] * HZ;
+      // local -> world: forward is (sin h, cos h), right is (cos h, -sin h)
+      const wx = x + lx * c + lz * s;
+      const wz = z - lx * s + lz * c;
+      if (!world.isOpen(wx, wz, 0.05)) return false;
+    }
+    return true;
+  }
+
+  /**
    * Anyone inside the car's footprint at speed goes down. Uses an oriented box
    * test in the car's own frame so a glancing pass along the side does not
    * count as a hit.
@@ -351,8 +406,18 @@ export class VehicleSystem {
     const ai = ctx.peek('ai');
     if (!ai?.agents) return;
 
-    const c = Math.cos(-this.heading);
-    const s = Math.sin(-this.heading);
+    /**
+     * World -> car frame. Forward is (sin h, cos h) and right is (cos h, -sin h),
+     * so the inverse rotation is lx = px*cos h - pz*sin h, lz = px*sin h + pz*cos h.
+     *
+     * This used to build c/s from `-this.heading` and then apply them with the
+     * same signs, which rotates the wrong way: at a heading of 1.1 rad a target
+     * standing directly in front of the car came out at lx 0.81, lz -0.59. The
+     * oriented box was therefore tested against a box facing the wrong
+     * direction, so people were clipped beside the car and missed in front of it.
+     */
+    const c = Math.cos(this.heading);
+    const s = Math.sin(this.heading);
     for (let i = 0; i < ai.agents.length; i++) {
       const a = ai.agents[i];
       if (!a.alive) continue;
@@ -370,10 +435,18 @@ export class VehicleSystem {
       this._hitPoint.copy(a.position);
       this._incident.set(Math.sin(this.heading), 0, Math.cos(this.heading));
       ctx.events.emit('damage:dealt', this._damage);
-      // Shove the body clear so it is not hit again every frame while the car
-      // drives through the same square metre.
-      a.position.x += this._incident.x * 1.1;
-      a.position.z += this._incident.z * 1.1;
+      /**
+       * Shove the body clear, PERPENDICULAR to the car's path.
+       *
+       * This used to displace along `_incident`, which is the car's forward
+       * vector — i.e. further down its own path — so at speed the same actor
+       * was re-entered and re-hit every ~3 frames, each hit spawning another
+       * hitmarker, damage number and sound until they died. Pushing sideways,
+       * on the side they were actually clipped, gets them out of the way.
+       */
+      const side = Math.sign(lx) || 1;
+      a.position.x += c * side * 1.6;
+      a.position.z -= s * side * 1.6;
     }
   }
 
