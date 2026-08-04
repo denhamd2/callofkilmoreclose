@@ -1,23 +1,54 @@
-[gd_scene load_steps=5 format=3]
+[gd_scene load_steps=8 format=3]
 
 [ext_resource type="Script" path="res://scripts/cast/cast_member.gd" id="1_cast"]
 [ext_resource type="PackedScene" path="res://scenes/characters/quaternius_mannequin.tscn" id="2_mannequin"]
 [ext_resource type="Script" path="res://scripts/characters/quaternius_anim_driver.gd" id="3_anim"]
+[ext_resource type="Script" path="res://scripts/combat/health.gd" id="4_health"]
+[ext_resource type="Script" path="res://scripts/combat/weapon_holder.gd" id="5_weapon"]
+[ext_resource type="Script" path="res://scripts/ai/combat_brain.gd" id="6_brain"]
 
 [sub_resource type="CapsuleShape3D" id="ShapeBody"]
 radius = 0.28
 height = 1.72
 
-[node name="CastMember" type="StaticBody3D"]
-collision_layer = 1
-collision_mask = 0
+; Was a StaticBody3D, which is why the neighbours could never move regardless of
+; what the script asked for. npc layer; masks world+player+npc+vehicle so they
+; walk the street instead of through it.
+[node name="CastMember" type="CharacterBody3D"]
+collision_layer = 4
+collision_mask = 15
 script = ExtResource("1_cast")
+
+[node name="Health" type="Node" parent="."]
+script = ExtResource("4_health")
+
+[node name="NavAgent" type="NavigationAgent3D" parent="."]
+radius = 0.45
+height = 1.8
+path_desired_distance = 0.5
+target_desired_distance = 0.8
+path_max_distance = 3.0
+max_speed = 4.6
+avoidance_enabled = true
+neighbor_distance = 6.0
+max_neighbors = 8
+time_horizon_agents = 1.2
+time_horizon_obstacles = 0.6
 
 [node name="Collision" type="CollisionShape3D" parent="."]
 position = Vector3(0, 0.86, 0)
 shape = SubResource("ShapeBody")
 
 [node name="Body" parent="." instance=ExtResource("2_mannequin")]
+
+; Mirrors david.tscn — WeaponHolder reparents itself onto a BoneAttachment3D on
+; DEF-hand.R at runtime. The cast had no mount at all, so they could not hold a
+; weapon even though the catalog and the rig both supported it.
+[node name="WeaponMount" type="Node3D" parent="Body"]
+script = ExtResource("5_weapon")
+
+[node name="Brain" type="Node" parent="."]
+script = ExtResource("6_brain")
 
 [node name="QuaterniusAnim" type="Node" parent="."]
 script = ExtResource("3_anim")

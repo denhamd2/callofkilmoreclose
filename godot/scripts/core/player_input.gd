@@ -24,6 +24,11 @@ signal interact_pressed
 signal melee_pressed
 signal fire_pressed
 signal jump_pressed
+## Weapon selection. There was previously no keyboard route to arming David at
+## all — only clicking the on-screen selector with a captured cursor — so the
+## ranged half of combat could not be exercised by hand.
+signal weapon_slot(slot: int)
+signal weapon_cycle(dir: int)
 
 ## Keyboard bindings. action -> array of physical keycodes.
 ## Physical keycodes are used so the layout follows the key's *position* and
@@ -40,7 +45,21 @@ const _ACTIONS := {
 	"kc_fire": [KEY_J],
 	"kc_handbrake": [KEY_SPACE],
 	"kc_free_cursor": [KEY_ESCAPE],
+	"kc_weapon_next": [KEY_TAB],
+	"kc_weapon_1": [KEY_1],
+	"kc_weapon_2": [KEY_2],
+	"kc_weapon_3": [KEY_3],
+	"kc_weapon_4": [KEY_4],
+	"kc_weapon_5": [KEY_5],
+	"kc_weapon_6": [KEY_6],
+	"kc_weapon_7": [KEY_7],
 }
+
+## Number-key actions, in slot order, mapped onto WeaponCatalog.list_ids().
+const _WEAPON_SLOTS := [
+	"kc_weapon_1", "kc_weapon_2", "kc_weapon_3", "kc_weapon_4",
+	"kc_weapon_5", "kc_weapon_6", "kc_weapon_7",
+]
 
 ## Mouse sensitivity, radians per pixel of motion.
 const MOUSE_SENS := 0.0022
@@ -124,6 +143,23 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton and event.pressed and not touch_ui:
 		if not _mouse_captured():
 			_capture_mouse(true)
+			return
+	# Wheel cycles weapons. Handled before the action block because a wheel event
+	# is a mouse button and would otherwise fall through to kc_fire.
+	if event is InputEventMouseButton and event.pressed:
+		var btn := (event as InputEventMouseButton).button_index
+		if btn == MOUSE_BUTTON_WHEEL_UP:
+			weapon_cycle.emit(1)
+			return
+		if btn == MOUSE_BUTTON_WHEEL_DOWN:
+			weapon_cycle.emit(-1)
+			return
+	if event.is_action_pressed(&"kc_weapon_next"):
+		weapon_cycle.emit(1)
+		return
+	for slot in _WEAPON_SLOTS.size():
+		if event.is_action_pressed(StringName(_WEAPON_SLOTS[slot])):
+			weapon_slot.emit(slot)
 			return
 	if event.is_action_pressed(&"kc_interact"):
 		interact_pressed.emit()

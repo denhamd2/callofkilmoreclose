@@ -56,6 +56,13 @@ var _driving := false
 ## look where they wanted. Position is copied each frame; orientation is the
 ## camera's own.
 var _follow: Node3D
+## The vehicle to orbit while driving, set by `set_driving()`.
+var _vehicle: Node3D = null
+
+## How quickly the view swings back behind the car, in seconds. Slow enough that a
+## turn does not whip the camera, fast enough that you are looking forward again
+## within about a second.
+const RECENTRE_TAU := 0.45
 
 
 func _ready() -> void:
@@ -77,12 +84,29 @@ func _process(delta: float) -> void:
 	_yaw = wrapf(_yaw - look.x, -PI, PI)
 	_pitch = clampf(_pitch - look.y, PITCH_MIN, PITCH_MAX)
 
+	# While driving, swing round behind the car and stay there. The mouse can still
+	# nudge the view, but it recentres — otherwise reversing or turning leaves you
+	# looking at the side of the car with no idea where you are going.
+	if _driving and _vehicle != null:
+		# Pogo's longitudinal axis is local +X, and a camera looking along a
+		# direction d has yaw atan2(-d.x, -d.z).
+		var fwd := _vehicle.global_basis.x
+		var behind := atan2(-fwd.x, -fwd.z)
+		_yaw = lerp_angle(_yaw, behind, 1.0 - exp(-delta / RECENTRE_TAU))
+
 	var k := 1.0 - exp(-delta / EASE_TAU)
 	_drive_blend = lerpf(_drive_blend, 1.0 if _driving else 0.0, k)
 
-	if _follow != null:
+	# On foot the pivot rides David. While driving it rides the CAR instead: David is
+	# now seated low inside the cabin, so pivoting on him put the boom origin inside
+	# the bodywork. Pivoting on the car keeps the view behind the vehicle, which is
+	# also what a driving camera should frame.
+	var anchor := _follow
+	if _drive_blend > 0.001 and _vehicle != null:
+		anchor = _vehicle
+	if anchor != null:
 		var h := lerpf(PIVOT_HEIGHT, DRIVE_PIVOT_HEIGHT, _drive_blend)
-		global_position = _follow.global_position + Vector3(0.0, h, 0.0)
+		global_position = anchor.global_position + Vector3(0.0, h, 0.0)
 	global_rotation = Vector3(0.0, _yaw, 0.0)
 	_arm.rotation.x = _pitch
 	_arm.spring_length = lerpf(DISTANCE, DRIVE_DISTANCE, _drive_blend)
@@ -110,10 +134,15 @@ func aim_direction() -> Vector3:
 ## pivot sits just above the roof of the car you are inside, so without an
 ## exclusion the probe hits your own bonnet and pins the camera at minimum
 ## length for the whole drive.
-func set_driving(on: bool, vehicle: RID = RID()) -> void:
+## `body` is the vehicle node the camera should orbit while driving. Without it the
+## pivot stays on David, who sits inside the cabin, and the boom starts inside the
+## bodywork.
+func set_driving(on: bool, vehicle: RID = RID(), body: Node3D = null) -> void:
 	_driving = on
 	if on:
+		_vehicle = body
 		if vehicle.is_valid():
 			_arm.add_excluded_object(vehicle)
 	else:
+		_vehicle = null
 		_arm.clear_excluded_objects()

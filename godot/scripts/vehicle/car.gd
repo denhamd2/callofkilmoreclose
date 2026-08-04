@@ -15,8 +15,41 @@ signal entered
 signal exited
 
 const ENTER_DIST := 3.6
-## Driver seat in Pogo space (+X forward, +Z right).
-const SEAT := Vector3(-0.25, 0.62, 0.34)
+
+## Height of the sprung body origin above the road when the suspension is at rest,
+## measured from a driving run. `main.gd` parks the car here so the visual does not
+## jump when the suspension takes over.
+const RIDE_HEIGHT := 0.66
+
+## Driver seat in Pogo space (+X forward, +Z right), right-hand drive.
+##
+## `y` is NEGATIVE because the body origin sits high — roughly at window level once
+## the ride height above is applied. The cabin floor is at body-local -0.483
+## (`Base-chassis`, visual y 0.175, minus the 0.658 mesh drop), so the driver's feet
+## belong just below that. It was +0.62, which put his soles above the roofline: he
+## was standing on the car, not sitting in it.
+const SEAT := Vector3(-0.22, -0.483, 0.34)
+
+## The mannequin is 1.78 m and the Golf's cabin is about 1.05 m from floor to
+## headlining, so a full-size seated David cannot both stand on the cabin floor and
+## keep his head under the roof — one end always clips. Shrinking the visual body
+## (not the David node itself, which would take the camera rig with it) resolves
+## both ends and is imperceptible at this distance.
+const DRIVER_SCALE := 0.73
+
+## The glTF has no steering wheel, no seats and no interior of any kind — the whole
+## bodyshell including all four door skins is a single mesh named `Roof`. These are
+## generated instead. The same limitation is why there is no door-opening
+## animation: there is no door mesh to swing.
+const WHEEL_POS := Vector3(0.30, 0.02, 0.34)
+const WHEEL_RADIUS := 0.17
+const SEAT_BACK_POS := Vector3(-0.44, -0.20, 0.34)
+
+## Below this the car is parking, not mowing anyone down (m/s).
+const MIN_KNOCK_SPEED := 2.2
+## Damage per m/s of impact speed. At ~14 m/s (the probe's drive speed) that is
+## ~112 against 160 hp — a heavy hit that is survivable, so they get back up.
+const KNOCK_DAMAGE_PER_MS := 8.0
 const EXIT_SPOTS: Array[Vector3] = [
 	Vector3(-0.2, 0.1, 1.85),
 	Vector3(-0.2, 0.1, -1.85),
@@ -55,6 +88,8 @@ func _ready() -> void:
 	PlayerInput.interact_pressed.connect(_on_interact)
 	if _mesh != null:
 		MeshDress.dress_car(_mesh, Color(0.36, 0.11, 0.13))
+	_hide_pogo_wheel_placeholders()
+	_build_cabin()
 	_park()
 
 
@@ -74,14 +109,112 @@ func _physics_process(delta: float) -> void:
 		_seat_driver()
 		super._physics_process(delta)
 		speed = linear_velocity.dot(global_basis.x)
+		_check_pedestrian_impacts()
 	else:
 		_update_prompt()
 		if not freeze:
 			_park()
 
 
+## Run people over.
+##
+## Polls contacts rather than using `body_entered`, because the car reports contacts
+## from five shapes — the authored hull plus the four suspension bumper spheres
+## Pogo adds at runtime — and a pedestrian scraping along the flank would fire the
+## signal repeatedly. `CastMember.knock_down()` is idempotent while someone is
+## already down, so polling is safe.
+##
+## No collision mask change is needed: the cast mask (15) includes `vehicle`, and
+## Godot's broadphase filter is bidirectional, so car/pedestrian pairs already
+## generate contacts. The car must NOT be put on layer 1 — its own suspension
+## raycasts are mask 1 and are not parent-excluded, so it would drive up itself.
+func _check_pedestrian_impacts() -> void:
+	var v := linear_velocity
+	# Below a brisk walk this is a nudge, not a knockdown.
+	if v.length() < MIN_KNOCK_SPEED:
+		return
+	for body in get_colliding_bodies():
+		var victim := body as Node3D
+		if victim == null or not victim.has_method(&"knock_down"):
+			continue
+		if victim.has_method(&"is_knocked") and victim.is_knocked():
+			continue
+		# Point velocity, not `linear_velocity`: `center_of_mass` is offset to
+		# (0.05, -0.3, 0), so a turning car clips people faster at the corners.
+		var impact := get_point_velocity(victim.global_position).length()
+		var dir := victim.global_position - global_position
+		dir.y = 0.0
+		if dir.length_squared() < 0.0001:
+			dir = global_basis.x
+		# Damage scales with how hard they were hit; survivors get back up.
+		Damage.apply(victim, impact * KNOCK_DAMAGE_PER_MS, self)
+		victim.knock_down(dir, impact)
+		StreetAudio.play_melee_thud()
+
+
+## Place David in the driver's seat, facing along the car rather than across it.
+##
+## This used to assign `global_transform` wholesale, which handed David the car's
+## basis. Pogo's forward is local +X while the mannequin's forward is -Z, so he sat
+## rotated 90° across the cabin. Rotating the car basis by -90° about Y maps his -Z
+## onto the car's +X.
 func _seat_driver() -> void:
-	driver.global_transform = global_transform.translated_local(SEAT)
+	var seat_basis := global_transform.basis * Basis.from_euler(Vector3(0.0, -PI / 2.0, 0.0))
+	driver.global_transform = Transform3D(
+		seat_basis, global_transform.translated_local(SEAT).origin)
+
+
+## Each SuspensionPogo instances RVCE's `wheel.tscn`, whose visual is a black-and-
+## white checkered placeholder. The Golf glTF supplies its own wheels, so those
+## placeholders just appear as four checkered balls under the car. Hide the meshes
+## and keep the suspension nodes themselves, which do the physics.
+func _hide_pogo_wheel_placeholders() -> void:
+	for wheel in find_children("*", "MeshInstance3D", true, false):
+		var mi := wheel as MeshInstance3D
+		if mi == null:
+			continue
+		# Everything under Mesh is the Golf; anything else is Pogo's placeholder.
+		if _mesh != null and _mesh.is_ancestor_of(mi):
+			continue
+		mi.visible = false
+
+
+## Scale the mannequin only — never the David node, which parents the camera rig.
+## Scaling is about David's origin, which is at his feet, so his soles stay on the
+## cabin floor and only his height comes down.
+func _scale_driver_body(david: Node3D, factor: float) -> void:
+	var body := david.get_node_or_null(^"Body") as Node3D
+	if body != null:
+		body.scale = Vector3.ONE * factor
+
+
+## Steering wheel and seat back, generated because the model has neither.
+func _build_cabin() -> void:
+	var wheel := MeshInstance3D.new()
+	wheel.name = "SteeringWheel"
+	var torus := TorusMesh.new()
+	torus.inner_radius = WHEEL_RADIUS * 0.78
+	torus.outer_radius = WHEEL_RADIUS
+	torus.rings = 24
+	torus.ring_segments = 10
+	wheel.mesh = torus
+	# TorusMesh lies in the XZ plane; stand it up and rake it back like a real
+	# column. Pogo's forward is +X, so the wheel's axis has to point along X.
+	wheel.transform = Transform3D(
+		Basis.from_euler(Vector3(0.0, 0.0, deg_to_rad(72.0))), WHEEL_POS)
+	wheel.material_override = MeshDress.cabin_trim()
+	wheel.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	add_child(wheel)
+
+	var seat := MeshInstance3D.new()
+	seat.name = "SeatBack"
+	var box := BoxMesh.new()
+	box.size = Vector3(0.10, 0.62, 0.46)
+	seat.mesh = box
+	seat.position = SEAT_BACK_POS
+	seat.material_override = MeshDress.cabin_trim()
+	seat.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	add_child(seat)
 
 
 func _park() -> void:
@@ -136,10 +269,11 @@ func _enter(david: DavidController) -> void:
 	david.set_collision_layer_value(2, false)
 	david.set_collision_mask_value(1, false)
 	_unpark()
+	_scale_driver_body(david, DRIVER_SCALE)
 	_seat_driver()
 	var cam := david.get_node_or_null("CamYaw") as ThirdPersonCamera
 	if cam != null:
-		cam.set_driving(true, get_rid())
+		cam.set_driving(true, get_rid(), self)
 	if _prompt != null:
 		_prompt.visible = false
 		_prompt_shown = false
@@ -168,6 +302,7 @@ func _exit() -> void:
 			break
 
 	david.driving = false
+	_scale_driver_body(david, 1.0)
 	david.set_collision_layer_value(2, true)
 	david.set_collision_mask_value(1, true)
 	david.teleport(Transform3D(global_transform.basis, chosen.origin))

@@ -68,11 +68,25 @@ Unless `@ziva` / explicit Ziva invocation:
 
 - **Do not change** unless the task explicitly says otherwise:
   - Street measurements and house count: `data/kilmore_close.gd`
-  - Street layout generation tables in `scripts/world/street_builder.gd` (except collision attachment when required)
-  - Sky3D static overcast daytime in `scenes/sky_kilmore.tscn` (no time progression)
+  - The fact that time never advances — one fixed sun, no day/night
   - Car enter/drive/exit flow
-- **Cast** uses the same Quaternius mannequin as David (doorstep idle / talking; locomotion-ready driver).
-- **Current slice:** Quaternius Universal Animation Library mannequin + shared `QuaterniusAnimDriver` (David, cast, training dummy); melee + raycast pistol.
+- **Renderer is `forward_plus`, desktop-first.** Android was dropped; do not
+  reinstate mobile fill-rate rules (no normal maps, opaque glass, shadows off) by
+  inertia. The post-processing stack lives in `scripts/world/kilmore_sky.gd`,
+  because Sky3D builds the `Environment` at runtime and no Environment resource
+  is authored anywhere.
+- **Cast** roam a navmesh (`CharacterBody3D` + `NavigationAgent3D`), carry
+  `Health`, belong to factions, and fight via `scripts/ai/combat_brain.gd`.
+- **Current slice:** Quaternius mannequin + shared `QuaterniusAnimDriver` for
+  David, cast and the training dummy; melee plus a 7-weapon catalogue.
+- **Two traps worth knowing before you touch either file:**
+  - `QuaterniusAnimDriver` one-shots switch the `AnimationTree` off. Turning it
+    back on must re-seat the state machine playback, or `_travel()` no-ops and the
+    skeleton falls back to its rest T-pose — this froze every actor permanently on
+    their first jump or punch.
+  - `AnimationTree.root_node` resolves only because assigning `anim_player` copies
+    the player's resolved root. Do not set `root_node` by hand and do not reparent
+    the tree, or every clip silently stops resolving with no error.
 
 ## Workflow
 
@@ -82,8 +96,18 @@ Unless `@ziva` / explicit Ziva invocation:
 4. Verify after each step:
 
 ```sh
-python3 godot/tools/validate_project.py
-godot --path godot --headless -- --probe
+python3 godot/tools/validate_project.py     # structural; must print OK
+godot --path godot --headless -- --probe    # gameplay/nav/combat; must exit 0
+godot --path godot -- --shot                # windowed; the only visual gate
+godot --path godot -- --profile             # windowed; real render budget
+```
+
+`--headless` runs a dummy RenderingDevice, so it cannot verify a single pixel and
+every `RENDER_*` monitor reads 0. After adding a new `class_name`, rescan or
+nothing referencing it will parse:
+
+```sh
+godot --path godot --headless --editor --quit
 ```
 
 ## Ziva customization

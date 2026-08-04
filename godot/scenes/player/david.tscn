@@ -1,10 +1,11 @@
-[gd_scene load_steps=8 format=3]
+[gd_scene load_steps=9 format=3]
 
 [ext_resource type="Script" path="res://scripts/player/david_controller.gd" id="1_david"]
 [ext_resource type="Script" path="res://scripts/player/third_person_camera.gd" id="2_cam"]
 [ext_resource type="PackedScene" path="res://scenes/characters/quaternius_mannequin.tscn" id="3_mannequin"]
 [ext_resource type="Script" path="res://scripts/characters/quaternius_anim_driver.gd" id="4_anim"]
 [ext_resource type="Script" path="res://scripts/combat/weapon_holder.gd" id="5_weapon"]
+[ext_resource type="Script" path="res://scripts/combat/health.gd" id="6_health"]
 
 [sub_resource type="CapsuleShape3D" id="ShapeBody"]
 radius = 0.3
@@ -13,10 +14,15 @@ height = 1.78
 [sub_resource type="SphereShape3D" id="ShapeProbe"]
 radius = 0.22
 
-[node name="David" type="CharacterBody3D" groups=["player"]]
+[node name="David" type="CharacterBody3D" groups=["hittable", "player"]]
+; player / world+npc+vehicle. The mask was 1, so David walked straight through
+; the neighbours; npc and vehicle make them solid.
 collision_layer = 2
-collision_mask = 1
+collision_mask = 13
 script = ExtResource("1_david")
+
+[node name="Health" type="Node" parent="."]
+script = ExtResource("6_health")
 
 [node name="Collision" type="CollisionShape3D" parent="."]
 position = Vector3(0, 0.89, 0)
@@ -30,8 +36,11 @@ script = ExtResource("5_weapon")
 [node name="QuaterniusAnim" type="Node" parent="."]
 script = ExtResource("4_anim")
 
+; Child of David, not Body, so it does not inherit the mannequin's 180° fix —
+; -Z is forward here. x=+0.25 is the right hand: the model's right is -X, which
+; the Body rotation maps to +X.
 [node name="MuzzleFlash" type="Marker3D" parent="."]
-position = Vector3(0.25, 1.35, 0.35)
+position = Vector3(0.25, 1.35, -0.35)
 
 [node name="CamYaw" type="Node3D" parent="."]
 script = ExtResource("2_cam")
@@ -49,4 +58,4 @@ position = Vector3(0.62, 0, 0)
 current = true
 fov = 75.0
 near = 0.1
-far = 260.0
+far = 500.0

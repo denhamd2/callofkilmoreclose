@@ -53,6 +53,22 @@ func play_melee_thud() -> void:
 	if not enabled or _melee == null:
 		return
 	_melee.stream = ProceduralSounds.melee_thud()
+	# Reset what play_melee_swing() shifts — the two share one player.
+	_melee.pitch_scale = 1.0
+	_melee.volume_db = -4.0
+	_melee.play()
+
+
+## The swing itself, as opposed to the connecting hit. Reuses the thud buffer
+## pitched up and dropped in level, which reads as a whoosh — cheaper than a
+## second procedural generator, and the distinction that matters to the player is
+## simply "did that land or not".
+func play_melee_swing() -> void:
+	if not enabled or _melee == null:
+		return
+	_melee.stream = ProceduralSounds.melee_thud()
+	_melee.pitch_scale = 1.75
+	_melee.volume_db = -14.0
 	_melee.play()
 
 

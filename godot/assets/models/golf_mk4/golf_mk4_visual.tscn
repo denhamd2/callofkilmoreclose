@@ -4,4 +4,17 @@
 
 [node name="GolfMK4Visual" type="Node3D"]
 
+; golf_mk4.glb is a Blender export with no axis conversion, and its axes are not
+; the obvious ones — read them from the named parts, not the AABB, since the model
+; is 1.49 wide and 1.49 tall and the two are trivially confused:
+;   X = height, up is -X    (Tyre x=[0.184,0.743] sits below Roof x=[-0.523,0.570])
+;   Y = length, front is -Y (Front-lights y=-1.6, Rear-Lights y=+1.6)
+;   Z = width, spanning [-1.528, 0] — off-centre, not straddling zero
+; Corrected here rather than per consumer: scenes/vehicle/car.tscn and the five
+; parked cars in street_builder.gd both instance this scene, and only the drivable
+; one carried a correction — which is why the parked cars stood on their noses too.
+; Maps -X -> +Y (up) and -Y -> +X, matching Pogo's +X longitudinal convention;
+; oy=0.743 puts the tyre contact patch on this scene's own origin plane, and
+; oz=-0.764 recentres the width so the visual straddles the chassis.
 [node name="Model" parent="." instance=ExtResource("1_golf")]
+transform = Transform3D(0, -1, 0, -1, 0, 0, 0, 0, -1, 0, 0.743, -0.764)

@@ -67,7 +67,11 @@ const FLOORS := 2
 ## Wall height to the eaves.
 const WALL_H := FLOOR_H * FLOORS         # 5.2
 ## Ridge height above the eaves.
-const ROOF_H := 1.9
+## Ridge height above the eaves. 1.65 over the 4.25 m half-span is a ~21° pitch,
+## which is what concrete interlocking tiles are laid at and matches the reference
+## photographs. It was 1.9 (24°); the extra height read as a slate roof and made
+## the houses look older than they are. A facade proportion, not a survey figure.
+const ROOF_H := 1.65
 
 ## House front face, and house box centre, as distances from the road centre.
 const FACE_X := KERB + SETBACK           # 14.525

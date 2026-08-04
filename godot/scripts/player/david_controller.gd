@@ -41,9 +41,23 @@ const FIRE_RANGE := 40.0
 const FIRE_COOLDOWN := 0.35
 const FIRE_DAMAGE := 25.0
 
+## Olive, deliberately outside the five cast jacket tints in data/cast.gd — the
+## player is on screen for the whole session and needs to be the readable one.
+const JACKET := Color(0.30, 0.31, 0.22)
+
 var loadout: Loadout = Loadout.UNARMED
-var weapon_id: StringName = WeaponCatalog.UNARMED
+## Starts empty rather than UNARMED so the first `equip_weapon(UNARMED)` is not
+## swallowed by the identity guard — `weapon_changed` never fired at startup, so
+## the weapon selector opened out of sync with the actual loadout.
+var weapon_id: StringName = &""
 var driving: bool = false
+
+## Read by `Factions.of()`. David sides against the McCabes.
+var faction: StringName = Factions.DAVID
+var dead := false
+
+## Seconds face-down before David is put back on his own doorstep.
+const RESPAWN_DELAY := 3.5
 
 var _coyote := 0.0
 var _buffered_jump := 0.0
@@ -57,6 +71,7 @@ var _facing := 0.0
 @onready var _animator: QuaterniusAnimDriver = $QuaterniusAnim
 @onready var _muzzle_marker: Marker3D = $MuzzleFlash
 @onready var _weapon_holder: WeaponHolder = $Body/WeaponMount
+@onready var _health: Health = $Health
 
 var _melee_query := PhysicsShapeQueryParameters3D.new()
 var _melee_shape := SphereShape3D.new()
@@ -67,19 +82,36 @@ const _SPARK_TEX: Texture2D = preload("res://assets/generated/spark_burst_frame_
 
 func _ready() -> void:
 	_facing = rotation.y
-	_melee_shape.radius = MELEE_RADIUS
+	# The sphere is centred at half reach with a radius to match, so the swept
+	# volume runs from the chest out to MELEE_REACH. Previously it was centred
+	# *at* full reach, leaving a 1.35 m dead zone directly in front of David —
+	# anyone he was standing next to could not be punched at all.
+	_melee_shape.radius = MELEE_REACH * 0.5 + MELEE_RADIUS
 	_melee_query.shape = _melee_shape
 	_melee_query.collide_with_bodies = true
 	_melee_query.collide_with_areas = false
+	# Was unset, i.e. all 32 layers — so a punch routinely "hit" the ground plate
+	# or a boundary wall and reported that back as the target. player | npc only.
+	_melee_query.collision_mask = 2 | 4
 	var skip: Array[RID] = [get_rid()]
 	_melee_query.exclude = skip
 	PlayerInput.jump_pressed.connect(_on_jump)
 	PlayerInput.melee_pressed.connect(_on_melee)
 	PlayerInput.fire_pressed.connect(_on_fire)
+	# David was the one actor never dressed, so he rendered in the raw glTF's
+	# orange M_Main / purple M_Joints. The cast and the dummy already do this.
+	if _body != null:
+		MeshDress.dress_mannequin(_body, JACKET)
 	if _animator != null:
 		_animator.setup(_body)
 	if _weapon_holder != null:
 		_weapon_holder.setup_on_body(_body)
+	if _health != null:
+		_health.died.connect(_on_died)
+		_health.revived.connect(_on_revived)
+		_health.damaged.connect(_on_damaged)
+	PlayerInput.weapon_slot.connect(_on_weapon_slot)
+	PlayerInput.weapon_cycle.connect(_on_weapon_cycle)
 	equip_weapon(WeaponCatalog.UNARMED)
 
 
@@ -120,6 +152,14 @@ func _physics_process(delta: float) -> void:
 
 	if driving:
 		velocity = Vector3.ZERO
+		return
+
+	if dead:
+		# Still fall, but no input and no melee — the death clip plays out.
+		velocity.x = 0.0
+		velocity.z = 0.0
+		_apply_gravity(delta)
+		move_and_slide()
 		return
 
 	_apply_gravity(delta)
@@ -196,7 +236,7 @@ func _on_jump() -> void:
 
 
 func _on_melee() -> void:
-	if driving or _melee_timer > 0.0:
+	if driving or dead or _melee_timer > 0.0:
 		return
 	_melee_timer = MELEE_COOLDOWN
 	_swing = MELEE_COOLDOWN * 0.55
@@ -212,27 +252,38 @@ func _resolve_melee() -> void:
 	if dir.length_squared() < 0.001:
 		dir = -global_transform.basis.z
 	dir = dir.normalized()
-	var origin := global_position + Vector3(0.0, 1.25, 0.0) + dir * MELEE_REACH
+	var chest := global_position + Vector3(0.0, 1.25, 0.0)
+	var origin := chest + dir * (MELEE_REACH * 0.5)
 	_melee_query.transform = Transform3D(Basis.IDENTITY, origin)
 	var hits := space.intersect_shape(_melee_query, 8)
-	var fallback: Node3D = null
+	# Nearest hittable in the forward arc. The old version returned the first
+	# result of any kind, including the ground plate and boundary walls, which is
+	# why punches "landed" on scenery — and the mask now excludes those anyway.
+	var best: Node3D = null
+	var best_d := INF
 	for hit in hits:
 		var collider := hit.get("collider") as Node3D
 		if collider == null or collider == self:
 			continue
-		if collider.is_in_group("hittable"):
-			melee_hit.emit(collider)
-			return
-		if fallback == null:
-			fallback = collider
-	if fallback != null:
-		melee_hit.emit(fallback)
+		if not collider.is_in_group("hittable"):
+			continue
+		var to_target := collider.global_position - chest
+		to_target.y = 0.0
+		if to_target.length_squared() > 0.0004 \
+				and dir.dot(to_target.normalized()) < 0.35:
+			continue  # behind or off to the side — the swing is forward-facing
+		var d := to_target.length()
+		if d < best_d:
+			best_d = d
+			best = collider
+	if best != null:
+		melee_hit.emit(best)
 
 
 # ------------------------------------------------------------------ firearm
 
 func _on_fire() -> void:
-	if driving or _fire_timer > 0.0 or loadout != Loadout.RANGED:
+	if driving or dead or _fire_timer > 0.0 or loadout != Loadout.RANGED:
 		return
 	_fire_timer = get_fire_cooldown()
 	shot_fired.emit()
@@ -252,6 +303,9 @@ func _resolve_fire() -> void:
 	var query := PhysicsRayQueryParameters3D.create(origin, origin + dir * get_fire_range())
 	query.collide_with_bodies = true
 	query.collide_with_areas = false
+	# world | player | npc | vehicle — bullets should stop on walls, so `world`
+	# stays in, unlike the melee mask.
+	query.collision_mask = 1 | 2 | 4 | 8
 	query.exclude = [get_rid()]
 	var hit := space.intersect_ray(query)
 	if hit.is_empty():
@@ -286,6 +340,69 @@ func _spawn_spark(at: Vector3) -> void:
 	var tw := create_tween()
 	tw.tween_property(sprite, "modulate:a", 0.0, 0.28)
 	tw.tween_callback(sprite.queue_free)
+
+
+# ------------------------------------------------------------------ health
+
+func _on_damaged(_amount: float, _source: Node, _hp: float) -> void:
+	if _animator != null and not dead:
+		_animator.play_flinch()
+
+
+## Number keys pick a weapon directly; Tab and the mouse wheel cycle. Before
+## this the only way to arm David was clicking the on-screen selector while the
+## cursor was captured, so the entire ranged half of combat was unreachable.
+func _on_weapon_slot(slot: int) -> void:
+	if dead or driving:
+		return
+	var ids := WeaponCatalog.list_ids()
+	if slot >= 0 and slot < ids.size():
+		equip_weapon(ids[slot])
+
+
+func _on_weapon_cycle(dir: int) -> void:
+	if dead or driving:
+		return
+	var ids := WeaponCatalog.list_ids()
+	if ids.is_empty():
+		return
+	var at := ids.find(weapon_id)
+	if at < 0:
+		at = 0
+	equip_weapon(ids[wrapi(at + dir, 0, ids.size())])
+
+
+## Kept so the `has_method("take_hit")` contract in `main.gd` still holds.
+func take_hit(amount: float, source: Node = null) -> void:
+	if _health != null:
+		_health.apply(amount, source)
+
+
+func is_alive() -> bool:
+	return _health == null or _health.is_alive()
+
+
+func _on_died(_source: Node) -> void:
+	dead = true
+	velocity = Vector3.ZERO
+	if _animator != null:
+		_animator.play_death()
+	get_tree().create_timer(RESPAWN_DELAY).timeout.connect(_respawn)
+
+
+func _respawn() -> void:
+	if _health != null:
+		_health.revive()
+
+
+func _on_revived() -> void:
+	dead = false
+	var spawn := KilmoreClose.david_spawn()
+	spawn.origin.y = KilmoreClose.WALK_H + 0.3
+	teleport(spawn)
+	equip_weapon(WeaponCatalog.UNARMED)
+	if _animator != null:
+		_animator.reset_alive()
 
 
 func teleport(to: Transform3D) -> void:

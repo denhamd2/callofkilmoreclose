@@ -26,6 +26,27 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 
+# Directories that are not this project's code: vendored addons plus the
+# git-ignored third-party dumps (car-physics forks, road-generator demos, the
+# Quaternius pack's Unity/Unreal copies). They are excluded from validation
+# because they are not shipped, not cloned, and not ours to fix.
+EXCLUDED_DIRS = frozenset({
+    "addons",
+    "road_demos",
+    "examples_dd3d",
+    "Duvet",
+    "Flos",
+    "Zoom",
+    "Monitors",
+    "Tools",
+    "Props",
+    "Unity",
+    "Unreal Engine",
+    "Godot",
+    "Models",
+    ".godot",
+})
+
 SECTION = re.compile(r"^\[(\w+)([^\]]*)\]\s*$")
 ATTR = re.compile(r'(\w+)\s*=\s*"([^"]*)"')
 EXT_REF = re.compile(r'ExtResource\(\s*"([^"]+)"\s*\)')
@@ -193,19 +214,30 @@ def check_project() -> None:
         if target is None or not target.exists():
             err(f"project.godot: autoload {name} -> missing {res}")
 
-    if 'renderer/rendering_method="gl_compatibility"' not in text:
+    # Inverted: the project is Forward+ / desktop-first now. gl_compatibility
+    # cannot do SSAO, SSIL, SSR, volumetric fog or mesh LOD at all, and Sky3D's
+    # shaders treat it as a special case — which is why the sky rendered black.
+    if 'renderer/rendering_method="forward_plus"' not in text:
         warn(
-            "project.godot: renderer is not gl_compatibility — the stated "
-            "Android target is a low-end phone"
+            "project.godot: renderer is not forward_plus — the post-processing "
+            "stack in scripts/world/kilmore_sky.gd needs it"
         )
 
 
 def main() -> int:
     check_project()
-    # Third-party addons are vendored; do not fail the project on their
-    # internal scene/script quirks. Our gameplay content lives outside addons/.
-    scenes = sorted(p for p in ROOT.rglob("*.tscn") if "addons" not in p.parts)
-    scripts = sorted(p for p in ROOT.rglob("*.gd") if "addons" not in p.parts)
+    # Third-party addons are vendored; do not fail the project on their internal
+    # scene/script quirks. Our gameplay content lives outside addons/.
+    #
+    # The same reasoning applies to the git-ignored vendor dumps: they are not
+    # part of the project, they are not what anyone else clones, and one broken
+    # reference inside road_demos/ was holding this validator permanently red —
+    # which makes "validator green" useless as a gate for the code that matters.
+    def ours(p) -> bool:
+        return not any(part in EXCLUDED_DIRS for part in p.parts)
+
+    scenes = sorted(p for p in ROOT.rglob("*.tscn") if ours(p))
+    scripts = sorted(p for p in ROOT.rglob("*.gd") if ours(p))
     for s in scenes:
         check_scene(s)
     for s in scripts:

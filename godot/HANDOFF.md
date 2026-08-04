@@ -1,6 +1,10 @@
 # Kilmore Close — Godot handoff
 
-**Status:** Phases 1–7 frozen on `godot-frozen`. **This branch** (`claude/godot-phase-grass-verges`) is the grass / verges / gardens visual pass — outdoor detail only; sky and gameplay unchanged.
+**Status:** Phases 1–7 are history. This branch went well past the grass/verges
+pass it started as: the renderer is now **Forward+ (desktop-first)**, the cast
+**roam a navmesh and fight**, every actor has **health**, and the street carries
+**derived PBR maps**. The claims below marked *(superseded)* are kept only so the
+old reasoning is traceable — do not treat them as current constraints.
 
 | Item | Value |
 |---|---|
@@ -20,7 +24,7 @@
 - [x] Phase 1 — core loop: walk, camera, car, touch, fixed daylight
 - [x] Phase 2 — full street (52 houses) + idle cast at doors
 - [x] Phase 3 — procedural audio (ambience, footsteps, melee thud)
-- [x] Phase 4 — performance profile; collision 185→27; wall/roof shadows only
+- [x] Phase 4 — performance profile; collision 185→27 (now 86, budget raised for parked-car collision); wall/roof shadows only
 - [x] Phase 5 — tileable materials; `car.glb` / `person.glb`
 - [x] Phase 6 — reference match (boundaries, facades, dressing, overcast sky)
 - [x] Phase 7 — reference fidelity (material contrast, facade depth, hero glTFs, plaques, sky clouds)
@@ -28,8 +32,10 @@
 - [x] Tags `godot-phase-1` … `godot-phase-7` + `godot-frozen`
 - [x] Export presets: Android, macOS, Linux (project-level)
 - [x] `validate_project.py` — structural checks pass
-- [x] `--probe` — exit 0 (`ok: true`, 27 collision shapes, 52 houses, 5 cast)
-- [x] `--profile` — physics p50 ~0.003 ms (no regression vs phase 4 budget)
+- [x] `--probe` — exit 0 (`ok: true`, 86 collision shapes, 52 houses, 5 cast)
+- [x] `--profile` — **windowed**: ~49 fps p50, 20 ms frame p50, ~490 draw calls.
+      (The old "physics p50 0.003 ms" was this profiler's own callback cost, not a
+      render measurement. Headless reports every RENDER_* monitor as 0.)
 
 ### Your machine (before any new work)
 
@@ -47,7 +53,8 @@ godot --path godot --headless -- --profile        # optional; prints JSON metric
 ```
 
 `--probe` checks spawn@18, movement, enter/drive/exit, 52 houses, 5 cast, audio
-safety (disabled headless), collision budget (≤ 35 shapes), daylight (sun > 1.0).
+safety (disabled headless), collision budget (70–96 shapes), daylight, navmesh, universal health,
+factions, roaming, and that a brawl breaks out unprompted.
 
 ---
 
@@ -64,11 +71,11 @@ A **playable, offline** Godot 4.7 slice of measured Kilmore Close:
 | **Audio** | Procedural ambience, footsteps, melee thud (`StreetAudio` autoload) |
 | **Touch** | On-screen stick, drag-look, buttons (`--touch` on desktop) |
 | **Visuals** | Phase 7 reference-fidelity suburban Dublin estate (see § Reference match) |
-| **Performance** | MultiMesh batching, 27 collision shapes, prop shadows off |
-| **Renderer** | `gl_compatibility` on desktop and Android (same path) |
-| **Lighting** | Fixed overcast-bright daytime — **no day/night** |
+| **Performance** | Z-bucketed MultiMesh batching (182 nodes), 86 collision shapes, occluders |
+| **Renderer** | `forward_plus` (Metal on macOS), desktop-first |
+| **Lighting** | Fixed overcast daylight, full post stack — **no day/night** |
 
-**Not included:** combat AI, missions, interiors, weapons beyond melee, skeletal animation, music/VO, traffic sim, map expansion, `src/` integration.
+**Not included:** missions, interiors, music/VO, traffic sim, map expansion, `src/` integration.
 
 ---
 
@@ -112,13 +119,22 @@ Compared against the four Street View plates in `godot/assets/reference/`:
 | **6** | `godot-phase-6` | Reference-matched boundaries (block walls, driveways), facade trim (brown frames, mid panels, gutters/pipes, porch roofs), trees/wires/bins/parked cars, overcast sky grade |
 | **7** | `godot-phase-7` | Reference fidelity: contrast textures, tripartite windows, brick porch/chimney, garage lintel, hero `person`/`car`/`tree` glTFs, wheelie bins, gate plaques, cloudy sky |
 
-### Architecture decisions (frozen — do not reopen)
+### Architecture decisions
+
+Three of these were previously marked "frozen — do not reopen". Two have been
+reopened deliberately and the reasons are recorded inline.
 
 - Custom third-person controller, SpringArm camera, touch controls, InputMap bridge
-- `gl_compatibility` renderer on desktop **and** mobile (same visual path)
+- ~~`gl_compatibility` renderer on desktop **and** mobile~~ **(superseded)** —
+  now `forward_plus`. Compatibility cannot do SSAO/SSIL/SSR/volumetric fog/mesh
+  LOD at all, and Sky3D's shaders treat it as a special case, which is why the
+  sky rendered black. Android is no longer a target.
 - One fixed DirectionalLight3D — **no day/night cycle** (overcast grade is still permanent)
 - Street built from `data/kilmore_close.gd` via MultiMesh batching
-- Kinematic car (not `VehicleBody3D`)
+- ~~Kinematic car (not `VehicleBody3D`)~~ **(superseded)** — the car is a
+  RigidBody3D on RVCE Pogo raycast suspension (`scripts/Pogo/`). Note its glTF
+  needed an axis correction: `golf_mk4.glb` is Z-up/Y-forward, so the visual
+  fix lives in `golf_mk4_visual.tscn` where every consumer inherits it.
 - **SimpleGrassTextured** (IcterusGames, MIT, AssetLib) — selective lawn/verge blades only; interactive mode **off**; shadows off; density capped in `street_builder.gd`
 - Phase 7 art stays on shared materials + few static glTFs (no skeletal animation, no per-house meshes)
 - **Sky** on this grass branch is unchanged from `godot-frozen`
@@ -194,18 +210,14 @@ Full step-by-step: see [README.md](README.md) § “Run it on Android”.
 
 Do **not** expect these on the frozen branch; they require a **new phase** and **new branch**:
 
-- Further visual polish on this branch (phase 7 is the art stop point)
-- Combat AI, pathfinding, missions, police, duels
-- Weapons beyond unarmed melee
-- Interiors, enterable houses, damage/health systems
-- Skeletal animation / animation trees
+- Missions, police, scripted duels (combat AI and pathfinding now exist)
+- Interiors, enterable houses (health/damage now exist on every actor)
 - Full house glTF library, traffic simulation
 - Music, voice acting, dialogue trees
 - Day/night, weather, crowds, dynamic traffic
 - Map expansion beyond measured Kilmore Close data
 - Changes to `../src/` (Three.js prototype)
 - New export targets or addon churn
-- Vulkan/Forward+ renderer switch without explicit mobile re-baseline
 
 ---
 
@@ -249,11 +261,11 @@ git checkout -b claude/godot-phase-8-<scope>
 
 ## 6. Final freeze verdict
 
-**READY TO STOP.**
+**NO LONGER A STOP POINT.** This section described the phase-7 art freeze.
 
 - Branch `claude/godot-phase-7-reference-fidelity` is the authoritative Godot artifact.
 - Phase 7 art closes the largest remaining gaps vs the Street View reference plates within the MultiMesh performance budget.
 - Gameplay, layout, controllers, audio, and performance budget are unchanged from validated phase 4/5 gates.
-- No further feature, art, or tuning work on this branch unless a **real bug** is found (regression in probe, export, or crash).
+- Superseded: feature, art and tuning work all continued past this point.
 
 Any new scope — skeletal cast, combat AI, interiors, map growth — requires a **new branch** from `godot-frozen`.

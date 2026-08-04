@@ -1,4 +1,4 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://scripts/ui/combat_hud.gd" id="1_script"]
 [ext_resource type="Texture2D" path="res://assets/generated/crosshair_frame_0.png" id="2_crosshair"]
@@ -52,3 +52,34 @@ text = "TARGET"
 horizontal_alignment = 1
 theme_override_font_sizes/font_size = 13
 theme_override_colors/font_color = Color(1, 1, 1, 0.9)
+
+[node name="PlayerHP" type="Control" parent="."]
+layout_mode = 0
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 28.0
+offset_top = -64.0
+offset_right = 248.0
+offset_bottom = -40.0
+
+[node name="Background" type="ColorRect" parent="PlayerHP"]
+layout_mode = 0
+offset_right = 220.0
+offset_bottom = 22.0
+color = Color(0.05, 0.06, 0.07, 0.72)
+
+[node name="Fill" type="ColorRect" parent="PlayerHP"]
+layout_mode = 0
+offset_right = 220.0
+offset_bottom = 22.0
+color = Color(0.42, 0.72, 0.38, 0.9)
+
+[node name="Label" type="Label" parent="PlayerHP"]
+layout_mode = 0
+offset_left = 6.0
+offset_top = 3.0
+offset_right = 214.0
+offset_bottom = 19.0
+text = "DAVID"
+theme_override_font_sizes/font_size = 13
+theme_override_colors/font_color = Color(1, 1, 1, 0.92)

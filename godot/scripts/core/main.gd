@@ -19,6 +19,9 @@ const SETTLE := 0.3
 @onready var _david: DavidController = $David
 @onready var _car: Car = $Car
 @onready var _prompt: Label = $HUD/Prompt
+@onready var _street: Node3D = $Street
+
+var _cast: Array[CastMember] = []
 
 const _CAST_SCENE: PackedScene = preload("res://scenes/cast/cast_member.tscn")
 const _DUMMY_SCENE: PackedScene = preload("res://scenes/combat/training_dummy.tscn")
@@ -33,14 +36,25 @@ func _ready() -> void:
 	_david.teleport(spawn)
 
 	var park := KilmoreClose.car_spawn()
-	park.origin.y = 0.12
+	# The sprung body's natural ride height, measured from Pogo's suspension at
+	# rest. It used to be parked at 0.12, far below where the suspension actually
+	# holds it, so the car visibly jumped the moment you got in.
+	park.origin.y = Car.RIDE_HEIGHT
 	_car.place(park)
 
 	_spawn_cast()
+	# The cast stay planted at their doors until the street navmesh exists —
+	# agents queried against an unsynchronised map return Vector3.ZERO and the
+	# whole roster slides to the world origin.
+	if _street != null and _street.has_signal(&"navmesh_ready"):
+		_street.navmesh_ready.connect(_on_navmesh_ready)
 	_spawn_training_dummy()
 	_spawn_combat_hud()
 	_spawn_weapon_selector()
 	_spawn_combat_controls()
+	# melee_swung had no listeners at all, so a punch that missed was silent and
+	# gave the player no feedback that the swing had even happened.
+	_david.melee_swung.connect(_on_melee_swung)
 	_david.melee_hit.connect(_on_melee_hit)
 	_david.shot_fired.connect(_on_shot_fired)
 	_david.shot_hit.connect(_on_shot_hit)
@@ -58,6 +72,17 @@ func _ready() -> void:
 			probe.name = "RuntimeProbe"
 			add_child(probe)
 
+	# Screenshot gate — the visual counterpart to --probe. MUST be windowed:
+	# --headless has a dummy RenderingDevice and captures blank images.
+	#   godot --path godot -- --shot
+	if OS.get_cmdline_user_args().has("--shot"):
+		var shot_script := load("res://tools/screenshot.gd") as Script
+		if shot_script != null:
+			var shot := Node.new()
+			shot.set_script(shot_script)
+			shot.name = "Screenshot"
+			add_child(shot)
+
 	# Performance profile path (measure before tuning).
 	#   godot --path godot --headless --quit-after 600 -- --profile
 	if OS.get_cmdline_user_args().has("--profile"):
@@ -73,6 +98,8 @@ func _spawn_cast() -> void:
 	var root := Node3D.new()
 	root.name = "Cast"
 	add_child(root)
+	_cast.clear()
+	var i := 0
 	for entry in KilmoreCast.members():
 		var member := _CAST_SCENE.instantiate() as CastMember
 		if member == null:
@@ -81,6 +108,23 @@ func _spawn_cast() -> void:
 		member.global_transform = KilmoreCast.doorstep(entry)
 		member.setup(entry)
 		member.bind_player(_david)
+		# Fixed per-actor seeds keep wander paths reproducible across runs, so a
+		# probe failure means a real regression rather than a different dice roll.
+		member.seed_rng(0x5F00 + i * 7919)
+		_cast.append(member)
+		i += 1
+
+
+func _on_navmesh_ready(polygon_count: int) -> void:
+	if polygon_count <= 0:
+		push_warning("navmesh baked with no polygons — cast will stay at their doors")
+		return
+	# One physics frame for NavigationServer to publish the new region before any
+	# agent asks it for a path.
+	await get_tree().physics_frame
+	for member in _cast:
+		if member != null:
+			member.enable_roaming()
 
 
 func _spawn_training_dummy() -> void:
@@ -117,17 +161,13 @@ func _spawn_combat_controls() -> void:
 		hud.add_child(controls)
 
 
+func _on_melee_swung() -> void:
+	StreetAudio.play_melee_swing()
+
+
 func _on_melee_hit(target: Node3D) -> void:
-	if target != null and target.has_method(&"take_hit"):
-		target.take_hit(DavidController.MELEE_DAMAGE, _david)
+	if Damage.apply(target, DavidController.MELEE_DAMAGE, _david):
 		StreetAudio.play_melee_thud()
-		return
-	if target == null or not target.is_in_group("cast"):
-		return
-	StreetAudio.play_melee_thud()
-	var label := target.get_node_or_null("NameLabel") as Label3D
-	if label != null:
-		label.modulate = Color(1.0, 0.92, 0.55, 1.0)
 
 
 func _on_shot_fired() -> void:
@@ -135,6 +175,5 @@ func _on_shot_fired() -> void:
 
 
 func _on_shot_hit(target: Node3D) -> void:
-	if target != null and target.has_method(&"take_hit"):
-		target.take_hit(_david.get_fire_damage(), _david)
+	if Damage.apply(target, _david.get_fire_damage(), _david):
 		StreetAudio.play_melee_thud()

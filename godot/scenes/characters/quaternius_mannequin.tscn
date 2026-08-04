@@ -4,4 +4,9 @@
 
 [node name="MannequinRoot" type="Node3D"]
 
+; The Quaternius rest pose faces +Z (foot verts: heel z=-0.098, toe z=+0.205) but
+; Godot's forward is -Z, so every clip played the body 180° from its logical facing.
+; Correct it here, on Model, so Body stays an unrotated actor-space node for
+; MeshDress / QuaterniusAnimDriver / WeaponHolder, which all find_child() from Body.
 [node name="Model" parent="." instance=ExtResource("1_glb")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 0, 0, 0)

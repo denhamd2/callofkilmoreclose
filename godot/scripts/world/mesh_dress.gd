@@ -1,7 +1,11 @@
-## Applies readable PBR colours to offline-generated glTF hero meshes.
+## Applies readable PBR colours to the glTF hero meshes.
 ##
-## Generated glTFs carry vertex COLOR_0 but Godot does not use that as albedo
-## unless explicitly enabled — without this pass they render flat white.
+## These models ship with either no materials at all (`tree_*.glb`, `bush_a.glb`
+## are single primitives carrying only POSITION and NORMAL) or two flat untextured
+## ones (the Quaternius mannequin). Without this pass they render as default
+## white. Note they do NOT carry vertex COLOR_0 — an earlier comment here claimed
+## they did, which is wrong; there is no vertex colour to fall back on, which is
+## why every surface has to be assigned a colour explicitly.
 
 class_name MeshDress
 extends RefCounted
@@ -17,14 +21,28 @@ const BARK := Color(0.35, 0.22, 0.14)
 const CANOPY := Color(0.22, 0.48, 0.24)
 
 
+## Cache of materials by (colour, roughness, metallic).
+##
+## `dress_car()` assigns a material per MeshInstance3D, and the Golf glTF has 58
+## meshes — so six cars on the street were allocating ~348 unique
+## StandardMaterial3Ds for what is really four surface kinds in five paints. That
+## defeats both the shared-material intent stated at the top of street_builder.gd
+## and the renderer's ability to batch by material.
+static var _cache: Dictionary = {}
+
+
 static func _mat(colour: Color, rough: float, metal: float = 0.0) -> StandardMaterial3D:
+	var key := "%.3f_%.3f_%.3f_%.3f_%.3f_%.3f" % [
+		colour.r, colour.g, colour.b, colour.a, rough, metal]
+	var hit: Variant = _cache.get(key)
+	if hit != null:
+		return hit as StandardMaterial3D
 	var m := StandardMaterial3D.new()
 	m.albedo_color = colour
 	m.roughness = rough
 	m.metallic = metal
 	m.vertex_color_use_as_albedo = false
-	if rough > 0.82:
-		m.specular_mode = BaseMaterial3D.SPECULAR_DISABLED
+	_cache[key] = m
 	return m
 
 
@@ -36,6 +54,10 @@ static func _part_name(node: Node) -> String:
 	return n
 
 
+## The mannequin is two separate primitives — M_Main (the limb segments) and
+## M_Joints (the ball joints). Giving them different colours makes every joint
+## read as a seam, which is the single worst thing about how the cast looks.
+## One material across both surfaces so the body reads as one piece.
 static func dress_mannequin(root: Node3D, main_colour: Color = JACKET) -> void:
 	for child in root.find_children("*", "MeshInstance3D", true, false):
 		var mi := child as MeshInstance3D
@@ -44,17 +66,9 @@ static func dress_mannequin(root: Node3D, main_colour: Color = JACKET) -> void:
 		var mesh: Mesh = mi.mesh
 		if mesh == null:
 			continue
+		var skin := _mat(main_colour, 0.55, 0.08)
 		for i in mesh.get_surface_count():
-			var active: Material = mi.get_active_material(i)
-			var name_hint := ""
-			if active != null:
-				name_hint = active.resource_name
-			var colour := main_colour
-			var rough := 0.55
-			if "Joint" in name_hint:
-				colour = main_colour.darkened(0.35)
-				rough = 0.45
-			mi.set_surface_override_material(i, _mat(colour, rough, 0.08))
+			mi.set_surface_override_material(i, skin)
 
 
 static func dress_person(root: Node3D, jacket: Color = JACKET) -> void:
@@ -68,6 +82,35 @@ static func dress_person(root: Node3D, jacket: Color = JACKET) -> void:
 		elif part.begins_with("Foot"):
 			colour = SHOE
 		mi.material_override = _mat(colour, 0.88)
+
+
+## Dark interior trim, for the procedurally generated steering wheel and seat in
+## `car.gd` — the glTF ships no interior geometry at all.
+static func cabin_trim() -> StandardMaterial3D:
+	return _mat(Color(0.09, 0.09, 0.10), 0.55, 0.05)
+
+
+## Windscreen and side glazing. Transparent, so the driver is visible in the cabin
+## — it used to be an opaque dark panel (alpha 1.0), which meant David could not be
+## seen inside the car no matter where he was seated.
+##
+## ALPHA_DEPTH_PRE_PASS, not plain alpha: the pre-pass writes depth first so the
+## near and far glazing of the same car sort correctly against each other. Cached
+## like every other material here, so all six cars share one instance.
+static func _car_glass() -> StandardMaterial3D:
+	var key := "car_glass"
+	var hit: Variant = _cache.get(key)
+	if hit != null:
+		return hit as StandardMaterial3D
+	var m := StandardMaterial3D.new()
+	m.albedo_color = Color(0.40, 0.47, 0.54, 0.30)
+	m.roughness = 0.06
+	m.metallic = 0.0
+	m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA_DEPTH_PRE_PASS
+	# Back-face culling stays ON. The bodyshell is closed, so drawing both faces of
+	# every pane doubles the transparent-pass cost for nothing.
+	_cache[key] = m
+	return m
 
 
 static func _car_surface_kind(part: String) -> StringName:
@@ -87,7 +130,7 @@ static func dress_car(root: Node3D, paint: Color = Color(0.78, 0.80, 0.84)) -> v
 		var part := _part_name(mi)
 		var kind := _car_surface_kind(part)
 		if kind == &"glass":
-			mi.material_override = _mat(GLASS, 0.10, 0.05)
+			mi.material_override = _car_glass()
 		elif kind == &"rubber":
 			mi.material_override = _mat(RUBBER, 0.94)
 		elif kind == &"trim":
@@ -96,12 +139,16 @@ static func dress_car(root: Node3D, paint: Color = Color(0.78, 0.80, 0.84)) -> v
 			mi.material_override = _mat(paint, 0.32, 0.18)
 
 
+## The `p == "tree"` test that used to be here is why one in five street trees
+## rendered entirely brown: `tree_a.glb`'s single mesh node is named exactly
+## "tree" while b–e are "tree.001".."tree.004", so only tree_a matched and got
+## painted bark from trunk to crown. These models are one primitive each with no
+## UVs and no materials, so a whole tree can only ever be one flat colour —
+## canopy green is the right one, and a trunk needs actual trunk geometry.
 static func _plant_surface_kind(part: String) -> StringName:
 	var p := part.to_lower()
-	if "trunk" in p or "bark" in p or "stem" in p or p == "tree":
+	if "trunk" in p or "bark" in p or "stem" in p:
 		return &"bark"
-	if "leaf" in p or "leaves" in p or "canopy" in p or "branch" in p:
-		return &"canopy"
 	return &"canopy"
 
 

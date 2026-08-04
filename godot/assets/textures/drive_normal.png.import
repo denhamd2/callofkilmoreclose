@@ -2,9 +2,9 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://c1maoga84i146"
-path.s3tc="res://.godot/imported/texture-a.png-04f96b2eb31e65e0fcdd5f917985ef9a.s3tc.ctex"
-path.etc2="res://.godot/imported/texture-a.png-04f96b2eb31e65e0fcdd5f917985ef9a.etc2.ctex"
+uid="uid://bxgw1xk71db0s"
+path.bptc="res://.godot/imported/drive_normal.png-5bbe0a1c7491d037a3f7b40a267bc21c.bptc.ctex"
+path.astc="res://.godot/imported/drive_normal.png-5bbe0a1c7491d037a3f7b40a267bc21c.astc.ctex"
 metadata={
 "imported_formats": ["s3tc_bptc", "etc2_astc"],
 "vram_texture": true
@@ -12,18 +12,18 @@ metadata={
 
 [deps]
 
-source_file="res://assets/models/characters/Textures/texture-a.png"
-dest_files=["res://.godot/imported/texture-a.png-04f96b2eb31e65e0fcdd5f917985ef9a.s3tc.ctex", "res://.godot/imported/texture-a.png-04f96b2eb31e65e0fcdd5f917985ef9a.etc2.ctex"]
+source_file="res://assets/textures/drive_normal.png"
+dest_files=["res://.godot/imported/drive_normal.png-5bbe0a1c7491d037a3f7b40a267bc21c.bptc.ctex", "res://.godot/imported/drive_normal.png-5bbe0a1c7491d037a3f7b40a267bc21c.astc.ctex"]
 
 [params]
 
 compress/mode=2
-compress/high_quality=false
+compress/high_quality=true
 compress/lossy_quality=0.7
 compress/uastc_level=0
 compress/rdo_quality_loss=0.0
 compress/hdr_compression=1
-compress/normal_map=0
+compress/normal_map=1
 compress/channel_pack=0
 mipmaps/generate=true
 mipmaps/limit=-1

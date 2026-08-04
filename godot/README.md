@@ -1,6 +1,8 @@
 # Call of Kilmore Close — Godot 4.7 port
 
-**Phases 1–7 frozen** (`godot-frozen`). Active outdoor-detail branch: `claude/godot-phase-grass-verges` (grass / verges / gardens only; sky locked).
+**Forward+ (Vulkan/Metal), desktop-first.** Android was dropped deliberately —
+see [HANDOFF.md](HANDOFF.md). The cast roam a navmesh and fight unprompted;
+every actor has health.
 
 **Handoff:** read [HANDOFF.md](HANDOFF.md) — setup, validation gates, reference-match summary, platform notes.
 
@@ -149,19 +151,20 @@ that side is a punch. `GET IN` and `JUMP` are buttons, bottom right.
 | House archetype | Cream pebbledash, salmon mid-panels, brown frames, lean-to porch roofs, gutters/downpipes, garage at driveway end |
 | David | Third-person Quaternius mannequin, skeletal locomotion (idle/walk/jog/sprint), melee + raycast pistol |
 | Camera | Over-the-shoulder spring-arm boom with wall collision |
-| Car | Parked at the kerb outside 18; enter, drive, exit (static glTF mesh, kinematic drive) |
-| Cast | MickMcCabe, Deco McCabe, Oysters, Angela Carpenter, Paddy Mason — Quaternius mannequins at front doors, idle/talking anims, jacket tints, no combat AI |
+| Car | Parked at the kerb outside 18; enter, drive, exit (RigidBody, Pogo raycast suspension) |
+| Cast | MickMcCabe, Deco McCabe, Oysters, Angela Carpenter, Paddy Mason — navmesh roaming, factions (McCabes vs residents), mixed loadouts, health |
 | Street dressing | Block boundary walls, driveways, trees, overhead wires, wheelie bins, kerbside parked cars |
 | Audio | Looping street ambience, cadence footsteps, melee thud (procedural, no asset files) |
 | Addresses | Numbered gate piers on every house, so you can see you are outside 18 — and no. 18 has its own door colour |
 | Lighting | Fixed overcast-bright daylight. No day/night cycle, ever |
-| Mobile | Touch control layer, GL Compatibility renderer, Android + macOS export presets |
+| Renderer | Forward+ with SSAO/SSIL/SSR/glow/volumetric fog/SDFGI, 4096 PCSS shadows, 4x MSAA |
 
 ### What it deliberately does **not** contain
 
-Stated plainly so nobody goes looking: no combat AI, no interiors, no mission
-logic, no music or voice acting. Cast members are street presence only (idle /
-talking skeletal anims, not pathfinding).
+Stated plainly so nobody goes looking: no interiors, no mission logic, no music
+or voice acting, no traffic. Characters are untextured Quaternius mannequins —
+the animation-library glTF *is* the body and ships with zero textures, so making
+them look like people is an asset decision, not a code one.
 
 ---
 
@@ -220,20 +223,28 @@ Extending the slice to the full length of the road is two constants.
 material rather than per object. The whole street is roughly a dozen draw calls
 instead of ~400. This is the main reason it should hold up on a basic phone.
 
-**The Compatibility (OpenGL ES 3.0) renderer, on desktop too.** The docs name
-it as the renderer for low-end hardware. Using it on both platforms means
-desktop shows you what the phone renders — there is no second visual path to
-keep in sync and be surprised by.
+**Forward+ (Vulkan, Metal on macOS).** This was originally Compatibility on both
+platforms, so that desktop showed you exactly what the phone rendered. That was
+sound while Android was the target, but Compatibility cannot do SSAO, SSIL, SSR,
+volumetric fog or mesh LOD *at all* — it capped the ceiling — and it was actively
+broken here: Sky3D's shaders treat it as a special case and the sky rendered
+black. Dropping mobile bought the whole post-processing stack and fixed a bug.
 
-**Glass is opaque.** A transparent material pushes the surface into the
-alpha-blended pass, which is the most expensive thing you can do on a mobile
-tiled GPU. A dark, low-roughness opaque panel reads as glass at street
-distance.
+**Glass is transparent, via a depth pre-pass.** It used to be opaque, because
+alpha blending is the most expensive thing you can do on a mobile tiled GPU. With
+mobile gone it is real glass with SSR behind it — but note the ~700 panes live in
+three MultiMesh batches with no intra-batch depth sort, so it uses
+`TRANSPARENCY_ALPHA_DEPTH_PRE_PASS`. That writes depth first and therefore sorts;
+plain alpha blending sorts the panes wrong against each other.
 
-**The car is kinematic, not a `VehicleBody3D`.** Godot's raycast vehicle needs
-suspension and friction tuning and gets unstable when the physics tick suffers
-— which is exactly what happens on a slow phone. A kinematic bicycle model is
-stable at any timestep and behaves identically on both platforms.
+**The car is a RigidBody3D on RVCE Pogo raycast suspension.** It was kinematic,
+on the argument that Godot's raycast vehicle gets unstable when the physics tick
+suffers on a slow phone. That argument left with the phone. One trap worth
+knowing: `golf_mk4.glb` is a Blender export with no axis conversion — Z-up and
+Y-forward — and its axes must be read from the named parts (`Tyre` vs `Roof`,
+front vs rear lights) rather than the bounding box, because the model is 1.49 m
+both wide and tall. The correction lives in `golf_mk4_visual.tscn` so the five
+parked cars inherit it too.
 
 **There is only one camera.** Driving does not hand over to a vehicle camera;
 it moves David into the driver's seat each physics step, so his own camera
@@ -277,14 +288,21 @@ documented swap path.
 ## Validating
 
 ```sh
-python3 godot/tools/validate_project.py
-godot --path godot --headless -- --probe
+python3 godot/tools/validate_project.py     # structural; must print OK
+godot --path godot --headless -- --probe    # gameplay/nav/combat; must exit 0
+godot --path godot -- --shot                # windowed; writes godot/shots/
+godot --path godot -- --profile             # windowed; real render budget
 ```
 
-Optional performance snapshot:
+`--headless` uses a dummy RenderingDevice: it proves gameplay, navigation and
+combat, but **not one pixel**, and every `RENDER_*` monitor reads 0. Rendering
+changes need `--shot` and human eyes.
+
+Adding a new `class_name` needs an editor rescan first, or every reference fails
+to parse with "Could not find type":
 
 ```sh
-godot --path godot --headless -- --profile
+godot --path godot --headless --editor --quit
 ```
 
 Catches broken resource references, missing files, load-order mistakes and

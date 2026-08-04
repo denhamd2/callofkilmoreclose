@@ -16,6 +16,13 @@ const CLIP_MELEE := &"Punch_Jab"
 const CLIP_MELEE_ALT := &"Punch_Cross"
 const CLIP_MELEE_ENTER := &"Punch_Enter"
 const CLIP_SHOOT := &"Pistol_Shoot"
+## Hit reactions. Both clips ship in the Quaternius library and were unused, so
+## damage previously produced no visible response at all.
+const CLIP_HIT_CHEST := &"Hit_Chest"
+const CLIP_HIT_HEAD := &"Hit_Head"
+## The library ships no get-up clip; this is an authored stand-up-from-seated and
+## is the nearest equivalent.
+const CLIP_GET_UP := &"Sitting_Exit"
 const CLIP_JUMP_START := &"Jump_Start"
 const CLIP_JUMP_LOOP := &"Jump"
 const CLIP_JUMP_LAND := &"Jump_Land"
@@ -28,12 +35,15 @@ var _player: AnimationPlayer = null
 var _tree: AnimationTree = null
 var _playback: AnimationNodeStateMachinePlayback = null
 var _action_until := 0.0
+var _action_priority := 0
+var _action_duration := 0.0
 var _driving := false
 var _talking := false
 var _dead := false
 var _jump_phase := 0
 var _current_locomotion := &""
 var _melee_alt := false
+var _flinch_alt := false
 
 
 func setup(body: Node3D) -> void:
@@ -84,24 +94,20 @@ func set_locomotion(
 		_jump_phase = 0
 
 	var state := &"idle"
-	var speed_scale := 1.0
 	if speed > 0.35:
 		if sprinting and speed > walk_ref * 0.85:
-			if speed > sprint_ref * 0.92:
-				state = &"sprint"
-				speed_scale = clampf(speed / sprint_ref, 0.9, 1.18)
-			else:
-				state = &"jog"
-				speed_scale = clampf(speed / sprint_ref, 0.85, 1.1)
+			state = &"sprint" if speed > sprint_ref * 0.92 else &"jog"
 		elif speed > walk_ref * 0.55:
 			state = &"jog"
-			speed_scale = clampf(speed / sprint_ref, 0.85, 1.1)
 		else:
 			state = &"walk"
-			speed_scale = clampf(speed / walk_ref, 0.82, 1.12)
 
 	_travel(state)
-	_player.speed_scale = speed_scale
+	# There is deliberately no `_player.speed_scale` write here. While the
+	# AnimationTree is active it owns the player, so setting the player's
+	# speed_scale did nothing at all — it just looked like the clips were being
+	# time-matched to the movement speed. Real locomotion time-scaling needs the
+	# state machine wrapped in a BlendTree with an AnimationNodeTimeScale.
 
 
 func play_melee(duration: float) -> void:
@@ -112,6 +118,71 @@ func play_melee(duration: float) -> void:
 
 func play_shoot(duration: float) -> void:
 	_play_action(CLIP_SHOOT, duration)
+
+
+## KNOCKDOWN — thrown by a vehicle.
+##
+## The library has no prone clip and no get-up clip, so this is assembled from
+## what exists. `_play_action()` switches the AnimationTree off and drives the
+## AnimationPlayer directly; because nothing resumes the tree until
+## `set_locomotion()` is next called, a non-looping clip is left parked on its
+## final frame — which is how DOWN gets a "lying on the ground" pose for free.
+
+## Tumbling through the air. Reuses the jump loop, which is a held airborne pose
+## and so reads correctly for an arbitrary flight time.
+func play_knock_airborne() -> void:
+	_play_action(CLIP_JUMP_LOOP, 9999.0, Priority.KNOCK)
+
+
+## Landed and prone. Death01 is the only clip in the library that ends on the
+## floor; the long duration keeps the tree off so the final frame holds.
+func play_knock_down() -> void:
+	_play_action(CLIP_DEATH, 9999.0, Priority.KNOCK)
+
+
+## Standing back up. `Sitting_Exit` is an authored stand-up-from-seated and is the
+## closest thing the library has to a get-up.
+func play_get_up(duration: float) -> void:
+	_play_action(CLIP_GET_UP, duration, Priority.KNOCK)
+
+
+## Hand control back to the locomotion state machine after a knockdown. The action
+## timer is cleared explicitly because the knockdown clips are parked with a
+## deliberately huge duration that would otherwise block `set_locomotion()`.
+func reset_after_knock() -> void:
+	_action_until = 0.0
+	_action_priority = 0
+	_action_duration = 0.0
+	_jump_phase = 0
+	_current_locomotion = &""
+	_resume_tree_if_needed()
+
+
+## Stagger on taking damage. Alternates chest and head so repeated hits do not
+## look like one clip stuttering.
+## Duration defaults to the real clip length. `Hit_Head` is 0.433 s and `Hit_Chest`
+## 0.333 s; the old hardcoded 0.35 s truncated the head reaction at 81%.
+func play_flinch(duration: float = 0.0) -> void:
+	if _dead:
+		return
+	# No flinch while thrown by a car — it yanks a prone body upright, and
+	# CastMember skips the animator block while knocked so nothing resumes.
+	if _action_priority >= Priority.KNOCK \
+			and Time.get_ticks_msec() / 1000.0 < _action_until:
+		return
+	var clip := CLIP_HIT_HEAD if _flinch_alt else CLIP_HIT_CHEST
+	_flinch_alt = not _flinch_alt
+	var d := duration
+	if d <= 0.0:
+		d = _clip_length(clip)
+	_play_action(clip, d, Priority.FLINCH)
+
+
+## Real length of a clip, so action windows match the animation instead of a guess.
+func _clip_length(clip: StringName) -> float:
+	if _player == null or not _player.has_animation(clip):
+		return 0.35
+	return _player.get_animation(clip).length
 
 
 func set_driving(active: bool) -> void:
@@ -128,9 +199,20 @@ func set_talking(active: bool) -> void:
 		_travel(&"idle")
 
 
+## Death, as a top-priority one-shot rather than a state-machine transition.
+##
+## The state machine route was doubly broken. There is no transition edge into
+## `death` except from `idle`, so `travel()` silently found no path and anyone
+## killed while moving died standing up. And `_playback.start()` only has any effect
+## while the tree is ACTIVE — but `Health.apply()` emits `damaged` before `died`, so
+## the flinch had already switched the tree off and handed the AnimationPlayer a
+## `Hit_Chest`; `_dead` then blocked every resume path, so `Death01` never ran at
+## all. Playing it directly at DEATH priority cannot be pre-empted by anything.
 func play_death() -> void:
 	_dead = true
-	_travel(&"death")
+	_action_priority = 0     # let DEATH through even mid-flinch
+	_play_action(CLIP_DEATH, _clip_length(CLIP_DEATH) + 600.0, Priority.DEATH)
+	_current_locomotion = &"death"
 
 
 func reset_alive() -> void:
@@ -190,21 +272,61 @@ func _travel(state: StringName) -> void:
 	_playback.travel(state)
 
 
-func _play_action(clip: StringName, duration: float) -> void:
+## One-shot priorities. Without these every action silently overwrote every other:
+## a diagnostic showed a 0.333 s flinch being replaced by `Pistol_Shoot` after
+## ~0.1 s, because an armed actor fires every 0.14-0.32 s. Getting shot has to
+## outrank shooting, and dying has to outrank everything.
+enum Priority { ATTACK = 1, FLINCH = 2, KNOCK = 3, DEATH = 4 }
+
+## Fraction of an in-progress action that must elapse before an action of the SAME
+## priority may restart it. Stops sustained fire from re-triggering a flinch three
+## times per clip so it never visibly develops.
+const RETRIGGER_AFTER := 0.6
+
+
+func _play_action(clip: StringName, duration: float,
+		priority: int = Priority.ATTACK) -> void:
 	if _player == null or not _player.has_animation(clip):
 		return
-	_action_until = Time.get_ticks_msec() / 1000.0 + duration
+	var now := Time.get_ticks_msec() / 1000.0
+	if now < _action_until:
+		# Something is already playing. Only a strictly higher priority interrupts;
+		# an equal one has to wait until the current clip is mostly done.
+		if priority < _action_priority:
+			return
+		if priority == _action_priority:
+			var elapsed := _action_duration - (_action_until - now)
+			if _action_duration > 0.0 and elapsed < _action_duration * RETRIGGER_AFTER:
+				return
+	_action_priority = priority
+	_action_duration = duration
+	_action_until = now + duration
 	if _tree != null:
 		_tree.active = false
 	_player.speed_scale = 1.0
 	_player.play(clip, BLEND_TIME * 0.5)
 
 
+## One-shot actions run by switching the AnimationTree off and driving the
+## AnimationPlayer directly, so turning it back on has to re-seat the state
+## machine. Without this the playback stays stopped and `_travel()` no-ops —
+## `_current_locomotion` still names the state we were in before the action — so
+## the tree outputs nothing and the skeleton sits in its rest T-pose. Every actor
+## froze permanently on their first jump, punch or shot; David froze at spawn,
+## because `main.gd` drops him 0.3 m and the landing counts as an action.
 func _resume_tree_if_needed() -> void:
 	if _tree == null or _dead:
 		return
-	if not _tree.active:
-		_tree.active = true
+	if _tree.active:
+		return
+	_tree.active = true
+	if _playback == null:
+		return
+	var state := _current_locomotion
+	if state == &"" or not _tree.tree_root.has_node(state):
+		state = &"idle"
+	_playback.start(state)
+	_current_locomotion = state
 
 
 func _update_jump(on_floor: bool) -> void:
