@@ -385,7 +385,11 @@ export class WorldSystem {
     // altitude rather than a timer, so it is right at any time of day.
     const sky = this._sky ?? (this._sky = ctx.peek('sky'));
     const alt = sky?.sunAltitude ?? 0.6;
-    const mix = 1 - Math.min(1, Math.max(0, (alt + 0.05) / 0.16));
+    // Ramp starts at ~11 degrees of sun altitude rather than ~6.3. Irish
+    // street lighting comes on well before the sun is physically down,
+    // especially under this sky's 0.78 cloud cover, and the old window was so
+    // narrow the lamps only lit for a few minutes either side of sunset.
+    const mix = 1 - Math.min(1, Math.max(0, (alt + 0.02) / 0.20));
     if (Math.abs(mix - this._lampMix) > 0.01) {
       this._lampMix = mix;
       for (let i = 0; i < this.lamps.length; i++) this.lamps[i].intensity = 14 * mix;

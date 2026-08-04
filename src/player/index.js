@@ -122,6 +122,9 @@ export class PlayerSystem {
      * does not spin back to a default when the stick is released.
      */
     this._bodyYaw = 0;
+    this._boomLen = 3.1;
+    this._boomPivot = new THREE.Vector3();
+    this._boomBack = new THREE.Vector3();
     this._bodyYawWanted = 0;
     /** Seconds since the last shot — holds the body facing the crosshair. */
     this._sinceFire = 99;
@@ -225,8 +228,25 @@ export class PlayerSystem {
     on('bullet:impact', (e) => this._onBulletImpact(e));
     // Firing pins the body to the crosshair for a moment, so a shot taken while
     // running does not leave David shooting sideways.
+    /**
+     * Drive David's BODY from the weapon events.
+     *
+     * The player's body was built through the same factory the AI use but never
+     * received a single one-shot — `animator.fire()`, `.reload()`, `.melee()`
+     * were only ever called for AI agents. Firing produced no upper-body motion
+     * on the character you are looking at, a 2.9 s reload animated nothing, and
+     * a punch was completely invisible.
+     */
     on('weapon:fire', () => {
       this._sinceFire = 0;
+      this.body?.animator?.fire?.(1);
+    });
+    on('weapon:reload', (e) => {
+      if (e?.phase === 'start') this.body?.animator?.reload?.(2.4);
+    });
+    on('weapon:melee', (e) => {
+      // A connect swings harder than a whiff.
+      this.body?.animator?.melee?.(e?.kick === true, e?.hit ? 1.15 : 0.85);
     });
 
     console.info(
@@ -334,7 +354,7 @@ export class PlayerSystem {
     // skipped when control is disabled, so running the boom regardless yanked
     // the camera off whatever transform a cutscene or the shot harness had set,
     // using a stale aimOrigin.
-    if (this.controlEnabled) this._applyBoom(ctx);
+    if (this.controlEnabled) this._applyBoom(dt, ctx);
 
     this.lowHealthPass?.sync(this.health);
     this._syncHitbox();
@@ -452,41 +472,79 @@ export class PlayerSystem {
    * through geometry. A sphere cast rather than a ray: a ray slips through the
    * corner of a wall and lands the camera inside a house.
    */
-  _applyBoom(ctx) {
+  /**
+   * The third-person boom.
+   *
+   * This was a direct assignment — the camera was welded to a point computed
+   * from the aim basis, with no lag, no lead and no smoothing. Three things
+   * were wrong with that and all three are addressed here.
+   *
+   * COLLISION RECOVERY IS ASYMMETRIC. The sphere cast pulls the camera in when
+   * something comes between it and David, which has to be instant or the
+   * geometry clips through frame. But the old code also pushed it back OUT
+   * instantly, so clearing a gatepost popped the camera from 0.55 m to 3.1 m in
+   * a single frame — the loudest artefact in the build. Coming out is now
+   * rate-limited.
+   *
+   * LOOK-AHEAD. The pivot leads in the direction of travel, so running down the
+   * street shows more of where you are going than where you have been.
+   *
+   * SPEED RESPONSE. The arm lengthens a little at a sprint, which reads as the
+   * shot opening up rather than the FOV alone doing the work.
+   */
+  _applyBoom(dt, ctx) {
     const cam = ctx.camera;
     this._boomDir.copy(this.rig.forward).normalize();
     this._boomRight.crossVectors(this._boomDir, this._boomUp).normalize();
 
-    // Aim pulls the camera in and over — the same move GTA makes when you raise
-    // the sights, so the shoulder stops eating the middle of the screen.
     const t = clamp01(this.adsAmount);
-    const dist = lerp(TP.distance, TP.adsDistance, t);
     const side = lerp(TP.shoulder, TP.adsShoulder, t);
 
-    this._boomDesired
-      .copy(this.aimOrigin)
-      .addScaledVector(this._boomRight, side)
-      .addScaledVector(this._boomUp, TP.height)
-      .addScaledVector(this._boomDir, -dist);
+    // Speed opens the arm; aiming closes it.
+    const spd = clamp01((this.movement.horizontalSpeed - 2.0) / 5.5);
+    const wantLen = lerp(TP.distance + TP.speedExtend * spd, TP.adsDistance, t);
 
+    // Pivot, with look-ahead. Lead is capped so a fast strafe cannot swing the
+    // pivot outside the player's own body.
+    const v = this.movement.velocity;
+    this._boomPivot.copy(this.aimOrigin);
+    this._boomPivot.x += clamp(v.x * TP.lookAhead, -TP.lookAheadMax, TP.lookAheadMax);
+    this._boomPivot.z += clamp(v.z * TP.lookAhead, -TP.lookAheadMax, TP.lookAheadMax);
+    this._boomPivot.addScaledVector(this._boomRight, side);
+    this._boomPivot.addScaledVector(this._boomUp, TP.height);
+
+    // How far can the arm actually extend before it hits something?
+    let maxLen = wantLen;
     const phys = this.physics;
     if (phys?.sphereCast) {
-      this._boomDir.copy(this._boomDesired).sub(this.aimOrigin);
-      const len = this._boomDir.length();
-      if (len > 1e-4) {
-        this._boomDir.divideScalar(len);
-        const hit = phys.sphereCast(this.aimOrigin, this._boomDir, TP.radius, len, phys.MASK.WORLD);
-        if (hit?.hit) {
-          this._boomDesired
-            .copy(this.aimOrigin)
-            .addScaledVector(this._boomDir, Math.max(TP.minDistance, hit.distance - TP.skin));
-        }
-      }
+      this._boomBack.copy(this._boomDir).negate();
+      const hit = phys.sphereCast(
+        this._boomPivot,
+        this._boomBack,
+        TP.radius,
+        wantLen,
+        phys.MASK.WORLD
+      );
+      if (hit?.hit) maxLen = Math.max(TP.minDistance, hit.distance - TP.skin);
     }
 
+    // In fast, out slow.
+    if (maxLen < this._boomLen) this._boomLen = maxLen;
+    else this._boomLen = moveToward(this._boomLen, maxLen, TP.recoverRate, dt);
+
+    this._boomDesired.copy(this._boomPivot).addScaledVector(this._boomDir, -this._boomLen);
     cam.position.copy(this._boomDesired);
     cam.updateMatrixWorld();
+
+    /**
+     * Hide David's own head when the arm is short enough that the camera is
+     * inside it. `minDistance` is 0.55 m, which is well inside the skull, and
+     * there was no fade — you saw the inside of his head.
+     */
+    const b = this.body;
+    if (b?.group) b.group.visible = !this.health.dead && this._boomLen > TP.bodyFadeDistance;
   }
+
 
   /**
    * World-space muzzle of the weapon in David's hands, or null before the body

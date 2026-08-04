@@ -338,4 +338,15 @@ export const THIRD_PERSON = {
    * during the ~50 ms acceleration ramp.
    */
   runSpeed: 3.4,
+
+  /* ---- boom ------------------------------------------------------------- */
+  /** Metres/second the arm is allowed to extend back out after a collision. */
+  recoverRate: 3.4,
+  /** Extra arm length at full sprint. */
+  speedExtend: 0.55,
+  /** Seconds of velocity the pivot leads by, and its hard cap in metres. */
+  lookAhead: 0.14,
+  lookAheadMax: 0.85,
+  /** Below this arm length the camera is inside David, so hide his mesh. */
+  bodyFadeDistance: 0.95,
 };

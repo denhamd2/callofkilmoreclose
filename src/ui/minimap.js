@@ -29,7 +29,7 @@ export class Minimap {
     for (const c of ['tl', 'tr', 'bl', 'br']) el('div', 'ow-mm-corner ' + c, this.root);
     el('div', 'ow-mm-n', this.root, 'N');
     const tag = el('div', 'ow-mm-tag', this.root);
-    el('span', null, tag, 'ZONE 07');
+    el('span', null, tag, 'KILMORE CL');
     this.scaleTag = el('span', null, tag, '60M');
 
     this.rng = rng;

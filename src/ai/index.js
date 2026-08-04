@@ -92,7 +92,26 @@ export const KILMORE_CAST = [
  * behaviour tree is allowed to fight.
  */
 export const HOSTILES = KILMORE_CAST.map((c) => c.name);
-export const CIVILIANS = [];
+
+/**
+ * AMBIENT NEIGHBOURS — people who are not in the fight.
+ *
+ * Every named character converges on David, which left the street with seven
+ * people on it and all seven trying to kill you. A GTA street reads as alive
+ * almost entirely through pedestrians who ignore you; there were none.
+ *
+ * These reuse existing character variants (they are the same estate, the same
+ * clothes) but spawn with `hostile: false`, so `agent._sense` never acquires a
+ * target and they stay out of the combat half of the state machine entirely.
+ * They walk the footpath end to end and get on with their day.
+ */
+export const AMBIENT = [
+  { variant: 'Christopher Burgess', name: 'Neighbour', side: -1, at: 0.18 },
+  { variant: 'Angela Carpenter', name: 'Neighbour', side: 1, at: 0.55 },
+  { variant: 'Deco McCabe', name: 'Neighbour', side: -1, at: 0.78 },
+];
+
+export const CIVILIANS = AMBIENT.map((a) => a.name);
 
 export class AiSystem {
   static id = 'ai';
@@ -665,9 +684,57 @@ export class AiSystem {
       });
       made++;
     }
+    made += this._populateAmbient(world);
     this.stats.agents = this.agents.length;
     if (missing.length) console.warn(`[ai] no such house number for: ${missing.join(', ')}`);
     console.info(`[ai] Kilmore Close: ${made} of ${KILMORE_CAST.length} cast staged at their own doors`);
+    return made;
+  }
+
+  /**
+   * Ambient pedestrians walking the footpath. See AMBIENT.
+   *
+   * The route runs along the footpath centreline, not the carriageway: the
+   * paved band sits between STREET.halfWidth and STREET.kerb and the verge
+   * takes the kerb-side 0.9 m of it, so the walkable centre is about 1.35 m out
+   * from the carriageway edge.
+   */
+  _populateAmbient(world) {
+    const S = world.STREET ?? null;
+    const halfWidth = S?.halfWidth ?? 3.815;
+    const kerb = S?.kerb ?? 5.815;
+    const zMin = S?.zMin ?? -26.8;
+    const zMax = S?.zMax ?? 277.9;
+    const pathX = halfWidth + 0.9 + (kerb - halfWidth - 0.9) / 2;
+
+    let made = 0;
+    for (const a of AMBIENT) {
+      const x = a.side * pathX;
+      // Start part-way along and walk to the far end, so they are spread out
+      // rather than all setting off from the same kerb.
+      const z0 = zMin + 10 + (zMax - zMin - 20) * a.at;
+      const z1 = a.side < 0 ? zMax - 10 : zMin + 10;
+      const route = [
+        new THREE.Vector3(x, this.groundAt(x, z0, 4), z0),
+        new THREE.Vector3(x, this.groundAt(x, z1, 4), z1),
+      ];
+      const start = route[0].clone();
+      const ci = this.grid.nearest(start.x, start.z, start.y, 8, 1.4);
+      if (ci >= 0) {
+        start.set(
+          this.grid.worldX(ci % this.grid.nx),
+          this.grid.floor[ci],
+          this.grid.worldZ((ci / this.grid.nx) | 0)
+        );
+      }
+      this.spawn(a.variant, start, a.side > 0 ? Math.PI : 0, {
+        name: a.name,
+        patrol: route,
+        hostile: false,
+        team: 2,
+      });
+      made++;
+    }
     return made;
   }
 

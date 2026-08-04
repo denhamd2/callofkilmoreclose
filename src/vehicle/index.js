@@ -65,6 +65,9 @@ const ROLL_RESIST = 2.4;
 const WHEELBASE = 2.62;
 const MAX_STEER = 0.52;
 
+/** Scalar clamp — importing THREE.MathUtils for one line is not worth it. */
+const clampf = (v, lo, hi) => (v < lo ? lo : v > hi ? hi : v);
+
 export class VehicleSystem {
   static id = 'vehicle';
   static deps = ['world', 'player', 'ui', 'physics'];
@@ -75,6 +78,9 @@ export class VehicleSystem {
     this.speed = 0;
     this.steer = 0;
     this.heading = 0;
+    this._roll = 0;
+    this._pitch = 0;
+    this._prevSpeed = 0;
     this._promptShown = false;
     this._disposables = [];
 
@@ -294,11 +300,19 @@ export class VehicleSystem {
     const handbrake = input.action('jump');
 
     // longitudinal
-    if (throttle > 0) this.speed += ACCEL * dt;
+    //
+    // Acceleration falls off with speed instead of being a flat 9.5 m/s^2 to a
+    // hard limiter. A constant rate gave 0-100 km/h in 2.9 s held all the way
+    // to the cap, which is why the car felt like it was on rails and why the
+    // speed ceiling arrived as a wall. The curve stands in for torque falloff
+    // and top-end drag; it is not a gearbox, but it is the shape of one.
+    const vFrac = Math.abs(this.speed) / MAX_SPEED;
+    const pull = ACCEL * (1 - 0.72 * vFrac * vFrac);
+    if (throttle > 0) this.speed += pull * dt;
     else if (throttle < 0) {
       // Brake first, then reverse once stopped — a single key doing both is
       // what every driving game does and what players expect.
-      this.speed -= (this.speed > 0.4 ? BRAKE : ACCEL) * dt;
+      this.speed -= (this.speed > 0.4 ? BRAKE : pull) * dt;
     }
     if (handbrake) this.speed -= Math.sign(this.speed) * BRAKE * 1.3 * dt;
     // drag and rolling resistance
@@ -310,11 +324,16 @@ export class VehicleSystem {
     // steering authority falls off with speed
     const grip = 1 - Math.min(0.72, Math.abs(this.speed) / MAX_SPEED);
     const target = turn * MAX_STEER * (0.42 + 0.58 * grip);
-    this.steer += (target - this.steer) * Math.min(1, dt * 9);
+    // Exponential, not `Math.min(1, dt * k)` — the old form settled measurably
+    // faster at 144 fps than at 60.
+    this.steer += (target - this.steer) * (1 - Math.exp(-9 * dt));
 
     // kinematic bicycle: heading rate = v/L * tan(steer)
     if (Math.abs(this.speed) > 0.02) {
-      this.heading += (this.speed / WHEELBASE) * Math.tan(this.steer) * dt;
+      // Handbrake breaks rear grip rather than only retarding: it rotates the
+      // car. It used to be nothing but a bigger brake on a different key.
+      const slide = handbrake ? 1.75 : 1;
+      this.heading += (this.speed / WHEELBASE) * Math.tan(this.steer) * slide * dt;
     }
 
     const dx = Math.sin(this.heading) * this.speed * dt;
@@ -352,9 +371,26 @@ export class VehicleSystem {
     if (typeof g === 'number' && Number.isFinite(g)) {
       // Follow the road surface, but damped — the analytic height is a hint and
       // snapping to it every frame reads as jitter.
-      this.root.position.y += (g - this.root.position.y) * Math.min(1, dt * 8);
+      this.root.position.y += (g - this.root.position.y) * (1 - Math.exp(-8 * dt));
     }
     this.root.rotation.y = this.heading;
+
+    /**
+     * Body attitude. The chassis was rigid — `rotation.y` was the only value
+     * ever written, so the car never dipped under brakes, squatted under power
+     * or leaned in a corner. There is no suspension model here; this is the
+     * visible half of one, driven straight off lateral and longitudinal
+     * acceleration, which is most of what the eye reads as weight.
+     */
+    const lat = (this.speed / WHEELBASE) * Math.tan(this.steer);
+    const rollT = clampf(-lat * Math.abs(this.speed) * 0.024, -0.11, 0.11);
+    const accelNow = (this.speed - this._prevSpeed) / Math.max(1e-4, dt);
+    this._prevSpeed = this.speed;
+    const pitchT = clampf(-accelNow * 0.006, -0.055, 0.075);
+    this._roll += (rollT - this._roll) * (1 - Math.exp(-7 * dt));
+    this._pitch += (pitchT - this._pitch) * (1 - Math.exp(-6 * dt));
+    this.root.rotation.z = this._roll;
+    this.root.rotation.x = this._pitch;
 
     // wheels: steer the front pair, roll all four
     const roll = (this.speed * dt) / 0.34;

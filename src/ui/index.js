@@ -87,7 +87,13 @@ export class UiSystem {
     this.hit = new Hitmarkers(this.centreLayer);
     this.minimap = new Minimap(this.chromeLayer, this.rng.fork());
     this.compass = new Compass(this.chromeLayer);
+    /**
+     * The TDM score/timer bar. Kept constructed so `update`/`dispose` stay one
+     * code path, but hidden: a team-deathmatch scoreboard with a 600-second
+     * clock has no meaning on Kilmore Close.
+     */
     this.matchBar = new MatchBar(this.chromeLayer);
+    this.matchBar.root?.style?.setProperty('display', 'none');
     this.killfeed = new Killfeed(this.chromeLayer);
     this.weaponWheel = new WeaponWheel(this.centreLayer);
     this.ammo = new AmmoPanel(this.chromeLayer);
@@ -203,7 +209,9 @@ export class UiSystem {
           headshot: !!e.headshot,
           mine: true,
         });
-        this.banner.show('Enemy Eliminated', e.headshot ? '+150 XP · HEADSHOT' : '+100 XP');
+        // No XP, no 'Enemy Eliminated'. This is a row over a street, not a
+        // deathmatch scoreboard.
+        this.banner.show('Down', e.headshot ? 'Clean hit' : '');
         this.state.scoreUs++;
       }
     });

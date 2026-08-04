@@ -268,6 +268,56 @@ export function recoilAdd(P, t, strength = 1) {
   P.d('Head', 1.5 * k, 0.8 * k * osc, 0);
 }
 
+/**
+ * A thrown punch or kick. `t` is seconds since the strike began.
+ *
+ * There was no melee content in this file at all, so a punch was invisible:
+ * `weapons` called `viewmodel.play('melee_punch')`, that clip does not exist,
+ * `play()` returns 0 for an unknown name, and in third person the viewmodel is
+ * hidden anyway. The visible body is driven from here.
+ *
+ * Shaped as windup -> strike -> recovery rather than a single decay, because
+ * the anticipation is what makes a hit read as thrown rather than teleported.
+ * Peak extension lands at about 35% through, which is where `weapons` resolves
+ * the hit.
+ */
+export function meleeAdd(P, t, kick = false, strength = 1) {
+  const dur = kick ? 0.52 : 0.38;
+  if (t > dur) return;
+  const u = t / dur;
+  // -1 during windup, +1 at full extension, easing back to 0.
+  const swing = u < 0.32 ? -Math.sin((u / 0.32) * Math.PI * 0.5) * 0.55 : Math.sin(((u - 0.32) / 0.68) * Math.PI);
+  const k = strength * swing;
+
+  if (kick) {
+    // Leading leg drives, torso counter-rotates, arms come up for balance.
+    P.d('UpLegR', -58 * k, 0, -6 * k);
+    P.d('LegR', 42 * Math.max(0, k), 0, 0);
+    P.d('FootR', -14 * k, 0, 0);
+    P.d('UpLegL', 8 * k, 0, 0);
+    P.d('Hips', -10 * k, -12 * k, 0);
+    P.d('Spine', 9 * k, 8 * k, 0);
+    P.d('Spine1', 6 * k, 6 * k, 0);
+    P.d('UpperArmL', -22 * k, 0, -18 * k);
+    P.d('UpperArmR', -14 * k, 0, 12 * k);
+    P.d('Head', 4 * k, -5 * k, 0);
+  } else {
+    // Right cross: hips and spine rotate into it, shoulder follows through.
+    P.d('Hips', 0, -14 * k, 0);
+    P.d('Spine', 2 * k, -13 * k, 0);
+    P.d('Spine1', 2 * k, -11 * k, 0);
+    P.d('Spine2', 3 * k, -9 * k, 0);
+    P.d('ClavicleR', -6 * k, -10 * k, 4 * k);
+    P.d('UpperArmR', -46 * k, -12 * k, 10 * k);
+    P.d('ForearmR', -52 * Math.max(0, k) + 18 * Math.min(0, k), 0, 0);
+    P.d('HandR', -10 * k, 0, 0);
+    // Off hand stays up, guarding.
+    P.d('UpperArmL', -30, 0, -14);
+    P.d('ForearmL', -62, 0, 0);
+    P.d('Head', 2 * k, -4 * k, 0);
+  }
+}
+
 /** Region-specific hit reaction; `t` seconds since impact, 0.45 s long. */
 export function hitAdd(P, region, t, dirSide = 0, strength = 1) {
   if (t > 0.5) return;

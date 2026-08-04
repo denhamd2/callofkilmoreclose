@@ -234,6 +234,24 @@ export class WeaponSystem {
     return [...this.states.keys()];
   }
 
+  /** Fill `out` with the ammo view. Allocation-free counterpart to `get ammo`. */
+  _ammoInto(out) {
+    const s = this.state;
+    if (!s) {
+      out.mag = 0; out.inMag = 0; out.chambered = false; out.reserve = 0;
+      out.magSize = 0; out.total = 0; out.empty = true;
+      return out;
+    }
+    out.mag = s.mag + (s.chambered ? 1 : 0);
+    out.inMag = s.mag;
+    out.chambered = s.chambered;
+    out.reserve = s.reserve;
+    out.magSize = s.def.magSize;
+    out.total = out.mag + s.reserve;
+    out.empty = out.mag <= 0;
+    return out;
+  }
+
   get ammo() {
     const s = this.state;
     if (!s) return { mag: 0, chambered: false, reserve: 0, magSize: 0, total: 0, empty: true };
@@ -293,7 +311,10 @@ export class WeaponSystem {
     const h = this._hudState;
     const s = this.state;
     if (!s) return h;
-    const a = this.ammo;
+    // `get ammo` returns a fresh object literal, and this runs every frame —
+    // one garbage object per frame inside a method whose whole point is that
+    // its result is preallocated. Read the fields directly instead.
+    const a = this._ammoInto(this._ammoScratch ?? (this._ammoScratch = {}));
     const vm = this.viewmodel;
     h.name = s.def.label ?? s.def.id;
     h.mode = s.mode;
@@ -641,7 +662,12 @@ export class WeaponSystem {
       const r = def.recoil;
       p.addRecoil(r.pitch * (kick ? 1.4 : 1), r.yaw, r.roll, r.punch * (best ? 1.3 : 1));
     }
-    this.viewmodel.play(kick ? 'melee_kick' : 'melee_punch');
+    // The viewmodel has no melee clip and is hidden in third person anyway, so
+    // the visible animation is the BODY's. `player` listens for this.
+    const mp = this._meleeEvent ?? (this._meleeEvent = { kick: false, hit: false });
+    mp.kick = kick;
+    mp.hit = best !== null;
+    this.ctx.events.emit('weapon:melee', mp);
     this._fireTimer = (60 / def.rpm) * (kick ? 1.35 : 1);
     this._sinceShot = 0;
     this.stats.fired++;

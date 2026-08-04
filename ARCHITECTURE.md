@@ -81,6 +81,7 @@ Emit and listen via `ctx.events`. Payloads are plain objects. The canonical set:
 | `weapon:fire` | `{ weapon, origin: Vector3, dir: Vector3, seed }` | weapons |
 | `weapon:reload` | `{ weapon, phase: 'start'\|'magout'\|'magin'\|'end' }` | weapons |
 | `weapon:shell` | `{ position, velocity }` | weapons |
+| `weapon:melee` | `{ kick: bool, hit: bool }` | weapons — a punch or kick was thrown; `player` plays it on the third-person body, which is the only place melee is visible |
 | `bullet:impact` | `{ point, normal, surface, incident, damage }` | physics |
 | `bullet:tracer` | `{ from, to, speed }` | weapons |
 | `damage:dealt` | `{ target, amount, headshot, killed, point }` | ai / physics |

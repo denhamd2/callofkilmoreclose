@@ -99,7 +99,20 @@ export class Animator {
     this.time = 0;
 
     // one-shot timers (negative = inactive)
+    /** Hoisted IK weight tables — see `_aimIk` / `_lookAt`. */
+    this._aimSpread = [
+      [this.iSpine, 0.12],
+      [this.iSpine1, 0.34],
+      [this.iSpine2, 0.54],
+    ];
+    this._lookChain = [
+      [this.iNeck, 0.4],
+      [this.iHead, 0.6],
+    ];
     this.recoilT = -1;
+    this.meleeT = -1;
+    this.meleeKick = false;
+    this.meleeK = 1;
     this.recoilK = 1;
     this.hitT = -1;
     this.hitRegion = 'torso';
@@ -187,6 +200,13 @@ export class Animator {
   fire(strength = 1) {
     this.recoilT = 0;
     this.recoilK = strength;
+  }
+
+  /** Throw a punch (or a kick). Drives `meleeAdd`. */
+  melee(kick = false, strength = 1) {
+    this.meleeT = 0;
+    this.meleeKick = kick;
+    this.meleeK = strength;
   }
 
   hit(region = 'torso', side = 1, strength = 1) {
@@ -282,6 +302,11 @@ export class Animator {
       C.hitAdd(P, this.hitRegion, this.hitT, this.hitSide, this.hitK);
       this.hitT += dt;
       if (this.hitT > 0.55) this.hitT = -1;
+    }
+    if (this.meleeT >= 0) {
+      C.meleeAdd(P, this.meleeT, this.meleeKick, this.meleeK);
+      this.meleeT += dt;
+      if (this.meleeT > 0.55) this.meleeT = -1;
     }
     if (this.reloadT >= 0) {
       C.reloadAdd(P, this.reloadT / this.reloadDur);
@@ -384,11 +409,10 @@ export class Animator {
   /* ---------------- A: aim ---------------- */
 
   _aimIk(target, weight) {
-    const spread = [
-      [this.iSpine, 0.12],
-      [this.iSpine1, 0.34],
-      [this.iSpine2, 0.54],
-    ];
+    // Hoisted: this was a fresh array of three sub-arrays every call, i.e. four
+    // objects per agent per frame, plus a destructuring iterator in the loop
+    // below. `update()`'s own header claims it does not allocate.
+    const spread = this._aimSpread;
     for (let iter = 0; iter < 2; iter++) {
       const hand = this.bones[this.iHandR];
       const bore = this._v.copy(this.boreLocal).applyQuaternion(this._wq(this.iHandR, this._q2)).normalize();
@@ -416,10 +440,7 @@ export class Animator {
 
   _lookAt(target, weight) {
     // the head's forward is its local +Z
-    const chain = [
-      [this.iNeck, 0.4],
-      [this.iHead, 0.6],
-    ];
+    const chain = this._lookChain;
     for (const [bi, f] of chain) {
       const wq = this._wq(bi, this._q2);
       const fwd = this._v.set(0, 0, 1).applyQuaternion(wq);

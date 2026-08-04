@@ -134,8 +134,18 @@ export class SkySystem {
     const q = ctx.config.q;
 
     this.celestial = new Celestial();
-    this.hour = 16.5;
-    this.timeRate = 0;
+    /**
+     * Evening, and moving. This was frozen at 16.5 with `timeRate = 0`, which
+     * meant a permanent flat mid-afternoon overcast and — because the street
+     * lamps key off sun altitude — five sodium lamps that could never switch
+     * on. The most atmospheric asset in the level was disabled by a constant.
+     *
+     * 19.8 is golden hour in a Dublin summer: low warm sun, long shadows down
+     * the street, lamps ramping in as it goes. The rate is slow enough that a
+     * session drifts toward dusk rather than time-lapsing through it.
+     */
+    this.hour = 19.8;
+    this.timeRate = 0.0025;
 
     // ---- weather / atmosphere state ---------------------------------------
     this.weather = {
