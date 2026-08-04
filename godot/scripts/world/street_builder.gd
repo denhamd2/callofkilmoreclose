@@ -126,11 +126,11 @@ func _build_materials() -> void:
 	_mat["tarmac"] = _dress(_flat(Color(1, 1, 1), 0.97),
 		"res://assets/textures/tarmac.png", 0.25, Color(0.90, 0.90, 0.92))
 	_mat["path"] = _dress(_flat(Color(1, 1, 1), 0.95),
-		"res://assets/textures/path.png", 0.42, Color(0.94, 0.94, 0.92))
+		"res://assets/textures/path.png", 0.38, Color(0.76, 0.76, 0.74))
 	_mat["drive"] = _dress(_flat(Color(1, 1, 1), 0.94),
 		"res://assets/textures/drive.png", 0.45, Color(1, 1, 1))
 	_mat["kerb"] = _dress(_flat(Color(1, 1, 1), 0.92),
-		"res://assets/textures/kerb.png", 0.9, Color(1, 1, 1))
+		"res://assets/textures/kerb.png", 0.9, Color(0.82, 0.82, 0.80))
 	_mat["grass"] = _dress(_flat(Color(1, 1, 1), 0.98),
 		"res://assets/textures/grass.png", 0.35, Color(0.92, 0.98, 0.88))
 	_mat["hedge"] = _dress(_flat(Color(1, 1, 1), 0.98),
@@ -482,11 +482,19 @@ func _spawn_static_trees() -> void:
 			continue
 		tree.name = "StreetTree"
 		tree.position = spot
+		MeshDress.dress_tree(tree)
 		_disable_shadows(tree)
 		add_child(tree)
 
 
 func _spawn_static_cars() -> void:
+	var paints: Array = [
+		Color(0.78, 0.80, 0.84),
+		Color(0.12, 0.14, 0.16),
+		Color(0.55, 0.58, 0.62),
+		Color(0.22, 0.32, 0.48),
+		Color(0.72, 0.74, 0.76),
+	]
 	var spots: Array = [
 		[Vector3(-(KilmoreClose.HALF_WIDTH - 0.95), 0.0, 30.0), 0.0],
 		[Vector3(KilmoreClose.HALF_WIDTH - 0.95, 0.0, 68.0), PI],
@@ -494,13 +502,15 @@ func _spawn_static_cars() -> void:
 		[Vector3(KilmoreClose.HALF_WIDTH - 0.95, 0.0, 188.0), -0.08],
 		[Vector3(-(KilmoreClose.HALF_WIDTH - 0.95), 0.0, 228.0), 0.0],
 	]
-	for spot in spots:
+	for i in spots.size():
+		var spot: Array = spots[i]
 		var car := _CAR_MESH.instantiate() as Node3D
 		if car == null:
 			continue
 		car.name = "ParkedCar"
 		car.position = spot[0]
 		car.rotation.y = spot[1]
+		MeshDress.dress_car(car, paints[i % paints.size()])
 		_disable_shadows(car)
 		add_child(car)
 

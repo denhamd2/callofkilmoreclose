@@ -64,11 +64,14 @@ var _prompt_shown := false
 var _player: DavidController = null
 
 @onready var _prompt: Label = get_node_or_null("../HUD/Prompt")
+@onready var _mesh: Node3D = $Mesh
 
 
 func _ready() -> void:
 	_heading = rotation.y
 	PlayerInput.interact_pressed.connect(_on_interact)
+	if _mesh != null:
+		MeshDress.dress_car(_mesh, Color(0.36, 0.11, 0.13))
 
 
 ## Park the car. Use this rather than assigning `global_transform` directly:

@@ -97,9 +97,13 @@ def gen_path() -> None:
         for x in range(w):
             slab_x = x % 64
             slab_y = y % 64
-            joint = slab_x < 2 or slab_y < 2 or slab_x > 61 or slab_y > 61
-            v = 175 if joint else 198 + ((x * 7 + y * 13) % 9)
-            px.append((v, v, v - 2))
+            joint = slab_x < 3 or slab_y < 3 or slab_x > 60 or slab_y > 60
+            speck = ((x * 11 + y * 17) % 7) - 3
+            if joint:
+                v = 128 + speck
+            else:
+                v = 168 + speck
+            px.append((v, v - 1, v - 3))
     _save_png(TEX_DIR / "path.png", w, h, px)
 
 

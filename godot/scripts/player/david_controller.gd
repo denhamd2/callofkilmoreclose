@@ -86,6 +86,8 @@ func _ready() -> void:
 	_melee_query.exclude = skip
 	PlayerInput.jump_pressed.connect(_on_jump)
 	PlayerInput.melee_pressed.connect(_on_melee)
+	if _body != null:
+		MeshDress.dress_person(_body)
 
 
 func _physics_process(delta: float) -> void:
