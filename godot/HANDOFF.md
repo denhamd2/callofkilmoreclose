@@ -1,12 +1,12 @@
 # Kilmore Close — Godot handoff (frozen)
 
-**Status:** Phases 1–5 complete and frozen. **Do not add features on this branch.**
+**Status:** Phases 1–6 complete and frozen. **Do not add features on this branch.**
 
 | Item | Value |
 |---|---|
 | Engine | Godot **4.7.1** (4.7.x stable) |
-| Frozen branch | `claude/godot-phase-5-visual-polish` |
-| Frozen commit | tag `godot-phase-5` |
+| Frozen branch | `claude/godot-phase-6-reference-match` |
+| Frozen commit | tag `godot-phase-6` |
 | Project root | `godot/project.godot` |
 | Three.js prototype | `../src/` — **not used by Godot; do not wire back** |
 
@@ -19,7 +19,8 @@
 - [x] Phase 3 — procedural audio (ambience, footsteps, melee thud)
 - [x] Phase 4 — performance profile + collision/shadow hardening
 - [x] Phase 5 — visual polish (street textures, car/person glTF; play loop unchanged)
-- [x] Tags: `godot-phase-1` … `godot-phase-5`
+- [x] Phase 6 — reference match (walls/driveways/facade trim/street dressing/overcast sky)
+- [x] Tags: `godot-phase-1` … `godot-phase-6`
 - [x] Export presets: Android, macOS, Linux (project-level; SDK/templates per machine)
 - [ ] **You:** Install Godot 4.7.1 + export templates locally
 - [ ] **You:** Run validation gates below before any new work
@@ -38,7 +39,7 @@ safety (disabled headless), collision budget (≤ 35 shapes).
 
 ---
 
-## What phases 1–5 accomplished
+## What phases 1–6 accomplished
 
 | Phase | Tag | Delivered |
 |---|---|---|
@@ -47,16 +48,17 @@ safety (disabled headless), collision budget (≤ 35 shapes).
 | **3** | `godot-phase-3` | `StreetAudio` autoload: looping ambience, cadence footsteps, melee thud — all procedural, no asset files |
 | **4** | `godot-phase-4` | Profiled street cost; collision shapes 185→27; MultiMesh shadows limited to wall/roof; probe collision budget |
 | **5** | `godot-phase-5` | Tileable street materials (triplanar MultiMesh dress); low-poly `car.glb` / `person.glb`; cast jacket tints preserved |
+| **6** | `godot-phase-6` | Reference-matched boundaries (block walls, driveways), facade trim (brown frames, mid panels, gutters/pipes, porch roofs), trees/wires/bins/parked cars, overcast sky grade |
 
 ### Architecture decisions (frozen — do not reopen)
 
 - Custom third-person controller, SpringArm camera, touch controls, InputMap bridge
 - `gl_compatibility` renderer on desktop **and** mobile (same visual path)
-- One fixed DirectionalLight3D — **no day/night, ever**
+- One fixed DirectionalLight3D — **no day/night cycle** (overcast grade is still permanent)
 - Street built from `data/kilmore_close.gd` via MultiMesh batching
 - Kinematic car (not `VehicleBody3D`)
 - No third-party addons
-- Phase 5 art stays on shared materials + few static glTFs (no skeletal animation, no per-house meshes)
+- Phase 6 art stays on shared materials + few static glTFs (no skeletal animation, no per-house meshes)
 
 ---
 
@@ -110,7 +112,7 @@ Full step-by-step: see [README.md](README.md) § “Run it on Android”.
 - Landscape, touch stick + drag-look + buttons
 - Same `gl_compatibility` renderer as desktop
 - Audio should play on boot (ambience), when walking (footsteps), on melee hit (thud)
-- Street textures and car/cast meshes should read under midday light without fill-rate stalls
+- Street should read as suburban Dublin under overcast daylight without fill-rate stalls
 
 ---
 
@@ -122,9 +124,9 @@ Do **not** expect these on the frozen branch; they require a **new phase** and *
 - Weapons beyond unarmed melee
 - Interiors, enterable houses, damage/health systems
 - Skeletal animation / animation trees
-- Full house glTF library, vegetation packs, plaque meshes for every gate
+- Full house glTF library, per-gate plaque meshes, traffic simulation
 - Music, voice acting, dialogue trees
-- Day/night, weather, crowds, traffic simulation
+- Day/night, weather, crowds, dynamic traffic
 - Map expansion beyond measured Kilmore Close data
 - Changes to `../src/` (Three.js prototype)
 - New export targets or addon churn
@@ -136,30 +138,30 @@ Do **not** expect these on the frozen branch; they require a **new phase** and *
 
 | Branch | Role |
 |---|---|
-| `claude/godot-phase-5-visual-polish` | **Frozen reference** (use this) |
+| `claude/godot-phase-6-reference-match` | **Frozen reference** (use this) |
+| `claude/godot-phase-5-visual-polish` | Phase 5 snapshot |
 | `claude/godot-phase-4-performance` | Phase 4 snapshot |
 | `claude/godot-phase-3-audio` | Phase 3 snapshot |
-| `claude/kilmore-close-restoration-672ceg` | Phase 1–2 Godot + early Three.js work history |
 | `main` | Upstream fork root (CLAUDE.md only; Godot lives on branches above) |
 
 To resume development:
 
 ```sh
-git checkout claude/godot-phase-5-visual-polish
-git checkout -b claude/godot-phase-6-<scope>
+git checkout claude/godot-phase-6-reference-match
+git checkout -b claude/godot-phase-7-<scope>
 ```
 
 ---
 
-## Release notes (v0.3.0 — frozen)
+## Release notes (v0.4.0 — frozen)
 
-**Kilmore Close — Godot port, phases 1–5**
+**Kilmore Close — Godot port, phases 1–6**
 
-- Walk and drive a full measured Kilmore Close street in fixed bright daylight
+- Walk and drive a full measured Kilmore Close street in fixed overcast daylight
 - David spawns outside number 18; car at the kerb
 - Five named neighbours idle at their doors
 - Procedural street audio
-- Street dressed with shared tileable materials; car and people are static glTF (not primitive boxes)
+- Reference-matched suburban dressing: block walls, driveways, brown trim, gutters/pipes, trees, wires, bins, kerbside parked cars
 - Optimised for mobile: MultiMesh street, 27 collision shapes, wall/roof shadows only, VRAM-compressed textures
 - macOS and Android export presets included
 
@@ -169,4 +171,4 @@ git checkout -b claude/godot-phase-6-<scope>
 
 ## Final freeze verdict
 
-This branch is **ready to stop**. It is the authoritative Godot artifact through phase 5. Any further work must branch from `godot-phase-5` with an explicit new scope — not incremental edits here.
+This branch is **ready to stop**. It is the authoritative Godot artifact through phase 6. Any further work must branch from `godot-phase-6` with an explicit new scope — not incremental edits here.

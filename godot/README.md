@@ -1,6 +1,6 @@
 # Call of Kilmore Close — Godot 4.7 port
 
-**Phases 1–5 complete and frozen.** Reference branch: `claude/godot-phase-5-visual-polish`, tag `godot-phase-5`.
+**Phases 1–6 complete and frozen.** Reference branch: `claude/godot-phase-6-reference-match`, tag `godot-phase-6`.
 
 **Handoff:** read [HANDOFF.md](HANDOFF.md) for setup, validation gates, platform notes, and what is out of scope. Do not add features on the frozen branch.
 
@@ -11,6 +11,7 @@
 | 3 | `godot-phase-3` | Procedural ambience, footsteps, melee thud |
 | 4 | `godot-phase-4` | Performance profile; collision/shadow hardening |
 | 5 | `godot-phase-5` | Street materials + car/person glTF visual polish |
+| 6 | `godot-phase-6` | Reference match: walls, driveways, facade trim, street dressing, overcast sky |
 
 This directory is a **complete, self-contained Godot project**. It does not
 share code with the Three.js prototype in `../src`, and nothing here imports
@@ -136,14 +137,15 @@ that side is a punch. `GET IN` and `JUMP` are buttons, bottom right.
 | | |
 |---|---|
 | Street | Full Kilmore Close — 13 joined semi-detached pairs a side, 52 houses, at the measured spacing (~251 m housing run) |
-| House archetype | White pebbledash, painted band, 2 upstairs windows, 1 downstairs + door, porch with glazed sliding door, single-storey side garage (tileable materials) |
+| House archetype | Cream pebbledash, salmon mid-panels, brown frames, lean-to porch roofs, gutters/downpipes, garage at driveway end |
 | David | Third-person, spawns outside no. 18, unarmed / melee-ready (static glTF body) |
 | Camera | Over-the-shoulder spring-arm boom with wall collision |
 | Car | Parked at the kerb outside 18; enter, drive, exit (static glTF mesh, kinematic drive) |
 | Cast | MickMcCabe, Deco McCabe, Oysters, Angela Carpenter, Paddy Mason — idle at their front doors, named labels, jacket tints, no combat AI |
+| Street dressing | Block boundary walls, driveways, trees, overhead wires, wheelie bins, kerbside parked cars |
 | Audio | Looping street ambience, cadence footsteps, melee thud (procedural, no asset files) |
 | Addresses | Numbered gate piers on every house, so you can see you are outside 18 — and no. 18 has its own door colour |
-| Lighting | Fixed bright daylight. No day/night cycle, ever |
+| Lighting | Fixed overcast-bright daylight. No day/night cycle, ever |
 | Mobile | Touch control layer, GL Compatibility renderer, Android + macOS export presets |
 
 ### What it deliberately does **not** contain
@@ -167,6 +169,7 @@ godot/
                            every dimension on the map.
     cast.gd                Named residents and house numbers.
   assets/
+    reference/             Street View reference plates (art direction only).
     textures/              Tileable street albedos (VRAM-compressed on import).
     models/car.glb         Low-poly hatchback visual.
     models/person.glb      Static body parts for David and cast.

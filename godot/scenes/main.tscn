@@ -7,13 +7,13 @@
 [ext_resource type="PackedScene" path="res://scenes/ui/touch_controls.tscn" id="5_touch"]
 
 [sub_resource type="ProceduralSkyMaterial" id="SkyMat"]
-sky_top_color = Color(0.404, 0.545, 0.729, 1)
-sky_horizon_color = Color(0.796, 0.831, 0.859, 1)
-sky_curve = 0.12
-sky_energy_multiplier = 1.15
-ground_bottom_color = Color(0.267, 0.282, 0.278, 1)
-ground_horizon_color = Color(0.678, 0.694, 0.686, 1)
-sun_angle_max = 15.0
+sky_top_color = Color(0.72, 0.74, 0.76, 1)
+sky_horizon_color = Color(0.84, 0.86, 0.88, 1)
+sky_curve = 0.18
+sky_energy_multiplier = 1.05
+ground_bottom_color = Color(0.42, 0.44, 0.43, 1)
+ground_horizon_color = Color(0.72, 0.74, 0.73, 1)
+sun_angle_max = 8.0
 
 [sub_resource type="Sky" id="SkyRes"]
 sky_material = SubResource("SkyMat")
@@ -23,9 +23,9 @@ background_mode = 2
 sky = SubResource("SkyRes")
 ambient_light_source = 3
 ambient_light_sky_contribution = 1.0
-ambient_light_energy = 1.25
+ambient_light_energy = 1.42
 tonemap_mode = 2
-tonemap_white = 6.0
+tonemap_white = 7.2
 
 [node name="Main" type="Node3D"]
 script = ExtResource("1_main")
@@ -35,9 +35,9 @@ environment = SubResource("EnvMain")
 
 [node name="Sun" type="DirectionalLight3D" parent="."]
 position = Vector3(0, 24, 0)
-rotation_degrees = Vector3(-62, -130, 0)
-light_color = Color(1, 0.988, 0.965, 1)
-light_energy = 1.35
+rotation_degrees = Vector3(-58, -125, 0)
+light_color = Color(0.96, 0.97, 0.99, 1)
+light_energy = 1.12
 shadow_enabled = true
 directional_shadow_mode = 0
 directional_shadow_max_distance = 90.0

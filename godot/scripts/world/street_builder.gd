@@ -38,6 +38,8 @@ var _batch: Dictionary = {}
 
 var _collision: StaticBody3D
 
+const _CAR_MESH: PackedScene = preload("res://assets/models/car.glb")
+
 
 func _ready() -> void:
 	_build_materials()
@@ -50,7 +52,9 @@ func _ready() -> void:
 		_add_house(h)
 	for p in KilmoreClose.pairs():
 		_add_pair_shell(p)
+	_build_street_dressing()
 	_flush_batches()
+	_spawn_static_cars()
 	built.emit()
 
 
@@ -88,36 +92,42 @@ func _build_materials() -> void:
 	# The pebbledash is the single most identifying surface on the street:
 	# off-white, very rough, no sheen at all.
 	_mat["dash"] = _dress(_flat(Color(1, 1, 1), 0.98),
-		"res://assets/textures/pebbledash.png", 0.55, Color(0.95, 0.94, 0.91))
+		"res://assets/textures/pebbledash.png", 0.55, Color(0.93, 0.91, 0.87))
 	# The painted band around the base of the wall.
 	_mat["band"] = _dress(_flat(Color(1, 1, 1), 0.92),
-		"res://assets/textures/band.png", 0.7, Color(1.0, 0.98, 0.96))
+		"res://assets/textures/band.png", 0.7, Color(0.98, 0.94, 0.90))
+	# Mid-height salmon/terracotta panels (reference facades).
+	_mat["band_mid"] = _dress(_flat(Color(1, 1, 1), 0.90),
+		"res://assets/textures/band_mid.png", 0.65, Color(1.0, 0.96, 0.94))
 	_mat["roof"] = _dress(_flat(Color(1, 1, 1), 0.88),
-		"res://assets/textures/roof.png", 0.45, Color(0.95, 0.95, 0.97))
+		"res://assets/textures/roof.png", 0.45, Color(0.88, 0.88, 0.90))
 	_mat["chimney"] = _dress(_flat(Color(1, 1, 1), 0.95),
-		"res://assets/textures/chimney.png", 0.8, Color(1, 1, 1))
-	# Glass is deliberately OPAQUE. A transparent material forces the whole
-	# surface into the alpha-blended pass, which is the most bandwidth-hungry
-	# thing you can do on a mobile tiler. A dark, low-roughness opaque panel
-	# reads as glass at every distance this street is seen from.
+		"res://assets/textures/chimney.png", 0.8, Color(0.92, 0.90, 0.88))
 	_mat["glass"] = _flat(Color(0.115, 0.155, 0.185), 0.12, 0.0)
-	_mat["frame"] = _flat(Color(0.94, 0.94, 0.93), 0.75)
+	# Mahogany window/door frames (reference brown trim).
+	_mat["frame"] = _flat(Color(0.42, 0.28, 0.18), 0.72)
 	_mat["door"] = _flat(Color(0.21, 0.27, 0.38), 0.65)
-	# Number 18's door, in a different colour from every other door on the
-	# street. On a road where every house is deliberately the same archetype,
-	# something has to say "this one is his" from across the carriageway.
 	_mat["door_home"] = _flat(Color(0.36, 0.11, 0.13), 0.55)
-	_mat["garage_door"] = _flat(Color(0.62, 0.62, 0.63), 0.60, 0.0)
+	_mat["garage_door"] = _dress(_flat(Color(1, 1, 1), 0.62),
+		"res://assets/textures/garage_door.png", 0.5, Color(0.95, 0.92, 0.88))
 	_mat["tarmac"] = _dress(_flat(Color(1, 1, 1), 0.97),
-		"res://assets/textures/tarmac.png", 0.25, Color(0.92, 0.92, 0.94))
+		"res://assets/textures/tarmac.png", 0.25, Color(0.90, 0.90, 0.92))
 	_mat["path"] = _dress(_flat(Color(1, 1, 1), 0.95),
-		"res://assets/textures/path.png", 0.5, Color(1, 1, 1))
+		"res://assets/textures/path.png", 0.5, Color(0.98, 0.98, 0.96))
+	_mat["drive"] = _dress(_flat(Color(1, 1, 1), 0.94),
+		"res://assets/textures/drive.png", 0.45, Color(1, 1, 1))
 	_mat["kerb"] = _dress(_flat(Color(1, 1, 1), 0.92),
 		"res://assets/textures/kerb.png", 0.9, Color(1, 1, 1))
 	_mat["grass"] = _dress(_flat(Color(1, 1, 1), 0.98),
-		"res://assets/textures/grass.png", 0.35, Color(0.95, 1.0, 0.9))
+		"res://assets/textures/grass.png", 0.35, Color(0.92, 0.98, 0.88))
 	_mat["hedge"] = _dress(_flat(Color(1, 1, 1), 0.98),
-		"res://assets/textures/hedge.png", 0.6, Color(1, 1, 1))
+		"res://assets/textures/hedge.png", 0.6, Color(0.95, 1.0, 0.92))
+	# Front boundary walls, coping, gutters, pipes, gates.
+	_mat["block_wall"] = _dress(_flat(Color(1, 1, 1), 0.96),
+		"res://assets/textures/block_wall.png", 0.85, Color(0.96, 0.96, 0.94))
+	_mat["coping"] = _flat(Color(0.38, 0.38, 0.36), 0.88)
+	_mat["pipe"] = _flat(Color(0.18, 0.18, 0.20), 0.55, 0.15)
+	_mat["metal_black"] = _flat(Color(0.08, 0.08, 0.09), 0.35, 0.4)
 
 
 # ------------------------------------------------------------------- batching
@@ -237,6 +247,9 @@ func _build_ground() -> void:
 		# reads from a distance instead of being a bare colour seam.
 		_mesh_box("kerb", Vector3(0.14, 0.2, z_len),
 			Vector3(s * (KilmoreClose.HALF_WIDTH + 0.07), walk_h - 0.1, z_mid))
+		# Roadside verge — narrow grass between kerb and carriageway.
+		_mesh_box("grass", Vector3(0.55, 0.12, z_len),
+			Vector3(s * (KilmoreClose.HALF_WIDTH + 0.38), walk_h - 0.14, z_mid))
 		# Front gardens: kerb line out to the house faces.
 		_mesh_box("grass", Vector3(KilmoreClose.SETBACK, 0.2, z_len),
 			Vector3(s * (KilmoreClose.KERB + KilmoreClose.SETBACK * 0.5),
@@ -248,21 +261,14 @@ func _build_ground() -> void:
 	_static_box(Vector3(140.0, 0.4, z_len + 60.0), Vector3(0.0, -0.2, z_mid))
 
 
-## The garden boundary for one side of the street: a low hedge along the kerb
-## line, BROKEN BY A GATE at every front door, with a path from each gate up to
-## the porch.
-##
-## The gates matter more than they look. An unbroken hedge is one line of code
-## shorter and it silently walls the player out of every front garden on the
-## street — including his own — which turns the houses into scenery you can
-## only ever look at. Kilmore Close is a place you walk up the path of.
+## The garden boundary for one side of the street: low block walls along the
+## kerb line, broken by pedestrian gates, with driveways and remnant lawns.
 func _build_boundary(side: int, zr: Vector2) -> void:
 	var s := float(side)
 	var walk_h := KilmoreClose.WALK_H
-	var hedge_x := s * (KilmoreClose.KERB + 0.25)
+	var wall_x := s * (KilmoreClose.KERB + 0.25)
 	var gate_half := 0.7
 
-	# Gate positions: one per house on this side, aligned with its front door.
 	var gates: Array[float] = []
 	for h in KilmoreClose.houses():
 		if int(h["side"]) != side:
@@ -270,24 +276,75 @@ func _build_boundary(side: int, zr: Vector2) -> void:
 		var gz: float = KilmoreClose.gate_z(h)
 		gates.append(gz)
 		_add_gate_number(side, gz, int(h["number"]))
-		# Garden path, gate to porch front. Batched rather than added as its
-		# own MeshInstance3D — there is one per house, and twenty individual
-		# draw calls for twenty identical paving strips is exactly the sort of
-		# thing that quietly eats a low-end phone's frame budget.
+		_add_ped_gate(wall_x, walk_h, gz)
+		_add_house_plot(h, walk_h)
 		var run := KilmoreClose.SETBACK - KilmoreClose.PORCH_D
 		_push("garden_path", "path", "box", Vector3(run, 0.2, 1.15),
 			Vector3(s * (KilmoreClose.KERB + run * 0.5), walk_h - 0.1, gz))
 	gates.sort()
 
-	# Hedge segments filling everything the gates do not open.
 	var cursor := zr.x
 	for gz in gates:
 		var stop := gz - gate_half
 		if stop > cursor:
-			_hedge_run(hedge_x, walk_h, cursor, stop)
+			_wall_run(wall_x, walk_h, cursor, stop)
 		cursor = maxf(cursor, gz + gate_half)
 	if zr.y > cursor:
-		_hedge_run(hedge_x, walk_h, cursor, zr.y)
+		_wall_run(wall_x, walk_h, cursor, zr.y)
+
+
+func _wall_run(x: float, walk_h: float, z0: float, z1: float) -> void:
+	var length := z1 - z0
+	if length <= 0.01:
+		return
+	var wall_h := 0.62
+	var centre := Vector3(x, walk_h + wall_h * 0.5, (z0 + z1) * 0.5)
+	_push("wall_boundary", "block_wall", "box", Vector3(0.22, wall_h, length), centre)
+	_push("wall_coping", "coping", "box", Vector3(0.26, 0.06, length),
+		Vector3(x, walk_h + wall_h + 0.03, (z0 + z1) * 0.5))
+	if length > 2.8:
+		_push("wall_rail", "metal_black", "box", Vector3(0.04, 0.32, length),
+			Vector3(x, walk_h + wall_h + 0.22, (z0 + z1) * 0.5))
+
+
+func _add_ped_gate(x: float, walk_h: float, gz: float) -> void:
+	var gate_h := 1.05
+	_push("ped_gate", "metal_black", "box", Vector3(0.04, gate_h, 1.35),
+		Vector3(x, walk_h + gate_h * 0.5, gz))
+
+
+func _garage_along_z(h: Dictionary) -> float:
+	var mirror: bool = h["mirror"]
+	var n := KilmoreClose.bay_count()
+	var half := KilmoreClose.HOUSE_W * 0.5
+	var far_bay := 0 if mirror else (n - 1)
+	return float(h["z"]) + clampf(KilmoreClose.bay_centre(far_bay),
+		-(half - KilmoreClose.GARAGE_W * 0.5), half - KilmoreClose.GARAGE_W * 0.5)
+
+
+func _add_house_plot(h: Dictionary, walk_h: float) -> void:
+	var side := int(h["side"])
+	var s := float(side)
+	var out := -float(side)
+	var gz := KilmoreClose.gate_z(h)
+	var g_z := _garage_along_z(h)
+	var kerb_x := s * KilmoreClose.KERB
+	var drive_len := KilmoreClose.SETBACK * 0.72
+	var drive_w := KilmoreClose.GARAGE_W + 0.35
+	var drive_cx := kerb_x - out * drive_len * 0.5
+	_push("driveway", "drive", "box", Vector3(drive_len, 0.06, drive_w),
+		Vector3(drive_cx, walk_h - 0.07, g_z))
+	var door_z := float(h["z"]) + KilmoreClose.door_along(bool(h["mirror"]))
+	var lawn_z := (gz + door_z) * 0.5
+	var lawn_w := KilmoreClose.HOUSE_W * 0.42
+	var lawn_len := KilmoreClose.SETBACK * 0.55
+	var lawn_cx := kerb_x - out * lawn_len * 0.5
+	_push("lawn_patch", "grass", "box", Vector3(lawn_len, 0.05, lawn_w),
+		Vector3(lawn_cx, walk_h - 0.08, lawn_z))
+	if int(h["number"]) % 3 == 0:
+		_push("shrub", "hedge", "box", Vector3(0.7, 0.45, 0.7),
+			Vector3(kerb_x - out * (KilmoreClose.SETBACK * 0.82),
+				walk_h + 0.22, door_z))
 
 
 ## A pair of gate piers with the house number on them.
@@ -326,13 +383,76 @@ func _add_gate_number(side: int, gz: float, number: int) -> void:
 	add_child(label)
 
 
-func _hedge_run(x: float, walk_h: float, z0: float, z1: float) -> void:
-	var length := z1 - z0
-	if length <= 0.01:
-		return
-	var centre := Vector3(x, walk_h + 0.4, (z0 + z1) * 0.5)
-	_push("hedge", "hedge", "box", Vector3(0.5, 0.8, length), centre)
-	# Visual only — low hedge does not need per-segment physics (profile cost).
+# -------------------------------------------------------- street dressing
+
+func _build_street_dressing() -> void:
+	var zr := KilmoreClose.road_z_range()
+	var walk_h := KilmoreClose.WALK_H
+	var z := zr.x + 16.0
+	var tree_i := 0
+	while z < zr.y - 12.0:
+		for side in [KilmoreClose.SIDE_NEAR, KilmoreClose.SIDE_FAR]:
+			if (tree_i + int(side)) % 3 == 0:
+				continue
+			var s := float(side)
+			var tx := s * (KilmoreClose.HALF_WIDTH + 1.15)
+			_push("tree_trunk", "pipe", "box", Vector3(0.35, 3.2, 0.35),
+				Vector3(tx, 1.6 + walk_h, z))
+			_push("tree_canopy", "hedge", "box", Vector3(3.6, 2.5, 3.6),
+				Vector3(tx, 4.0 + walk_h, z))
+		z += 21.0 + float(tree_i % 5) * 1.8
+		tree_i += 1
+
+	for h in KilmoreClose.houses():
+		if int(h["number"]) % 3 != 1:
+			continue
+		var s := float(int(h["side"]))
+		var gz := KilmoreClose.gate_z(h)
+		var bx := s * (KilmoreClose.KERB + 0.45)
+		var bin_mat := "metal_black" if int(h["number"]) % 2 == 0 else "band_mid"
+		_push("bin", bin_mat, "box", Vector3(0.55, 1.05, 0.45),
+			Vector3(bx, walk_h + 0.52, gz + 0.6))
+
+	for pz in [38.0, 118.0, 198.0]:
+		var px := float(KilmoreClose.SIDE_NEAR) * (KilmoreClose.HALF_WIDTH - 0.55)
+		_push("utility_pole", "pipe", "box", Vector3(0.22, 5.5, 0.22),
+			Vector3(px, 2.75 + walk_h, pz))
+
+	for wi in range(3):
+		var wz := 52.0 + wi * 68.0
+		var wh := 4.9 + walk_h
+		_push("wire", "metal_black", "box",
+			Vector3(KilmoreClose.FACE_X * 1.62, 0.03, 0.03),
+			Vector3(0.0, wh, wz))
+		_push("wire", "metal_black", "box", Vector3(0.03, 0.03, 16.0),
+			Vector3(0.0, wh - 0.35, wz + 8.0))
+
+
+func _spawn_static_cars() -> void:
+	var spots: Array = [
+		[Vector3(-(KilmoreClose.HALF_WIDTH - 0.95), 0.0, 30.0), 0.0],
+		[Vector3(KilmoreClose.HALF_WIDTH - 0.95, 0.0, 68.0), PI],
+		[Vector3(-(KilmoreClose.HALF_WIDTH - 0.95), 0.0, 142.0), 0.12],
+		[Vector3(KilmoreClose.HALF_WIDTH - 0.95, 0.0, 188.0), -0.08],
+		[Vector3(-(KilmoreClose.HALF_WIDTH - 0.95), 0.0, 228.0), 0.0],
+	]
+	for spot in spots:
+		var car := _CAR_MESH.instantiate() as Node3D
+		if car == null:
+			continue
+		car.name = "ParkedCar"
+		car.position = spot[0]
+		car.rotation.y = spot[1]
+		_disable_shadows(car)
+		add_child(car)
+
+
+func _disable_shadows(node: Node) -> void:
+	if node is GeometryInstance3D:
+		(node as GeometryInstance3D).cast_shadow = \
+			GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	for child in node.get_children():
+		_disable_shadows(child)
 
 
 # ----------------------------------------------------- the pair, and the house
@@ -359,6 +479,10 @@ func _add_pair_shell(p: Dictionary) -> void:
 	_push("roof", "roof", "prism",
 		Vector3(depth + 0.6, KilmoreClose.ROOF_H, width + 0.4),
 		Vector3(c.x, wall_h + KilmoreClose.ROOF_H * 0.5, c.z))
+	# Gutter/fascia line along the eaves.
+	_push("gutter", "pipe", "box",
+		Vector3(depth + 0.55, 0.10, width + 0.45),
+		Vector3(c.x, wall_h + 0.05, c.z))
 	# A chimney at each gable end of the pair.
 	for sgn in [-1.0, 1.0]:
 		_push("chimney", "chimney", "box",
@@ -416,6 +540,31 @@ func _add_house(h: Dictionary) -> void:
 
 	_add_porch(face_x, out, z + KilmoreClose.door_along(mirror))
 	_add_garage(face_x, out, z + garage_along)
+	_add_facade_trim(face_x, out, z, mirror)
+	_add_downpipe(face_x, out, z, mirror)
+
+
+func _add_facade_trim(face_x: float, out: float, z: float, mirror: bool) -> void:
+	# Mid-height salmon panel between upper and lower windows.
+	var panel_w := KilmoreClose.HOUSE_W * 0.55
+	var panel_y := KilmoreClose.FLOOR_H + 1.55
+	_push("band_mid", "band_mid", "box",
+		Vector3(0.08, 1.15, panel_w),
+		Vector3(face_x + out * 0.04, panel_y, z))
+	# Porch surround accent.
+	var door_z := z + KilmoreClose.door_along(mirror)
+	_push("porch_panel", "band_mid", "box",
+		Vector3(0.07, KilmoreClose.PORCH_H - 0.2, KilmoreClose.PORCH_W + 0.1),
+		Vector3(face_x + out * 0.05, KilmoreClose.PORCH_H * 0.5, door_z))
+
+
+func _add_downpipe(face_x: float, out: float, z: float, mirror: bool) -> void:
+	var half := KilmoreClose.HOUSE_W * 0.5
+	var along := half * 0.82 if mirror else -half * 0.82
+	var wall_h := KilmoreClose.WALL_H
+	_push("downpipe", "pipe", "box",
+		Vector3(0.06, wall_h - 0.4, 0.06),
+		Vector3(face_x + out * 0.10, wall_h * 0.5, z + along))
 
 
 func _add_window(face_x: float, out: float, z: float, sill: float,
@@ -427,6 +576,9 @@ func _add_window(face_x: float, out: float, z: float, sill: float,
 	_push("win_frame", "frame", "box",
 		Vector3(0.06, h + 0.16, w + 0.16),
 		Vector3(face_x + out * 0.03, y, z))
+	_push("win_sill", "frame", "box",
+		Vector3(0.08, 0.06, w + 0.22),
+		Vector3(face_x + out * 0.04, sill, z))
 	_push("win_glass", "glass", "box",
 		Vector3(0.04, h, w),
 		Vector3(face_x + out * 0.06, y, z))
@@ -462,10 +614,10 @@ func _add_porch(face_x: float, out: float, z: float) -> void:
 		_push("porch_side", "dash", "box",
 			Vector3(pd, ph, 0.16),
 			Vector3(cx, ph * 0.5, z + sgn * (pw * 0.5 - 0.08)))
-	# Lid.
-	_push("porch_lid", "frame", "box",
-		Vector3(pd + 0.16, 0.14, pw + 0.20),
-		Vector3(cx, ph + 0.07, z))
+	# Lean-to tiled porch roof (reference porches).
+	_push("porch_roof", "roof", "prism",
+		Vector3(pd + 0.18, 0.32, pw + 0.22),
+		Vector3(cx, ph + 0.16, z))
 	# The glazed sliding door across the front of the porch.
 	_push("porch_glass", "glass", "box",
 		Vector3(0.06, glass_h, pw - 0.20),
