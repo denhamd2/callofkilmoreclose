@@ -7,13 +7,15 @@
 [ext_resource type="PackedScene" path="res://scenes/ui/touch_controls.tscn" id="5_touch"]
 
 [sub_resource type="ProceduralSkyMaterial" id="SkyMat"]
-sky_top_color = Color(0.72, 0.74, 0.76, 1)
-sky_horizon_color = Color(0.84, 0.86, 0.88, 1)
-sky_curve = 0.18
-sky_energy_multiplier = 1.05
+sky_top_color = Color(0.62, 0.68, 0.74, 1)
+sky_horizon_color = Color(0.78, 0.82, 0.86, 1)
+sky_curve = 0.22
+sky_energy_multiplier = 1.0
 ground_bottom_color = Color(0.42, 0.44, 0.43, 1)
 ground_horizon_color = Color(0.72, 0.74, 0.73, 1)
-sun_angle_max = 8.0
+sun_angle_max = 12.0
+sky_cover = 0.55
+sky_cover_modulate = Color(0.92, 0.94, 0.96, 1)
 
 [sub_resource type="Sky" id="SkyRes"]
 sky_material = SubResource("SkyMat")
@@ -23,9 +25,9 @@ background_mode = 2
 sky = SubResource("SkyRes")
 ambient_light_source = 3
 ambient_light_sky_contribution = 1.0
-ambient_light_energy = 1.42
+ambient_light_energy = 1.22
 tonemap_mode = 2
-tonemap_white = 7.2
+tonemap_white = 6.4
 
 [node name="Main" type="Node3D"]
 script = ExtResource("1_main")

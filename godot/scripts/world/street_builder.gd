@@ -39,6 +39,18 @@ var _batch: Dictionary = {}
 var _collision: StaticBody3D
 
 const _CAR_MESH: PackedScene = preload("res://assets/models/car.glb")
+const _TREE_MESH: PackedScene = preload("res://assets/models/tree.glb")
+
+# 7-segment digit patterns (segments: top, UR, LR, bottom, LL, UL, mid).
+const _DIGIT_SEG: Dictionary = {
+	0: [1, 1, 1, 1, 1, 1, 0], 1: [0, 1, 1, 0, 0, 0, 0],
+	2: [1, 1, 0, 1, 1, 0, 1], 3: [1, 1, 1, 1, 0, 0, 1],
+	4: [0, 1, 1, 0, 0, 1, 1], 5: [1, 0, 1, 1, 0, 1, 1],
+	6: [1, 0, 1, 1, 1, 1, 1], 7: [1, 1, 1, 0, 0, 0, 0],
+	8: [1, 1, 1, 1, 1, 1, 1], 9: [1, 1, 1, 1, 0, 1, 1],
+}
+
+var _tree_spots: Array = []
 
 
 func _ready() -> void:
@@ -55,6 +67,7 @@ func _ready() -> void:
 	_build_street_dressing()
 	_flush_batches()
 	_spawn_static_cars()
+	_spawn_static_trees()
 	built.emit()
 
 
@@ -92,7 +105,7 @@ func _build_materials() -> void:
 	# The pebbledash is the single most identifying surface on the street:
 	# off-white, very rough, no sheen at all.
 	_mat["dash"] = _dress(_flat(Color(1, 1, 1), 0.98),
-		"res://assets/textures/pebbledash.png", 0.55, Color(0.93, 0.91, 0.87))
+		"res://assets/textures/pebbledash.png", 0.38, Color(0.88, 0.86, 0.82))
 	# The painted band around the base of the wall.
 	_mat["band"] = _dress(_flat(Color(1, 1, 1), 0.92),
 		"res://assets/textures/band.png", 0.7, Color(0.98, 0.94, 0.90))
@@ -103,7 +116,7 @@ func _build_materials() -> void:
 		"res://assets/textures/roof.png", 0.45, Color(0.88, 0.88, 0.90))
 	_mat["chimney"] = _dress(_flat(Color(1, 1, 1), 0.95),
 		"res://assets/textures/chimney.png", 0.8, Color(0.92, 0.90, 0.88))
-	_mat["glass"] = _flat(Color(0.115, 0.155, 0.185), 0.12, 0.0)
+	_mat["glass"] = _flat(Color(0.20, 0.24, 0.28), 0.12, 0.0)
 	# Mahogany window/door frames (reference brown trim).
 	_mat["frame"] = _flat(Color(0.42, 0.28, 0.18), 0.72)
 	_mat["door"] = _flat(Color(0.21, 0.27, 0.38), 0.65)
@@ -113,7 +126,7 @@ func _build_materials() -> void:
 	_mat["tarmac"] = _dress(_flat(Color(1, 1, 1), 0.97),
 		"res://assets/textures/tarmac.png", 0.25, Color(0.90, 0.90, 0.92))
 	_mat["path"] = _dress(_flat(Color(1, 1, 1), 0.95),
-		"res://assets/textures/path.png", 0.5, Color(0.98, 0.98, 0.96))
+		"res://assets/textures/path.png", 0.42, Color(0.94, 0.94, 0.92))
 	_mat["drive"] = _dress(_flat(Color(1, 1, 1), 0.94),
 		"res://assets/textures/drive.png", 0.45, Color(1, 1, 1))
 	_mat["kerb"] = _dress(_flat(Color(1, 1, 1), 0.92),
@@ -124,10 +137,16 @@ func _build_materials() -> void:
 		"res://assets/textures/hedge.png", 0.6, Color(0.95, 1.0, 0.92))
 	# Front boundary walls, coping, gutters, pipes, gates.
 	_mat["block_wall"] = _dress(_flat(Color(1, 1, 1), 0.96),
-		"res://assets/textures/block_wall.png", 0.85, Color(0.96, 0.96, 0.94))
+		"res://assets/textures/block_wall.png", 0.72, Color(0.92, 0.92, 0.90))
+	_mat["brick_red"] = _dress(_flat(Color(1, 1, 1), 0.94),
+		"res://assets/textures/brick_red.png", 0.55, Color(0.98, 0.96, 0.94))
 	_mat["coping"] = _flat(Color(0.38, 0.38, 0.36), 0.88)
 	_mat["pipe"] = _flat(Color(0.18, 0.18, 0.20), 0.55, 0.15)
 	_mat["metal_black"] = _flat(Color(0.08, 0.08, 0.09), 0.35, 0.4)
+	_mat["bin_red"] = _flat(Color(0.62, 0.12, 0.10), 0.75)
+	_mat["bin_green"] = _flat(Color(0.14, 0.38, 0.16), 0.75)
+	_mat["plaque"] = _flat(Color(0.14, 0.14, 0.15), 0.82)
+	_mat["plaque_text"] = _flat(Color(0.94, 0.94, 0.92), 0.70)
 
 
 # ------------------------------------------------------------------- batching
@@ -143,9 +162,14 @@ func _build_materials() -> void:
 ## stored one size per batch quietly drew them all at the first one's length.
 func _push(key: String, mat_key: String, shape: String, size: Vector3,
 		origin: Vector3) -> void:
+	_push_xf(key, mat_key, shape, Transform3D(Basis.IDENTITY.scaled(size), origin))
+
+
+func _push_xf(key: String, mat_key: String, shape: String,
+		xf: Transform3D) -> void:
 	if not _batch.has(key):
 		_batch[key] = {"mat": mat_key, "shape": shape, "xf": []}
-	_batch[key]["xf"].append(Transform3D(Basis.IDENTITY.scaled(size), origin))
+	_batch[key]["xf"].append(xf)
 
 
 func _flush_batches() -> void:
@@ -347,40 +371,54 @@ func _add_house_plot(h: Dictionary, walk_h: float) -> void:
 				walk_h + 0.22, door_z))
 
 
-## A pair of gate piers with the house number on them.
-##
-## This exists so that "David spawns outside 18 Kilmore Close" is something you
-## can VERIFY from inside the game rather than take on trust. The archetype is
-## the point of this street — every house is deliberately the same — which means
-## without a number on the gate there is no way to tell his from the nineteen
-## others, and the single most testable claim in the brief becomes unfalsifiable.
-##
-## The number is BILLBOARDED. A flat plaque would need its facing rotated per
-## side of the street, and Label3D's default orientation is exactly the kind of
-## detail that is wrong 50% of the time when you cannot open the editor to look.
-## A number you cannot read from the pavement is worse than no number. This is a
-## slice affordance; a real plaque mesh replaces it once the street is dressed.
+## Gate piers with a dark plaque and 7-segment house number facing the pavement.
 func _add_gate_number(side: int, gz: float, number: int) -> void:
 	var s := float(side)
 	var walk_h := KilmoreClose.WALK_H
 	var pier_h := 1.05
 	var pier_x := s * (KilmoreClose.KERB + 0.17)
+	var face := -s  # toward the road centre from the garden wall.
 	for sgn in [-1.0, 1.0]:
 		_push("gate_pier", "kerb", "box", Vector3(0.34, pier_h, 0.34),
 			Vector3(pier_x, walk_h + pier_h * 0.5, gz + sgn * 0.87))
 
-	var label := Label3D.new()
-	label.name = "No%d" % number
-	label.text = str(number)
-	label.font_size = 96
-	label.pixel_size = 0.0032
-	label.modulate = Color(0.11, 0.11, 0.12)
-	label.outline_size = 14
-	label.outline_modulate = Color(0.95, 0.95, 0.93)
-	label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-	label.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	label.position = Vector3(pier_x, walk_h + pier_h + 0.2, gz - 0.87)
-	add_child(label)
+	var plaque_y := walk_h + pier_h + 0.10
+	var plaque_z := gz - 0.87
+	_push("number_plaque", "plaque", "box",
+		Vector3(0.05, 0.24, 0.34),
+		Vector3(pier_x + face * 0.10, plaque_y, plaque_z))
+	_push_gate_digits(pier_x + face * 0.13, plaque_y, plaque_z, face, number)
+
+
+func _push_gate_digits(px: float, py: float, pz: float, face: float,
+		number: int) -> void:
+	var digits := str(number)
+	var count := digits.length()
+	var cell := 0.11
+	var start_z := pz - (count - 1) * cell * 0.5
+	for i in count:
+		_push_digit_7(px, py, start_z + i * cell, face, int(digits[i]))
+
+
+func _push_digit_7(px: float, py: float, pz: float, face: float,
+		digit: int) -> void:
+	var pat: Array = _DIGIT_SEG.get(digit, _DIGIT_SEG[8])
+	var segs: Array = [
+		[Vector3(0.0, 0.075, 0.0), Vector3(0.03, 0.028, 0.075)],   # top
+		[Vector3(0.0, 0.038, 0.038), Vector3(0.03, 0.052, 0.024)],  # UR
+		[Vector3(0.0, -0.038, 0.038), Vector3(0.03, 0.052, 0.024)], # LR
+		[Vector3(0.0, -0.075, 0.0), Vector3(0.03, 0.028, 0.075)],  # bottom
+		[Vector3(0.0, -0.038, -0.038), Vector3(0.03, 0.052, 0.024)],# LL
+		[Vector3(0.0, 0.038, -0.038), Vector3(0.03, 0.052, 0.024)], # UL
+		[Vector3(0.0, 0.0, 0.0), Vector3(0.03, 0.024, 0.075)],     # mid
+	]
+	for si in segs.size():
+		if pat[si] == 0:
+			continue
+		var off: Vector3 = segs[si][0]
+		var sz: Vector3 = segs[si][1]
+		_push("digit_seg", "plaque_text", "box", sz,
+			Vector3(px, py + off.y, pz + off.z))
 
 
 # -------------------------------------------------------- street dressing
@@ -396,10 +434,7 @@ func _build_street_dressing() -> void:
 				continue
 			var s := float(side)
 			var tx := s * (KilmoreClose.HALF_WIDTH + 1.15)
-			_push("tree_trunk", "pipe", "box", Vector3(0.35, 3.2, 0.35),
-				Vector3(tx, 1.6 + walk_h, z))
-			_push("tree_canopy", "hedge", "box", Vector3(3.6, 2.5, 3.6),
-				Vector3(tx, 4.0 + walk_h, z))
+			_tree_spots.append(Vector3(tx, walk_h, z))
 		z += 21.0 + float(tree_i % 5) * 1.8
 		tree_i += 1
 
@@ -409,9 +444,10 @@ func _build_street_dressing() -> void:
 		var s := float(int(h["side"]))
 		var gz := KilmoreClose.gate_z(h)
 		var bx := s * (KilmoreClose.KERB + 0.45)
-		var bin_mat := "metal_black" if int(h["number"]) % 2 == 0 else "band_mid"
-		_push("bin", bin_mat, "box", Vector3(0.55, 1.05, 0.45),
-			Vector3(bx, walk_h + 0.52, gz + 0.6))
+		var num := int(h["number"])
+		var bin_mat := "bin_red" if num % 5 == 0 else (
+			"bin_green" if num % 2 == 0 else "metal_black")
+		_add_wheelie_bin(bx, walk_h, gz + 0.6, bin_mat)
 
 	for pz in [38.0, 118.0, 198.0]:
 		var px := float(KilmoreClose.SIDE_NEAR) * (KilmoreClose.HALF_WIDTH - 0.55)
@@ -426,6 +462,28 @@ func _build_street_dressing() -> void:
 			Vector3(0.0, wh, wz))
 		_push("wire", "metal_black", "box", Vector3(0.03, 0.03, 16.0),
 			Vector3(0.0, wh - 0.35, wz + 8.0))
+
+
+func _add_wheelie_bin(x: float, walk_h: float, z: float, mat_key: String) -> void:
+	_push("bin_body", mat_key, "box", Vector3(0.48, 0.82, 0.42),
+		Vector3(x, walk_h + 0.41, z))
+	_push("bin_lid", mat_key, "box", Vector3(0.50, 0.10, 0.44),
+		Vector3(x, walk_h + 0.88, z))
+	_push("bin_wheel", "metal_black", "box", Vector3(0.12, 0.12, 0.12),
+		Vector3(x - 0.14, walk_h + 0.06, z + 0.12))
+	_push("bin_wheel", "metal_black", "box", Vector3(0.12, 0.12, 0.12),
+		Vector3(x + 0.14, walk_h + 0.06, z + 0.12))
+
+
+func _spawn_static_trees() -> void:
+	for spot in _tree_spots:
+		var tree := _TREE_MESH.instantiate() as Node3D
+		if tree == null:
+			continue
+		tree.name = "StreetTree"
+		tree.position = spot
+		_disable_shadows(tree)
+		add_child(tree)
 
 
 func _spawn_static_cars() -> void:
@@ -485,9 +543,13 @@ func _add_pair_shell(p: Dictionary) -> void:
 		Vector3(c.x, wall_h + 0.05, c.z))
 	# A chimney at each gable end of the pair.
 	for sgn in [-1.0, 1.0]:
-		_push("chimney", "chimney", "box",
+		_push("chimney", "brick_red", "box",
 			Vector3(0.9, 1.5, 0.7),
 			Vector3(c.x, wall_h + KilmoreClose.ROOF_H * 0.55,
+				c.z + sgn * (width * 0.5 - 0.75)))
+		_push("chimney_cap", "chimney", "box",
+			Vector3(0.95, 0.14, 0.75),
+			Vector3(c.x, wall_h + KilmoreClose.ROOF_H * 0.55 + 0.82,
 				c.z + sgn * (width * 0.5 - 0.75)))
 
 	# Collision: one box for the pair's wall block. The roof is above head
@@ -538,7 +600,7 @@ func _add_house(h: Dictionary) -> void:
 		-(half - KilmoreClose.GARAGE_W * 0.5),
 		half - KilmoreClose.GARAGE_W * 0.5)
 
-	_add_porch(face_x, out, z + KilmoreClose.door_along(mirror))
+	_add_porch(face_x, out, z + KilmoreClose.door_along(mirror), int(h["number"]))
 	_add_garage(face_x, out, z + garage_along)
 	_add_facade_trim(face_x, out, z, mirror)
 	_add_downpipe(face_x, out, z, mirror)
@@ -569,9 +631,6 @@ func _add_downpipe(face_x: float, out: float, z: float, mirror: bool) -> void:
 
 func _add_window(face_x: float, out: float, z: float, sill: float,
 		w: float, h: float) -> void:
-	# The frame stands 30 mm proud of the wall and the glass 20 mm proud of
-	# that, so the reveal catches the light instead of the opening reading as a
-	# flat decal painted on the pebbledash.
 	var y := sill + h * 0.5
 	_push("win_frame", "frame", "box",
 		Vector3(0.06, h + 0.16, w + 0.16),
@@ -579,9 +638,17 @@ func _add_window(face_x: float, out: float, z: float, sill: float,
 	_push("win_sill", "frame", "box",
 		Vector3(0.08, 0.06, w + 0.22),
 		Vector3(face_x + out * 0.04, sill, z))
-	_push("win_glass", "glass", "box",
-		Vector3(0.04, h, w),
-		Vector3(face_x + out * 0.06, y, z))
+	# Tripartite glazing: two mullions, three panes.
+	var pane_w := (w - 0.10) / 3.0
+	var pane_x := [-w * 0.33, 0.0, w * 0.33]
+	for px in pane_x:
+		_push("win_glass", "glass", "box",
+			Vector3(0.04, h - 0.06, pane_w),
+			Vector3(face_x + out * 0.06, y, z + px))
+	for mx in [-w * 0.165, w * 0.165]:
+		_push("win_mullion", "frame", "box",
+			Vector3(0.05, h - 0.04, 0.05),
+			Vector3(face_x + out * 0.055, y, z + mx))
 
 
 func _add_door(face_x: float, out: float, z: float, is_home: bool) -> void:
@@ -590,30 +657,37 @@ func _add_door(face_x: float, out: float, z: float, is_home: bool) -> void:
 	_push("door_frame", "frame", "box",
 		Vector3(0.06, dh + 0.14, dw + 0.14),
 		Vector3(face_x + out * 0.03, (dh + 0.14) * 0.5, z))
-	# Two batches, not one, so number 18 can carry its own door colour without
-	# breaking the single-draw-call-per-material rule the street relies on.
 	var key := "door_home" if is_home else "door_leaf"
 	var mat := "door_home" if is_home else "door"
 	_push(key, mat, "box",
 		Vector3(0.05, dh, dw),
 		Vector3(face_x + out * 0.06, dh * 0.5, z))
+	if is_home:
+		_push("mailbox", "metal_black", "box",
+			Vector3(0.08, 0.22, 0.16),
+			Vector3(face_x + out * 0.12, 1.35, z + dw * 0.55))
+		_push_gate_digits(face_x + out * 0.10, dh * 0.62, z, out, 18)
 
 
 ## Porch: a shallow box projecting from the front wall, with a glazed sliding
 ## door across its face and a flat lid.
-func _add_porch(face_x: float, out: float, z: float) -> void:
+func _add_porch(face_x: float, out: float, z: float, _number: int) -> void:
 	var pd := KilmoreClose.PORCH_D
 	var pw := KilmoreClose.PORCH_W
 	var ph := KilmoreClose.PORCH_H
 	var cx := face_x + out * (pd * 0.5)
 	var glass_h := ph - 0.28
 
-	# Two side cheeks in pebbledash, so the porch reads as built rather than
-	# stuck on.
+	# Brick porch surround (reference no. 19).
+	for sgn in [-1.0, 1.0]:
+		_push("porch_brick", "brick_red", "box",
+			Vector3(pd + 0.06, ph, 0.22),
+			Vector3(cx, ph * 0.5, z + sgn * (pw * 0.5 + 0.02)))
+	# Pebbledash side cheeks inside the brick frame.
 	for sgn in [-1.0, 1.0]:
 		_push("porch_side", "dash", "box",
-			Vector3(pd, ph, 0.16),
-			Vector3(cx, ph * 0.5, z + sgn * (pw * 0.5 - 0.08)))
+			Vector3(pd, ph, 0.14),
+			Vector3(cx, ph * 0.5, z + sgn * (pw * 0.5 - 0.10)))
 	# Lean-to tiled porch roof (reference porches).
 	_push("porch_roof", "roof", "prism",
 		Vector3(pd + 0.18, 0.32, pw + 0.22),
@@ -648,4 +722,11 @@ func _add_garage(face_x: float, out: float, z: float) -> void:
 	_push("garage_door", "garage_door", "box",
 		Vector3(0.08, gh - 0.30, gw - 0.22),
 		Vector3(face_x + out * gd, (gh - 0.30) * 0.5, z))
+	# Lintel row of three small panes above the garage door.
+	var lintel_y := gh - 0.08
+	var lintel_w := (gw - 0.40) / 3.0
+	for li in [-1, 0, 1]:
+		_push("garage_lintel", "glass", "box",
+			Vector3(0.06, 0.18, lintel_w),
+			Vector3(face_x + out * (gd + 0.02), lintel_y, z + li * (lintel_w + 0.04)))
 	# Visual only — pair wall collision blocks the dwelling; garage is set dressing.

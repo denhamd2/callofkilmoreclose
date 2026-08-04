@@ -1,6 +1,6 @@
 # Call of Kilmore Close — Godot 4.7 port
 
-**Phases 1–6 complete and frozen.** Reference branch: `claude/godot-phase-6-reference-match`, tags `godot-phase-6` / `godot-frozen`.
+**Phases 1–7 complete and frozen.** Reference branch: `claude/godot-phase-7-reference-fidelity`, tags `godot-phase-7` / `godot-frozen`.
 
 **Handoff:** read [HANDOFF.md](HANDOFF.md) — setup, validation gates, reference-match summary, platform notes, out-of-scope list. **Do not add features or art on this branch.**
 
@@ -12,6 +12,7 @@
 | 4 | `godot-phase-4` | Performance profile; collision/shadow hardening |
 | 5 | `godot-phase-5` | Street materials + car/person glTF visual polish |
 | 6 | `godot-phase-6` | Reference match: walls, driveways, facade trim, street dressing, overcast sky |
+| 7 | `godot-phase-7` | Reference fidelity: contrast textures, facade depth, hero glTFs, plaques, cloudy sky |
 
 This directory is a **complete, self-contained Godot project**. It does not
 share code with the Three.js prototype in `../src`, and nothing here imports
@@ -171,8 +172,11 @@ godot/
   assets/
     reference/             Street View reference plates (art direction only).
     textures/              Tileable street albedos (VRAM-compressed on import).
-    models/car.glb         Low-poly hatchback visual.
-    models/person.glb      Static body parts for David and cast.
+    models/car.glb         Hatchback visual (body, wheels, glass).
+    models/person.glb      Static body parts for David and cast (Torso tint hook).
+    models/tree.glb        Street-tree visual (trunk + canopy lobes).
+    textures/brick_red.png Red brick for porch surround and chimneys.
+    tools/generate_phase7_assets.py  Offline texture + glTF generator.
   scenes/
     main.tscn              Entry point: environment, sun, street, actors, HUD.
     player/david.tscn      David's body, collider and camera rig.

@@ -1,12 +1,12 @@
 # Kilmore Close — Godot handoff (frozen)
 
-**Status:** Phases 1–6 complete. **This branch is stopped.** Do not add features, art, or tuning here unless a real bug is found.
+**Status:** Phases 1–7 complete. **This branch is stopped.** Do not add features, art, or tuning here unless a real bug is found.
 
 | Item | Value |
 |---|---|
 | Engine | Godot **4.7.1** (4.7.x stable) |
-| Frozen branch | `claude/godot-phase-6-reference-match` |
-| Frozen tags | `godot-phase-6` (art baseline) · `godot-frozen` (handoff + verified) |
+| Frozen branch | `claude/godot-phase-7-reference-fidelity` |
+| Frozen tags | `godot-phase-7` (art baseline) · `godot-frozen` (handoff + verified) |
 | Project root | `godot/project.godot` |
 | Reference plates | `godot/assets/reference/` (four Street View screenshots) |
 | Three.js prototype | `../src/` — **not used by Godot; do not wire back** |
@@ -23,7 +23,8 @@
 - [x] Phase 4 — performance profile; collision 185→27; wall/roof shadows only
 - [x] Phase 5 — tileable materials; `car.glb` / `person.glb`
 - [x] Phase 6 — reference match (boundaries, facades, dressing, overcast sky)
-- [x] Tags `godot-phase-1` … `godot-phase-6` + `godot-frozen`
+- [x] Phase 7 — reference fidelity (material contrast, facade depth, hero glTFs, plaques, sky clouds)
+- [x] Tags `godot-phase-1` … `godot-phase-7` + `godot-frozen`
 - [x] Export presets: Android, macOS, Linux (project-level)
 - [x] `validate_project.py` — structural checks pass
 - [x] `--probe` — exit 0 (`ok: true`, 27 collision shapes, 52 houses, 5 cast)
@@ -34,7 +35,7 @@
 - [ ] Install Godot **4.7.1** + matching export templates
 - [ ] Run validation gates below on your hardware
 - [ ] (Android) Complete one-time SDK/JDK setup per § Android notes
-- [ ] Start the **next** scope on a **new branch** from `godot-frozen` or `godot-phase-6`
+- [ ] Start the **next** scope on a **new branch** from `godot-frozen` or `godot-phase-7`
 
 ### Validation gates (run from repo root)
 
@@ -61,7 +62,7 @@ A **playable, offline** Godot 4.7 slice of measured Kilmore Close:
 | **Cast** | MickMcCabe, Deco McCabe, Oysters, Angela Carpenter, Paddy Mason — idle at doors |
 | **Audio** | Procedural ambience, footsteps, melee thud (`StreetAudio` autoload) |
 | **Touch** | On-screen stick, drag-look, buttons (`--touch` on desktop) |
-| **Visuals** | Phase 6 reference-matched suburban Dublin estate (see § Reference match) |
+| **Visuals** | Phase 7 reference-fidelity suburban Dublin estate (see § Reference match) |
 | **Performance** | MultiMesh batching, 27 collision shapes, prop shadows off |
 | **Renderer** | `gl_compatibility` on desktop and Android (same path) |
 | **Lighting** | Fixed overcast-bright daytime — **no day/night** |
@@ -70,14 +71,17 @@ A **playable, offline** Godot 4.7 slice of measured Kilmore Close:
 
 ---
 
-## Reference-match summary (phase 6)
+## Reference-match summary (phases 6–7)
 
 Compared against the four Street View plates in `godot/assets/reference/`:
 
 | Reference trait | How it was matched |
 |---|---|
-| Cream pebbledash semis | Muted `pebbledash` triplanar + measured pair shell |
+| Cream pebbledash semis | Higher-contrast `pebbledash` triplanar + measured pair shell |
 | Salmon/red-brown facade bands | `band_mid` panels between window tiers + porch surround |
+| Red brick porch accents | `brick_red` porch surround + brick chimney stacks |
+| Tripartite windows | Three-pane glazing + vertical mullions per opening |
+| Garage lintel panes | Three small `glass` panes above garage door |
 | Dark gray tiled roofs | `roof` texture + prism meshes; gutter strip at eaves |
 | Brown window/door/garage trim | Mahogany `frame`; textured `garage_door` |
 | Lean-to porch roofs | Porch flat lid → small pitched `roof` prism |
@@ -85,15 +89,17 @@ Compared against the four Street View plates in `godot/assets/reference/`:
 | Low front walls + coping | `block_wall` + `coping` replace phase-5 hedges |
 | Black gates / railings | `metal_black` pedestrian gates + wall-top rails |
 | Driveways + remnant lawns | `drive` hardstanding to garage; shrunk `grass` patches |
-| Pale road / footpath / kerb | Existing `tarmac` / `path` / `kerb` + roadside verge |
-| Trees, wires, bins, parked cars | Capped MultiMesh props + 5 static `car.glb` instances |
-| Cloudy-bright overcast mood | `main.tscn` sky/ambient/sun retune (still permanent daytime) |
+| Pale road / footpath / kerb | `tarmac` / slab-joint `path` / `kerb` + roadside verge |
+| Trees, wires, bins, parked cars | `tree.glb` instances + wheelie bins + 5 `car.glb` |
+| House numbers on gate piers | Dark `number_plaque` + 7-segment digit geometry (no Label3D) |
+| David's door / mailbox | Door digits + black mailbox at no. 18 |
+| Cloudy-bright overcast mood | `ProceduralSkyMaterial` with `sky_cover` cloud masses |
 
-**Closest practical match:** strong mid-distance estate typology; close-up houses remain procedural (one archetype, no per-door OSM meshes). Phase 6 is the **visual stop point** — further art belongs on a new branch.
+**Closest practical match:** strong mid-distance typology with improved close-up facade depth and hero assets; houses remain one procedural archetype (no per-door OSM meshes). Phase 7 is the **visual stop point** — further art belongs on a new branch.
 
 ---
 
-## What phases 1–6 accomplished
+## What phases 1–7 accomplished
 
 | Phase | Tag | Delivered |
 |---|---|---|
@@ -103,6 +109,7 @@ Compared against the four Street View plates in `godot/assets/reference/`:
 | **4** | `godot-phase-4` | Profiled street cost; collision shapes 185→27; MultiMesh shadows limited to wall/roof; probe collision budget |
 | **5** | `godot-phase-5` | Tileable street materials (triplanar MultiMesh dress); low-poly `car.glb` / `person.glb`; cast jacket tints preserved |
 | **6** | `godot-phase-6` | Reference-matched boundaries (block walls, driveways), facade trim (brown frames, mid panels, gutters/pipes, porch roofs), trees/wires/bins/parked cars, overcast sky grade |
+| **7** | `godot-phase-7` | Reference fidelity: contrast textures, tripartite windows, brick porch/chimney, garage lintel, hero `person`/`car`/`tree` glTFs, wheelie bins, gate plaques, cloudy sky |
 
 ### Architecture decisions (frozen — do not reopen)
 
@@ -112,7 +119,7 @@ Compared against the four Street View plates in `godot/assets/reference/`:
 - Street built from `data/kilmore_close.gd` via MultiMesh batching
 - Kinematic car (not `VehicleBody3D`)
 - No third-party addons
-- Phase 6 art stays on shared materials + few static glTFs (no skeletal animation, no per-house meshes)
+- Phase 7 art stays on shared materials + few static glTFs (no skeletal animation, no per-house meshes)
 
 ---
 
@@ -174,12 +181,12 @@ Full step-by-step: see [README.md](README.md) § “Run it on Android”.
 
 Do **not** expect these on the frozen branch; they require a **new phase** and **new branch**:
 
-- Further visual polish on this branch (phase 6 is the art stop point)
+- Further visual polish on this branch (phase 7 is the art stop point)
 - Combat AI, pathfinding, missions, police, duels
 - Weapons beyond unarmed melee
 - Interiors, enterable houses, damage/health systems
 - Skeletal animation / animation trees
-- Full house glTF library, per-gate plaque meshes, traffic simulation
+- Full house glTF library, traffic simulation
 - Music, voice acting, dialogue trees
 - Day/night, weather, crowds, dynamic traffic
 - Map expansion beyond measured Kilmore Close data
@@ -193,9 +200,10 @@ Do **not** expect these on the frozen branch; they require a **new phase** and *
 
 | Branch | Role |
 |---|---|
-| `claude/godot-phase-6-reference-match` | **Frozen reference** (use this) |
+| `claude/godot-phase-7-reference-fidelity` | **Frozen reference** (use this) |
 | Tag `godot-frozen` | Handoff-verified stop point |
-| Tag `godot-phase-6` | Phase 6 art baseline |
+| Tag `godot-phase-7` | Phase 7 art baseline |
+| `claude/godot-phase-6-reference-match` | Phase 6 snapshot |
 | `claude/godot-phase-5-visual-polish` | Phase 5 snapshot |
 | `claude/godot-phase-4-performance` | Phase 4 snapshot |
 | `claude/godot-phase-3-audio` | Phase 3 snapshot |
@@ -204,21 +212,21 @@ Do **not** expect these on the frozen branch; they require a **new phase** and *
 To resume development:
 
 ```sh
-git checkout claude/godot-phase-6-reference-match   # or: git checkout godot-frozen
-git checkout -b claude/godot-phase-7-<scope>
+git checkout claude/godot-phase-7-reference-fidelity   # or: git checkout godot-frozen
+git checkout -b claude/godot-phase-8-<scope>
 ```
 
 ---
 
-## Release notes (v1.0 — frozen)
+## Release notes (v1.1 — frozen)
 
-**Kilmore Close — Godot port, phases 1–6 (complete)**
+**Kilmore Close — Godot port, phases 1–7 (complete)**
 
 - Walk and drive a full measured Kilmore Close street in fixed overcast daylight
 - David spawns outside number 18; car at the kerb
 - Five named neighbours idle at their doors
 - Procedural street audio
-- Reference-matched suburban dressing: block walls, driveways, brown trim, gutters/pipes, trees, wires, bins, kerbside parked cars
+- Reference-fidelity suburban dressing: tripartite windows, brick porch accents, gate plaques, wheelie bins, hero car/person/tree models, cloudy sky
 - Optimised for mobile: MultiMesh street, 27 collision shapes, wall/roof shadows only, VRAM-compressed textures
 - macOS and Android export presets included
 
@@ -230,9 +238,9 @@ git checkout -b claude/godot-phase-7-<scope>
 
 **READY TO STOP.**
 
-- Branch `claude/godot-phase-6-reference-match` is the authoritative Godot artifact.
-- Phase 6 art matches the reference plates as closely as practical for this MultiMesh slice.
+- Branch `claude/godot-phase-7-reference-fidelity` is the authoritative Godot artifact.
+- Phase 7 art closes the largest remaining gaps vs the Street View reference plates within the MultiMesh performance budget.
 - Gameplay, layout, controllers, audio, and performance budget are unchanged from validated phase 4/5 gates.
 - No further feature, art, or tuning work on this branch unless a **real bug** is found (regression in probe, export, or crash).
 
-Any new scope — plaque meshes, skeletal cast, combat AI, interiors, map growth — requires a **new branch** from `godot-frozen`.
+Any new scope — skeletal cast, combat AI, interiors, map growth — requires a **new branch** from `godot-frozen`.

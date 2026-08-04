@@ -2,9 +2,9 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://tmxs06hrvu8c"
-path.s3tc="res://.godot/imported/block_wall.png-09fec900f9c0bec0492b22dfc91c076e.s3tc.ctex"
-path.etc2="res://.godot/imported/block_wall.png-09fec900f9c0bec0492b22dfc91c076e.etc2.ctex"
+uid="uid://braojyr53c3wu"
+path.s3tc="res://.godot/imported/brick_red.png-5b0d8fb51c940825c03cde773f29c928.s3tc.ctex"
+path.etc2="res://.godot/imported/brick_red.png-5b0d8fb51c940825c03cde773f29c928.etc2.ctex"
 metadata={
 "imported_formats": ["s3tc_bptc", "etc2_astc"],
 "vram_texture": true
@@ -12,8 +12,8 @@ metadata={
 
 [deps]
 
-source_file="res://assets/textures/block_wall.png"
-dest_files=["res://.godot/imported/block_wall.png-09fec900f9c0bec0492b22dfc91c076e.s3tc.ctex", "res://.godot/imported/block_wall.png-09fec900f9c0bec0492b22dfc91c076e.etc2.ctex"]
+source_file="res://assets/textures/brick_red.png"
+dest_files=["res://.godot/imported/brick_red.png-5b0d8fb51c940825c03cde773f29c928.s3tc.ctex", "res://.godot/imported/brick_red.png-5b0d8fb51c940825c03cde773f29c928.etc2.ctex"]
 
 [params]
 
